@@ -13,6 +13,10 @@ defmodule Markright.Buffer do
 
   alias Markright.Buffer, as: B
 
+  def empty(data), do: %Markright.Buffer{}
+  def empty?(%B{buffer: "", tags: []}), do: true
+  def empty?(%B{}), do: false
+
   def append(%B{} = data, buffer) when is_binary(buffer) do
     %B{data | buffer: data.buffer <> buffer}
   end

@@ -16,6 +16,7 @@ defmodule Markright do
       grip: [
         em: "_",
         strong: "*",
+        b: "**",
         code: "`",
         strike: "~",
       ]
@@ -26,6 +27,19 @@ defmodule Markright do
       Keyword.merge(config, @syntax, fn _k, v1, v2 ->
         Keyword.merge(v1, v2)
       end)
+    end
+
+    def blocks do
+      syntax()[:block]
+      |> Keyword.values
+      |> Enum.map(& "\n[\s\t]*" <> &1)
+  #    |> Enum.map(& Regex.escape/1) # We DO NOT escape to allow regexps
+      |> Enum.join("|")
+    end
+
+    def grips do
+      syntax()[:grip]
+      |> Enum.sort(fn {_, v1}, {_, v2} -> String.length(v1) > String.length(v2) end)
     end
   end
 
@@ -44,7 +58,7 @@ defmodule Markright do
       iex> Enum.count(ast)
       3
       iex> Enum.at(ast, 0)
-      ["Hello, ", {:strong, [], "world"}, "!"]
+      {:p, [], ["Hello, ", {:strong, [], "world"}, "!"]}
       iex> Enum.at(ast, 1)
       {:blockquote, [], [
         " This is a ",
@@ -52,30 +66,35 @@ defmodule Markright do
         ".\n       It is multiline."
       ]}
       iex> Enum.at(ast, 2)
-      ["Cordially, ", {:em, [], "Markright"}, "."]
+      {:p, [], ["Cordially, ", {:em, [], "Markright"}, "."] }
 
       iex> input = "plain *bold* rest!"
       iex> Markright.to_ast(input)
-      [["plain ", {:strong, [], "bold"}, " rest!"]]
+      [{:p, [], ["plain ", {:strong, [], "bold"}, " rest!"]}]
 
       iex> input = "plain *bold1* _italic_ *bold2* rest!"
       iex> Markright.to_ast(input)
-      [["plain ", {:strong, [], "bold1"}, " ", {:em, [], "italic"}, " ",
-             {:strong, [], "bold2"}, " rest!"]]
+      [{:p, [], ["plain ", {:strong, [], "bold1"}, " ", {:em, [], "italic"}, " ",
+             {:strong, [], "bold2"}, " rest!"]}]
 
       iex> input = "plainplainplain *bold1bold1bold1* and *bold21bold21bold21 _italicitalicitalic_ bold22bold22bold22* rest!"
       iex> Markright.to_ast(input)
-      [["plainplainplain ", {:strong, [], "bold1bold1bold1"}, " and ",
+      [{:p, [], ["plainplainplain ", {:strong, [], "bold1bold1bold1"}, " and ",
              {:strong, [],
               ["bold21bold21bold21 ", {:em, [], "italicitalicitalic"},
-               " bold22bold22bold22"]}, " rest!"]]
+               " bold22bold22bold22"]}, " rest!"]}]
 
-      iex> input = "_Please ~use~ love *`Markright`* since it is great_!"
+      iex> input = "_Please ~use~ love **`Markright`** since it is *great*_!"
       iex> Markright.to_ast(input, fn e -> IO.puts "★☆★ \#{inspect(e)}" end)
-      [["plainplainplain ", {:strong, [], "bold1bold1bold1"}, " and ",
-             {:strong, [],
-              ["bold21bold21bold21 ", {:em, [], "italicitalicitalic"},
-               " bold22bold22bold22"]}, " rest!"]]
+      [{:p, [], [
+        {:em, [],
+          ["Please ", {:strike, [], "use"}, " love ",
+           {:b, [], {:code, [], "Markright"}}, " since it is ",
+           {:strong, [], "great"}, ""]}, "!"]}]
+
+      iex> input = "> Welcome b> ack! >> This is level 2."
+      iex> Markright.to_ast(input, fn e -> IO.puts "★☆★ \#{inspect(e)}" end)
+      [{:p, [], []}]
 
 
   """
@@ -84,7 +103,7 @@ defmodule Markright do
                                                  is_list(opts) do
     input
     |> sanitize_line_endings
-    |> String.replace(~r/\n*(#{blocks()})/, "\n\n\\1") # at least two CRs before
+    |> String.replace(~r/\n*(#{Markright.Syntax.blocks()})/, "\n\n\\1") # at least two CRs before
     |> String.split(~r/\n{2,}/)
     |> Stream.map(& &1 |> String.trim |> astify(fun, opts))
     |> Enum.to_list
@@ -92,16 +111,12 @@ defmodule Markright do
 
   ##############################################################################
 
-  defp blocks do
-    Markright.Syntax.syntax()[:block]
-    |> Keyword.values
-    |> Enum.map(& "\n[\s\t]*" <> &1)
-#    |> Enum.map(& Regex.escape/1) # We DO NOT escape to allow regexps
-    |> Enum.join("|")
-  end
-
   defp sanitize_line_endings(input) do
     Regex.replace(~r/\r\n|\r/, input, "\n")
+  end
+
+  defmacrop is_empty_buffer(data) do
+    quote do: %Markright.Buffer{buffer: "", tags: []} == unquote(data)
   end
 
   ##############################################################################
@@ -122,30 +137,20 @@ defmodule Markright do
 
   ##############################################################################
 
-  @spec finalize(String.t, Function.t, List.t) :: any
-  defp finalize(plain, fun, opts) do
-    callback_through({:text, opts, plain}, fun)
-  end
-
-  @spec astified(String.t, Function.t, List.t, Markright.Buffer.t) :: any
-  defp astified(plain, fun, opts, acc \\ %Markright.Buffer{}) do
-    astify(plain, fun, opts, acc)
-#    case astify(plain, fun, opts, acc) do
-#      %Markright.Buffer{buffer: buffer, tags: _tags} -> {:text, opts, buffer}
-#      s when is_binary(s) -> {:text, opts, s}
-#      t when is_tuple(t)  -> t
-#    end
-  end
-
   @spec astify(String.t, Function.t, List.t, Markright.Buffer.t) :: any
   defp astify(part, fun, opts, acc \\ %Markright.Buffer{})
 
-  defp astify(<<">"  :: binary, rest :: binary>>, fun, opts, acc) do
-    callback_through({:blockquote, opts, astified(rest, fun, opts, acc)}, fun)
+  defp astify(<<">"  :: binary, rest :: binary>>, fun, opts, acc) when is_empty_buffer(acc) do
+    callback_through({:blockquote, opts, astify(rest, fun, opts, Markright.Buffer.unshift(acc, {:blockquote, []}))}, fun)
   end
 
+  defp astify(input, fun, opts, acc) when is_binary(input) and is_empty_buffer(acc) do
+    callback_through({:p, opts, astify(input, fun, opts, Markright.Buffer.unshift(acc, {:p, []}))}, fun)
+  end
+
+
   Enum.each(0..@max_lookahead-1, fn i ->
-    Enum.each(Markright.Syntax.syntax()[:grip], fn {t, g} ->
+    Enum.each(Markright.Syntax.grips(), fn {t, g} ->
       defp astify(<<plain :: binary-size(unquote(i)), unquote(g) :: binary, rest :: binary>>, fun, opts, acc) do
         case Markright.Buffer.shift(acc) do
           {{unquote(t), opts}, tail} ->
@@ -156,8 +161,10 @@ defmodule Markright do
             astified = astify(rest, fun, opts, Markright.Buffer.cleanup(neu))
             {ready, [{tbd, tail}]} = Enum.split(astified, -1)
             rest = astify(tbd, fun, opts, tail)
-            [
-              astify(plain, fun, opts, acc),
+            case astify(plain, fun, opts, acc) do
+              s when "" == s -> []
+              s             -> [s]
+            end ++ [
               callback_through({unquote(t), opts, normalize_leaves(ready)}, fun)
             ] ++ (if is_list(rest), do: rest, else: [rest])
         end
