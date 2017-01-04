@@ -5,7 +5,7 @@ defmodule Markright do
 
   @max_lookahead 10
 
-  defmodule Markright.Syntax do
+  defmodule Syntax do
     @syntax [
       block: [
         blockquote: ">"
@@ -32,29 +32,38 @@ defmodule Markright do
 
   ## Examples
 
-      iex> input = "Hello, *world*!
-      ...>
-      ...> > This is a _blockquote_.
-      ...>   It is multiline.
-      ...>
-      ...> Cordially, _Markright_."
-      iex> ast = Markright.to_ast(input)
-      iex> Enum.count(ast)
-      3
-      iex> Enum.at(ast, 0)
-      [{:text, [], "Hello, "}, {:strong, [], "world"}, {:text, [], "!"}]
-      iex> Enum.at(ast, 1)
-      {:blockquote, [], [
-        {:text, [], " This is a "},
-        {:em, [], "blockquote"},
-        {:text, [], ".\n       It is multiline."}
-        ]
-      }
-      iex> Enum.at(ast, 2)
-      [{:text, [], "Cordially, "}, {:em, [], "Markright"}, {:text, [], "."}]
+    #  iex> input = "Hello, *world*!
+    #  ...>
+    #  ...> > This is a _blockquote_.
+    #  ...>   It is multiline.
+    #  ...>
+    #  ...> Cordially, _Markright_."
+    #  iex> ast = Markright.to_ast(input)
+    #  iex> Enum.count(ast)
+    #  3
+    #  iex> Enum.at(ast, 0)
+    #  [{:text, [], "Hello, "}, {:strong, [], "world"}, {:text, [], "!"}]
+    #  iex> Enum.at(ast, 1)
+    #  {:blockquote, [], [
+    #    {:text, [], " This is a "},
+    #    {:em, [], "blockquote"},
+    #    {:text, [], ".\n       It is multiline."}
+    #    ]
+    #  }
+    #  iex> Enum.at(ast, 2)
+    #  [{:text, [], "Cordially, "}, {:em, [], "Markright"}, {:text, [], "."}]
 
-      iex> input = "Hello, *_great_ world*!"
-      iex> Markright.to_ast(input)
+    #  iex> input = "plain *bold* rest!"
+    #  iex> Markright.to_ast(input)
+    #  [["plain ", {:strong, [], "bold"}, " rest!"]]
+
+    #  iex> input = "plain *bold1* _italic_ *bold2* rest!"
+    #  iex> Markright.to_ast(input)
+    #  [["plain ", {:strong, [], "bold1"}, " ", {:em, [], "italic"}, " ",
+    #         {:strong, [], "bold2"}, " rest!"]]
+
+      iex> input = "plainplainplain *bold1bold1bold1* and *bold21bold21bold21 _italicitalicitalic_ bold22bold22bold22* rest!"
+      iex> Markright.to_ast(input, fn e -> IO.puts "★☆★ \#{inspect(e)}" end)
       [{:text, [], "Hello, *world!"}]
 
 
@@ -86,64 +95,80 @@ defmodule Markright do
 
   ##############################################################################
 
-  defp flush(acc, tag, opts) do
-    case acc do
-      [{^tag, opts, buffer} | t] ->
-        {{tag, opts, buffer}, t}
-      [{:text, opts, buffer} | t] ->
-        {{:text, opts, buffer}, [{tag, opts, ""}] ++ t}
-      _ ->
-        {:tag, [{tag, opts, ""}] ++ acc}
-    end
+  @spec callback_through(Tuple.t, Function.t, Markright.Buffer.t | String.t) :: any
+  defp callback_through(ast, fun \\ nil, rest \\ nil)
+  defp callback_through(ast, nil, nil), do: ast
+  defp callback_through(ast, nil, rest) when is_binary(rest), do: {ast, rest}
+  defp callback_through(ast, nil, %Markright.Buffer{} = rest), do: {ast, rest.buffer}
+  defp callback_through(ast, fun, rest) when is_function(fun, 1) do
+    fun.({ast, rest})
+    callback_through(ast, nil, rest)
+  end
+  defp callback_through(ast, fun, rest) when is_function(fun, 2) do
+    fun.(ast, rest)
+    callback_through(ast, nil, rest)
   end
 
-  defp astify(part, fun, opts, acc \\ [])
+  ##############################################################################
+
+  @spec finalize(String.t, Function.t, List.t) :: any
+  defp finalize(plain, fun, opts) do
+    callback_through({:text, opts, plain}, fun)
+  end
+
+  @spec astified(String.t, Function.t, List.t, Markright.Buffer.t) :: any
+  defp astified(plain, fun, opts, acc \\ %Markright.Buffer{}) do
+    astify(plain, fun, opts, acc)
+#    case astify(plain, fun, opts, acc) do
+#      %Markright.Buffer{buffer: buffer, tags: _tags} -> {:text, opts, buffer}
+#      s when is_binary(s) -> {:text, opts, s}
+#      t when is_tuple(t)  -> t
+#    end
+  end
+
+  @spec astify(String.t, Function.t, List.t, Markright.Buffer.t) :: any
+  defp astify(part, fun, opts, acc \\ %Markright.Buffer{})
+
   defp astify(<<">"  :: binary, rest :: binary>>, fun, opts, acc) do
-    result = {:blockquote, opts, astify(rest, fun, opts, acc)}
-    if fun, do: fun.(result)
-    result
+    callback_through({:blockquote, opts, astified(rest, fun, opts, acc)}, fun)
   end
 
   Enum.each(0..@max_lookahead-1, fn i ->
     Enum.each(Markright.Syntax.syntax()[:grip], fn {t, g} ->
-      Code.eval_string(~s"""
-        defp astify(<<plain :: binary-size(#{i}), "#{g}" :: binary, rest :: binary>>, fun, opts, acc) do
-          acc = case acc do
-            [] -> [{:text, opts, plain}]
-            [{tag, opts, buffer} | t] -> [{tag, opts, buffer <> plain}] ++ t
-          end
-          result = case flush(acc, :#{t}, opts) do
-                     {:tag, neu} ->
-                       astify(rest, fun, opts, neu)
-                     {{tag, opts, buffer}, neu} ->
-                       [{tag, opts, buffer}] ++ astify(rest, fun, opts, neu)
-                   end
-          if fun, do: fun.(result)
-          result
+      defp astify(<<plain :: binary-size(unquote(i)), unquote(g) :: binary, rest :: binary>>, fun, opts, acc) do
+        IO.puts "★★ ASTIFY #{inspect(acc)}"
+
+        IO.puts "☆0 #{inspect([Markright.Buffer.shift(acc), unquote(t)])}"
+        case Markright.Buffer.shift(acc) do
+          {{unquote(t), opts}, tail} ->
+            IO.puts "☆1 #{inspect([astify(plain, fun, opts, acc), {rest, tail}])}"
+            [astify(plain, fun, opts, acc), {rest, Markright.Buffer.cleanup(tail)}]
+
+          other ->
+            neu = Markright.Buffer.unshift(acc, {unquote(t), opts})
+            astified = astify(rest, fun, opts, Markright.Buffer.cleanup(neu))
+            {ready, [{tbd, tail}]} = Enum.split(astified, -1)
+            rest = astify(tbd, fun, opts, tail)
+            [
+              astify(plain, fun, opts, acc),
+              callback_through({unquote(t), opts, ready}, fun)
+            ] ++ (if is_list(rest), do: rest, else: [rest])
         end
-      """, [], __ENV__)
+      end
     end)
   end)
 
   defp astify(<<plain :: binary-size(@max_lookahead), rest :: binary>>, fun, opts, acc) do
-    case acc do
-      [{tag, opts, buffer} | t] ->
-        astify(rest, fun, opts, [{tag, opts, buffer <> plain}] ++ t)
-      [] ->
-        astify(rest, fun, opts, [{:text, opts, plain}])
-    end
+    astify(rest, fun, opts, Markright.Buffer.append(acc, plain))
   end
 
   ##############################################################################
   ### MUST BE LAST
   ##############################################################################
 
-  defp astify(unmatched, fun, opts, acc) when is_binary(unmatched) do
-    result = case acc do
-               [{tag, opts, buffer} | t] -> [{tag, opts, buffer <> unmatched}] # ++ astify() ???
-               [] -> [{:text, opts, unmatched}]
-             end
-    if fun, do: fun.(result)
-    result
+  defp astify(unmatched, _fun, _opts, acc) when is_binary(unmatched) do
+    Markright.Buffer.append(acc, unmatched).buffer
   end
+
+  ##############################################################################
 end

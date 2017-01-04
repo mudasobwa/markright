@@ -1,4 +1,4 @@
-defmodule MarkrightTest do
+defmodule Markright.Test do
   use ExUnit.Case
   doctest Markright
 
