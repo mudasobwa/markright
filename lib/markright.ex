@@ -7,6 +7,7 @@ defmodule Markright do
 
   defmodule Syntax do
     @syntax [
+      shield: ~w|/ \\|,
       block: [
         blockquote: ">"
       ],
@@ -29,6 +30,8 @@ defmodule Markright do
       end)
     end
 
+    def shields, do: syntax()[:shield]
+
     def blocks do
       syntax()[:block]
       |> Keyword.values
@@ -47,6 +50,9 @@ defmodule Markright do
   Hello world.
 
   ## Examples
+
+      iex> Markright.to_ast("Plain string.")
+      [{:p, [], "Plain string."}]
 
       iex> input = "Hello, *world*!
       ...>
@@ -85,16 +91,29 @@ defmodule Markright do
                " bold22bold22bold22"]}, " rest!"]}]
 
       iex> input = "_Please ~use~ love **`Markright`** since it is *great*_!"
-      iex> Markright.to_ast(input, fn e -> IO.puts "★☆★ \#{inspect(e)}" end)
+      iex> Markright.to_ast(input)
       [{:p, [], [
         {:em, [],
           ["Please ", {:strike, [], "use"}, " love ",
            {:b, [], {:code, [], "Markright"}}, " since it is ",
            {:strong, [], "great"}, ""]}, "!"]}]
 
-      iex> input = "> Welcome b> ack! >> This is level 2."
+      iex> input = "> Blockquote!
+      ...> > This is level 2."
       iex> Markright.to_ast(input, fn e -> IO.puts "★☆★ \#{inspect(e)}" end)
-      [{:p, [], []}]
+      [{:blockquote, [], [" Blockquote!", " This is level 2."]}]
+
+      iex> input = "Unterminated *asterisk"
+      iex> Markright.to_ast(input, fn e -> IO.puts "★☆★ \#{inspect(e)}" end)
+      [{:p, [], ["Unterminated asterisk"]}]
+
+      iex> input = "Escaped /*asterisk"
+      iex> Markright.to_ast(input)
+      [{:p, [], "Escaped *asterisk"}]
+
+      iex> input = "Escaped \\\\*asterisk 2"
+      iex> Markright.to_ast(input)
+      [{:p, [], "Escaped *asterisk 2"}]
 
 
   """
@@ -140,33 +159,53 @@ defmodule Markright do
   @spec astify(String.t, Function.t, List.t, Markright.Buffer.t) :: any
   defp astify(part, fun, opts, acc \\ %Markright.Buffer{})
 
+  ##############################################################################
+  ##  BLOCKS
+  ##############################################################################
+
   defp astify(<<">"  :: binary, rest :: binary>>, fun, opts, acc) when is_empty_buffer(acc) do
     callback_through({:blockquote, opts, astify(rest, fun, opts, Markright.Buffer.unshift(acc, {:blockquote, []}))}, fun)
   end
+
+  ##############################################################################
+  ##  Last in BLOCKS
 
   defp astify(input, fun, opts, acc) when is_binary(input) and is_empty_buffer(acc) do
     callback_through({:p, opts, astify(input, fun, opts, Markright.Buffer.unshift(acc, {:p, []}))}, fun)
   end
 
+  ##############################################################################
+  ##############################################################################
 
   Enum.each(0..@max_lookahead-1, fn i ->
+    Enum.each(Markright.Syntax.shields(), fn shield ->
+      defp astify(<<
+                    plain :: binary-size(unquote(i)),
+                    unquote(shield) :: binary,
+                    next :: binary-size(1),
+                    rest :: binary
+                  >>, fun, opts, acc) do
+        astify(rest, fun, opts, Markright.Buffer.append(acc, plain <> next))
+      end
+    end)
+
     Enum.each(Markright.Syntax.grips(), fn {t, g} ->
       defp astify(<<plain :: binary-size(unquote(i)), unquote(g) :: binary, rest :: binary>>, fun, opts, acc) do
         case Markright.Buffer.shift(acc) do
           {{unquote(t), opts}, tail} ->
             [astify(plain, fun, opts, acc), {rest, Markright.Buffer.cleanup(tail)}]
 
-          other ->
-            neu = Markright.Buffer.unshift(acc, {unquote(t), opts})
-            astified = astify(rest, fun, opts, Markright.Buffer.cleanup(neu))
-            {ready, [{tbd, tail}]} = Enum.split(astified, -1)
-            rest = astify(tbd, fun, opts, tail)
-            case astify(plain, fun, opts, acc) do
-              s when "" == s -> []
-              s             -> [s]
-            end ++ [
-              callback_through({unquote(t), opts, normalize_leaves(ready)}, fun)
-            ] ++ (if is_list(rest), do: rest, else: [rest])
+          _ ->
+            deleavify(astify(plain, fun, opts, acc)) ++
+            case astify(rest, fun, opts, Markright.Buffer.unshift_and_cleanup(acc, {unquote(t), opts})) do
+              s when is_binary(s) -> deleavify(s)
+              astified when is_list(astified) ->
+                {ready, [{tbd, tail}]} = Enum.split(astified, -1)
+                
+                deleavify(callback_through({unquote(t), opts, leavify(ready)}, fun)) \
+                  ++ \
+                deleavify(astify(tbd, fun, opts, tail))
+            end
         end
       end
     end)
@@ -186,7 +225,7 @@ defmodule Markright do
 
   ##############################################################################
 
-  defp normalize_leaves(leaves) when is_list(leaves) do
+  defp leavify(leaves) when is_list(leaves) do
     case Enum.filter(leaves, fn
                                e when is_binary(e) -> String.trim(e) != ""
                                _ -> true
@@ -194,6 +233,16 @@ defmodule Markright do
       []  -> ""
       [h] -> h
       _   -> leaves
+    end
+  end
+
+  def deleavify(input) do
+    case input do
+      s when "" == s      -> []
+      s when is_binary(s) -> [s]
+      s when is_list(s)   -> s
+      t when is_tuple(t)  -> [t] # NOT Tuple.to_list(t)
+      _                   -> [input]
     end
   end
 end

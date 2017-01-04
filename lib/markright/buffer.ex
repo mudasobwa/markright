@@ -29,7 +29,11 @@ defmodule Markright.Buffer do
     {data.buffer <> buffer, %B{data | buffer: ""}}
   end
 
-  def push(%B{} = data, tag) when is_atom(tag) do
+  def unshift_and_cleanup(%B{} = data, tag) when is_tuple(tag) do
+    %B{data | tags: [tag] ++ data.tags, buffer: ""}
+  end
+
+  def push(%B{} = data, tag) when is_tuple(tag) do
     %B{data | tags: data.tags ++ [tag]}
   end
 
