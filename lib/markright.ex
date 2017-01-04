@@ -15,7 +15,9 @@ defmodule Markright do
       ],
       grip: [
         em: "_",
-        strong: "*"
+        strong: "*",
+        code: "`",
+        strike: "~",
       ]
     ]
 
@@ -32,39 +34,48 @@ defmodule Markright do
 
   ## Examples
 
-    #  iex> input = "Hello, *world*!
-    #  ...>
-    #  ...> > This is a _blockquote_.
-    #  ...>   It is multiline.
-    #  ...>
-    #  ...> Cordially, _Markright_."
-    #  iex> ast = Markright.to_ast(input)
-    #  iex> Enum.count(ast)
-    #  3
-    #  iex> Enum.at(ast, 0)
-    #  [{:text, [], "Hello, "}, {:strong, [], "world"}, {:text, [], "!"}]
-    #  iex> Enum.at(ast, 1)
-    #  {:blockquote, [], [
-    #    {:text, [], " This is a "},
-    #    {:em, [], "blockquote"},
-    #    {:text, [], ".\n       It is multiline."}
-    #    ]
-    #  }
-    #  iex> Enum.at(ast, 2)
-    #  [{:text, [], "Cordially, "}, {:em, [], "Markright"}, {:text, [], "."}]
+      iex> input = "Hello, *world*!
+      ...>
+      ...> > This is a _blockquote_.
+      ...>   It is multiline.
+      ...>
+      ...> Cordially, _Markright_."
+      iex> ast = Markright.to_ast(input)
+      iex> Enum.count(ast)
+      3
+      iex> Enum.at(ast, 0)
+      ["Hello, ", {:strong, [], "world"}, "!"]
+      iex> Enum.at(ast, 1)
+      {:blockquote, [], [
+        " This is a ",
+        {:em, [], "blockquote"},
+        ".\n       It is multiline."
+      ]}
+      iex> Enum.at(ast, 2)
+      ["Cordially, ", {:em, [], "Markright"}, "."]
 
-    #  iex> input = "plain *bold* rest!"
-    #  iex> Markright.to_ast(input)
-    #  [["plain ", {:strong, [], "bold"}, " rest!"]]
+      iex> input = "plain *bold* rest!"
+      iex> Markright.to_ast(input)
+      [["plain ", {:strong, [], "bold"}, " rest!"]]
 
-    #  iex> input = "plain *bold1* _italic_ *bold2* rest!"
-    #  iex> Markright.to_ast(input)
-    #  [["plain ", {:strong, [], "bold1"}, " ", {:em, [], "italic"}, " ",
-    #         {:strong, [], "bold2"}, " rest!"]]
+      iex> input = "plain *bold1* _italic_ *bold2* rest!"
+      iex> Markright.to_ast(input)
+      [["plain ", {:strong, [], "bold1"}, " ", {:em, [], "italic"}, " ",
+             {:strong, [], "bold2"}, " rest!"]]
 
       iex> input = "plainplainplain *bold1bold1bold1* and *bold21bold21bold21 _italicitalicitalic_ bold22bold22bold22* rest!"
+      iex> Markright.to_ast(input)
+      [["plainplainplain ", {:strong, [], "bold1bold1bold1"}, " and ",
+             {:strong, [],
+              ["bold21bold21bold21 ", {:em, [], "italicitalicitalic"},
+               " bold22bold22bold22"]}, " rest!"]]
+
+      iex> input = "_Please ~use~ love *`Markright`* since it is great_!"
       iex> Markright.to_ast(input, fn e -> IO.puts "★☆★ \#{inspect(e)}" end)
-      [{:text, [], "Hello, *world!"}]
+      [["plainplainplain ", {:strong, [], "bold1bold1bold1"}, " and ",
+             {:strong, [],
+              ["bold21bold21bold21 ", {:em, [], "italicitalicitalic"},
+               " bold22bold22bold22"]}, " rest!"]]
 
 
   """
@@ -136,12 +147,8 @@ defmodule Markright do
   Enum.each(0..@max_lookahead-1, fn i ->
     Enum.each(Markright.Syntax.syntax()[:grip], fn {t, g} ->
       defp astify(<<plain :: binary-size(unquote(i)), unquote(g) :: binary, rest :: binary>>, fun, opts, acc) do
-        IO.puts "★★ ASTIFY #{inspect(acc)}"
-
-        IO.puts "☆0 #{inspect([Markright.Buffer.shift(acc), unquote(t)])}"
         case Markright.Buffer.shift(acc) do
           {{unquote(t), opts}, tail} ->
-            IO.puts "☆1 #{inspect([astify(plain, fun, opts, acc), {rest, tail}])}"
             [astify(plain, fun, opts, acc), {rest, Markright.Buffer.cleanup(tail)}]
 
           other ->
@@ -151,7 +158,7 @@ defmodule Markright do
             rest = astify(tbd, fun, opts, tail)
             [
               astify(plain, fun, opts, acc),
-              callback_through({unquote(t), opts, ready}, fun)
+              callback_through({unquote(t), opts, normalize_leaves(ready)}, fun)
             ] ++ (if is_list(rest), do: rest, else: [rest])
         end
       end
@@ -171,4 +178,15 @@ defmodule Markright do
   end
 
   ##############################################################################
+
+  defp normalize_leaves(leaves) when is_list(leaves) do
+    case Enum.filter(leaves, fn
+                               e when is_binary(e) -> String.trim(e) != ""
+                               _ -> true
+                             end) do
+      []  -> ""
+      [h] -> h
+      _   -> leaves
+    end
+  end
 end
