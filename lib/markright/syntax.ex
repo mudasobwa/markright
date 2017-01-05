@@ -4,6 +4,8 @@ defmodule Markright.Syntax do
   """
   @syntax [
     lookahead: 10,
+    language_name_length: 20,
+
     shield: ~w|/ \\|,
     block: [
       blockquote: ">"
@@ -29,6 +31,7 @@ defmodule Markright.Syntax do
   end
 
   def lookahead, do: syntax()[:lookahead]
+  def language_name_length, do: syntax()[:language_name_length]
 
   def shields, do: syntax()[:shield]
 

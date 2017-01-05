@@ -1,16 +1,21 @@
-defmodule Markright.Parser.Generic do
+defmodule Markright.Parsers.Generic do
   @behaviour Markright.Parser
 
-  @max_lookahead Markright.Syntax.lookahead
+  @max_lookahead     Markright.Syntax.lookahead
+  @max_lang_name_len Markright.Syntax.language_name_length
 
   use Markright.Buffer
-  import Markright.Utils, only: [leavify: 1, deleavify: 1]
+  import Markright.Utils, only: [leavify: 1, deleavify: 1, empty_tag?: 1]
 
-  def to_ast(input, fun, opts \\ %{}) when is_binary(input) and
+  def to_ast(input, fun, opts \\ %{}, acc \\ Buf.empty()) when is_binary(input) and
                                           (is_nil(fun) or is_function(fun)) and
                                            is_map(opts) do
 
-    astify(input, fun, opts, Buf.empty())
+    ast = astify(input, fun, %{}, acc)
+    case opts[:only] do
+      :ast -> ast
+      _    -> {ast, ""}
+    end
   end
 
   ##############################################################################
@@ -33,11 +38,35 @@ defmodule Markright.Parser.Generic do
   defp astify(part, fun, opts, acc \\ %Buf{})
 
   ##############################################################################
+  ##  CODE BLOCKS
+
+  Enum.each(0..@max_lang_name_len-1, fn i ->
+    defp astify(<<
+                  "```"   :: binary,
+                  lang    :: binary-size(unquote(i)),
+                  "\n"    :: binary,
+                  rest    :: binary
+                >>, fun, opts, acc) when is_empty_buffer(acc) do
+      with {code_ast, tail} <- Markright.Parsers.Code.to_ast(rest, fun, opts) do
+        leavify({
+          callback_through({:pre, opts, {:code, %{lang: lang}, code_ast}}, fun, acc),
+          astify(tail, fun, opts, acc)
+        })
+      end
+    end
+  end)
+
+  ##############################################################################
   ##  BLOCKS
   ##############################################################################
 
   defp astify(<<">"  :: binary, rest :: binary>>, fun, opts, acc) when is_empty_buffer(acc) do
-    callback_through({:blockquote, opts, astify(rest, fun, opts, Buf.unshift(acc, {:blockquote, %{}}))}, fun, acc)
+    with {code_ast, tail} <- Markright.Parsers.Generic.to_ast(rest, fun, opts, Buf.unshift(acc, {:blockquote, opts})) do
+      leavify({
+        callback_through({:blockquote, opts, code_ast}, fun, acc),
+        astify(tail, fun, opts, acc)
+      })
+    end
   end
 
   ##############################################################################
