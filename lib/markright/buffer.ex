@@ -11,30 +11,39 @@ defmodule Markright.Buffer do
 
   defstruct @fields
 
-  alias Markright.Buffer, as: B
+  alias Markright.Buffer, as: Buf
 
-  def empty(data), do: %Markright.Buffer{}
-  def empty?(%B{buffer: "", tags: []}), do: true
-  def empty?(%B{}), do: false
+  def empty, do: %Buf{}
+  def empty?(%Buf{buffer: "", tags: []}), do: true
+  def empty?(%Buf{}), do: false
 
-  def append(%B{} = data, buffer) when is_binary(buffer) do
-    %B{data | buffer: data.buffer <> buffer}
+  defmacro __using__(_opts) do
+    quote do
+      alias Markright.Buffer, as: Buf
+      defmacrop is_empty_buffer(data) do
+        quote do: %Buf{buffer: "", tags: []} == unquote(data)
+      end
+    end
   end
 
-  def cleanup(%B{} = data) do
-    %B{data | buffer: ""}
+  def append(%Buf{} = data, buffer) when is_binary(buffer) do
+    %Buf{data | buffer: data.buffer <> buffer}
   end
 
-  def append_and_cleanup(%B{} = data, buffer) when is_binary(buffer) do
-    {data.buffer <> buffer, %B{data | buffer: ""}}
+  def cleanup(%Buf{} = data) do
+    %Buf{data | buffer: ""}
   end
 
-  def unshift_and_cleanup(%B{} = data, tag) when is_tuple(tag) do
-    %B{data | tags: [tag] ++ data.tags, buffer: ""}
+  def append_and_cleanup(%Buf{} = data, buffer) when is_binary(buffer) do
+    {data.buffer <> buffer, %Buf{data | buffer: ""}}
   end
 
-  def push(%B{} = data, tag) when is_tuple(tag) do
-    %B{data | tags: data.tags ++ [tag]}
+  def unshift_and_cleanup(%Buf{} = data, tag) when is_tuple(tag) do
+    %Buf{data | tags: [tag] ++ data.tags, buffer: ""}
+  end
+
+  def push(%Buf{} = data, tag) when is_tuple(tag) do
+    %Buf{data | tags: data.tags ++ [tag]}
   end
 
   @doc """
@@ -45,22 +54,22 @@ defmodule Markright.Buffer do
         iex> Markright.Buffer.pop(%Markright.Buffer{tags: [:a, :b, :c]})
         {:c, %Markright.Buffer{buffer: "", tags: [:a, :b]}}
   """
-  def pop(%B{} = data) do
+  def pop(%Buf{} = data) do
     case data.tags do
       [] -> {nil, data}
       list when is_list(list) ->
-        {List.last(list), %B{data | tags: Enum.slice(list, 0..Enum.count(list)-2)}}
+        {List.last(list), %Buf{data | tags: Enum.slice(list, 0..Enum.count(list)-2)}}
     end
   end
 
-  def unshift(%B{} = data, tag) when is_tuple(tag) do
-    %B{data | tags: [tag] ++ data.tags}
+  def unshift(%Buf{} = data, tag) when is_tuple(tag) do
+    %Buf{data | tags: [tag] ++ data.tags}
   end
 
-  def shift(%B{} = data) do
+  def shift(%Buf{} = data) do
     case data.tags do
       [] -> {nil, data}
-      [h | t] -> {h, %B{data | tags: t}}
+      [h | t] -> {h, %Buf{data | tags: t}}
     end
   end
 
