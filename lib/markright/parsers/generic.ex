@@ -49,7 +49,7 @@ defmodule Markright.Parsers.Generic do
                 >>, fun, opts, acc) when is_empty_buffer(acc) do
       with {code_ast, tail} <- Markright.Parsers.Code.to_ast(rest, fun, opts) do
         leavify({
-          callback_through({:pre, opts, {:code, %{lang: lang}, code_ast}}, fun, acc),
+          callback_through({:pre, opts, [{:code, %{lang: lang}, code_ast}]}, fun, acc),
           astify(tail, fun, opts, acc)
         })
       end

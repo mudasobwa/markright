@@ -12,6 +12,15 @@ defmodule Markright.Test do
 
   Мы вместе с Денисом Лесновым разрабатываем аудиопроигрыватель для сайта,
   о котором уже рассказывали здесь в 2015 году.
+
+  ```elixir
+  defmodule Xml.Namespaces do
+    @var 42
+    def method(param \\ 3.14) do
+      if is_nil(param), do: @var, else: @var * param
+    end
+  ```
+
   Сейчас на подходе обновлённая версия, которая умеет играть
   не только отдельные треки, но и целые плейлисты.
   """
@@ -28,42 +37,22 @@ defmodule Markright.Test do
   \t<span>Почтальон Печкин</span>
   </blockquote>
   <p>Мы вместе с Денисом Лесновым разрабатываем аудиопроигрыватель для сайта,
-  о котором уже рассказывали здесь в 2015 году.
-  Сейчас на подходе обновлённая версия, которая умеет играть
+  о котором уже рассказывали здесь в 2015 году.</p>
+  <pre>
+  \t<code lang=\"elixir\">defmodule Xml.Namespaces do
+    @var 42
+    def method(param \\\\ 3.14) do
+      if is_nil(param), do: @var, else: @var * param
+    end</code>
+  </pre>
+  <p>Сейчас на подходе обновлённая версия, которая умеет играть
   не только отдельные треки, но и целые плейлисты.</p>
   """
-
-  @input_code ~S"""
-  Hello world.
-
-  ```ruby
-  def method(*args, **args)
-    puts "method #{__callee__} called"
-  end
-  ```
-
-  Right after.
-  Normal *para* again.
-  """
-
-  @output_code [
-    {:p, %{}, "Hello world."},
-     {:pre, %{},
-      {:code, %{lang: "ruby"},
-       "def method(*args, **args)\n  puts \"method \#{__callee__} called\"\nend"}},
-     {:p, %{},
-      ["Right after.\nNormal ", {:strong, %{}, "para"}, " again."]}]
 
   test "generates XML from parsed markright" do
     assert (@input_text
             |> Markright.to_ast
             |> IO.inspect
             |> XmlBuilder.generate) == String.trim(@output_text)
-  end
-
-  test "understands codeblocks in the markright" do
-    assert (@input_code
-            |> Markright.to_ast
-            |> IO.inspect) == @output_code
   end
 end

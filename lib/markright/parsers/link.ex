@@ -1,4 +1,4 @@
-defmodule Markright.Parsers.Code do
+defmodule Markright.Parsers.Link do
   @behaviour Markright.Parser
 
   use Markright.Buffer
