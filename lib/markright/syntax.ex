@@ -12,6 +12,7 @@ defmodule Markright.Syntax do
 
     ],
     grip: [
+      span: "⇓",
       em: "_",
       strong: "*",
       b: "**",
@@ -28,7 +29,7 @@ defmodule Markright.Syntax do
   end
 
   def lookahead, do: syntax()[:lookahead]
-  
+
   def shields, do: syntax()[:shield]
 
   def blocks do

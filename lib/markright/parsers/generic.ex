@@ -6,9 +6,9 @@ defmodule Markright.Parser.Generic do
   use Markright.Buffer
   import Markright.Utils, only: [leavify: 1, deleavify: 1]
 
-  def to_ast(input, fun, opts \\ []) when is_binary(input) and
-                                         (is_nil(fun) or is_function(fun)) and
-                                          is_list(opts) do
+  def to_ast(input, fun, opts \\ %{}) when is_binary(input) and
+                                          (is_nil(fun) or is_function(fun)) and
+                                           is_map(opts) do
 
     astify(input, fun, opts, Buf.empty())
   end
@@ -37,14 +37,14 @@ defmodule Markright.Parser.Generic do
   ##############################################################################
 
   defp astify(<<">"  :: binary, rest :: binary>>, fun, opts, acc) when is_empty_buffer(acc) do
-    callback_through({:blockquote, opts, astify(rest, fun, opts, Buf.unshift(acc, {:blockquote, []}))}, fun, acc)
+    callback_through({:blockquote, opts, astify(rest, fun, opts, Buf.unshift(acc, {:blockquote, %{}}))}, fun, acc)
   end
 
   ##############################################################################
   ##  Last in BLOCKS
 
   defp astify(input, fun, opts, acc) when is_binary(input) and is_empty_buffer(acc) do
-    callback_through({:p, opts, astify(input, fun, opts, Buf.unshift(acc, {:p, []}))}, fun, acc)
+    callback_through({:p, opts, astify(input, fun, opts, Buf.unshift(acc, {:p, %{}}))}, fun, acc)
   end
 
   ##############################################################################

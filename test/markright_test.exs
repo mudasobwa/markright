@@ -2,7 +2,25 @@ defmodule Markright.Test do
   use ExUnit.Case
   doctest Markright
 
-  test "the truth" do
-    assert 1 + 1 == 2
+  @input ~S"""
+  **Опыт использования пространств имён в клиентском XHTML**
+
+  _Текст Ростислава Чебыкина._
+
+  > Я вам посылку принёс. Только я вам её не отдам, потому что у вас документов нету.
+  > — ⇓Почтальон Печкин⇓
+
+  Мы вместе с Денисом Лесновым разрабатываем аудиопроигрыватель для сайта,
+  о котором уже рассказывали здесь в 2015 году.
+  Сейчас на подходе обновлённая версия, которая умеет играть
+  не только отдельные треки, но и целые плейлисты.
+  """
+
+  test "generates XML from parsed Markright" do
+    @input
+    |> Markright.to_ast
+    |> IO.inspect
+    |> XmlBuilder.generate
+    |> IO.inspect
   end
 end

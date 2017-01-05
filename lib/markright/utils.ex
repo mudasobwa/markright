@@ -8,6 +8,7 @@ defmodule Markright.Utils do
                                _ -> true
                              end) do
       []  -> ""
+      %{} -> ""
       [h] -> h
       _   -> leaves
     end
