@@ -6,6 +6,7 @@ defmodule Markright do
   @behaviour Markright.Parser
 
   import Markright.Utils, only: [sanitize_line_endings: 1]
+  use Markright.Buffer, as: Buf
 
 
   @doc """
@@ -62,11 +63,11 @@ defmodule Markright do
 
       iex> input = "> Blockquotes!
       ...> > This is level 2."
-      iex> Markright.to_ast(input, fn e -> IO.puts "★☆★ \#{inspect(e)}" end)
+      iex> Markright.to_ast(input) #, fn e -> IO.puts "★☆★ \#{inspect(e)}" end)
       [{:blockquote, %{}, [" Blockquote!", " This is level 2."]}]
 
       iex> input = "Unterminated *asterisk"
-      iex> Markright.to_ast(input, fn e -> IO.puts "★☆★ \#{inspect(e)}" end)
+      iex> Markright.to_ast(input) #, fn e -> IO.puts "★☆★ \#{inspect(e)}" end)
       [{:p, %{}, ["Unterminated asterisk"]}]
 
       iex> input = "Escaped /*asterisk"
@@ -79,17 +80,24 @@ defmodule Markright do
 
 
   """
-  def to_ast(input, fun \\ nil, opts \\ %{}) when is_binary(input) and
-                                                 (is_nil(fun) or is_function(fun)) and
-                                                  is_map(opts) do
+  def to_ast(input, fun \\ nil, opts \\ %{}, _acc \\ Buf.empty())
+    when is_binary(input) and (is_nil(fun) or is_function(fun)) and is_map(opts) do
+
     input
     |> sanitize_line_endings
     |> String.replace(~r/\n*(#{Markright.Syntax.blocks(regex: true)})/, "\n\n\\1") # at least two CRs before
     |> String.split(~r/\n{2,}/)
-    |> IO.inspect
 #    |> Stream.map(& "\n" <> &1 |> String.trim |> Markright.Parsers.Generic.to_ast(fun, Map.put(opts, :only, :ast)))
-    |> Stream.map(& &1 |> String.trim |> Markright.Parsers.Generic.to_ast(fun, Map.put(opts, :only, :ast)))
+    |> Stream.map(& &1
+                    |> String.trim
+                    |> Markright.Parsers.Generic.to_ast(fun, Map.put(opts, :only, :ast))
+                  )
     |> Enum.to_list
+    |> Enum.filter(fn # FIXME: Move to dedicated method :cleanup, stack dups
+      {_, _, ""} -> false
+      {_, _, []} -> false
+      _ -> true
+    end)
 #    |> Markright.Parsers.Generic.to_ast(fun, Map.put(opts, :only, :ast))
   end
 

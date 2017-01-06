@@ -3,7 +3,7 @@ defmodule Markright.Syntax do
   The syntax definition/helpers.
   """
 
-  import Markright.Utils, only: [to_module: 1]
+#  import Markright.Utils, only: [to_module: 1]
 
   @syntax [
     lookahead: 10,
@@ -28,7 +28,8 @@ defmodule Markright.Syntax do
       strike: "~",
     ],
     custom: [
-      link: "["
+      link: "[",
+      img: "![",
     ]
   ]
 

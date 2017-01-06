@@ -17,7 +17,6 @@ defmodule Markright.Parsers.Link.Test do
 
   test "parses different types of links" do
     assert (@input
-            |> Markright.to_ast
-            |> IO.inspect) == @output
+            |> Markright.to_ast) == @output
   end
 end

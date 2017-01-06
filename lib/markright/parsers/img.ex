@@ -1,11 +1,11 @@
-defmodule Markright.Parsers.Link do
+defmodule Markright.Parsers.Img do
   @moduledoc ~S"""
   Parses the input for the link.
 
   ## Examples
 
-      iex> "http://example.com Hello my] lovely world!" |> Markright.Parsers.Link.to_ast
-      {{:a, %{href: "http://example.com"}, "Hello my"}, " lovely world!"}
+      iex> "http://example.com Hello my] lovely world!" |> Markright.Parsers.Img.to_ast
+      {{:img, %{src: "http://example.com", alt: "Hello my"}, nil}, " lovely world!"}
   """
 
   @behaviour Markright.Parser
@@ -19,8 +19,8 @@ defmodule Markright.Parsers.Link do
     {first, rest} = Markright.Parsers.Word.to_ast(input)
 
     case astify(rest, fun, opts, acc) do
-      {{text, link}, rest} -> {{:a, %{href: link}, first <> " " <> text}, rest}
-      {text, rest} -> {{:a, %{href: first}, text}, rest}
+      {{text, link}, rest} -> {{:img, %{src: link, alt: first <> " " <> text}, nil}, rest}
+      {text, rest} -> {{:img, %{src: first, alt: text}, nil}, rest}
     end
   end
 
