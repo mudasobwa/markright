@@ -24,17 +24,21 @@ defmodule Markright.Parsers.Code do
   """
   @behaviour Markright.Parser
 
+  @max_indent Markright.Syntax.indent
+
   use Markright.Buffer
 
   def to_ast(input, fun \\ nil, opts \\ %{}, acc \\ Buf.empty()) \
     when is_binary(input) and (is_nil(fun) or is_function(fun)) and is_map(opts) do
-
     {lang, rest} = Markright.Parsers.Word.to_ast(input)
-    {code, rest} = astify(rest, fun, opts, acc)
-    {{:pre, opts, [
-      {:code,
-        (if String.trim(lang) == "", do: %{}, else: %{lang: lang}),
-        code}]}, rest}
+    case astify(rest, fun, opts, acc) do
+      # {"", rest}   -> rest
+      {code, rest} ->
+        {{:pre, opts, [
+          {:code,
+            (if String.trim(lang) == "", do: %{}, else: %{lang: lang}),
+            code}]}, rest}
+    end
   end
 
   ##############################################################################
@@ -44,14 +48,17 @@ defmodule Markright.Parsers.Code do
 
   ##############################################################################
 
-  Enum.each(0..4, fn i ->
+  Enum.each(0..@max_indent-1, fn i ->
     indent = String.duplicate(" ", i)
     defp astify(<<"\n" :: binary, unquote(indent) :: binary, "```" :: binary, rest :: binary>>, _fun, _opts, acc),
       do: {acc.buffer, rest}
-    end)
+  end)
 
   defp astify(<<letter :: binary-size(1), rest :: binary>>, fun, opts, acc),
     do: astify(rest, fun, opts, Buf.append(acc, letter))
+
+  defp astify("", _fun, _opts, acc),
+    do: {acc.buffer, ""}
 
   ##############################################################################
 end

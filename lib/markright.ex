@@ -80,14 +80,17 @@ defmodule Markright do
 
   """
   def to_ast(input, fun \\ nil, opts \\ %{}) when is_binary(input) and
-                                                (is_nil(fun) or is_function(fun)) and
-                                                 is_map(opts) do
+                                                 (is_nil(fun) or is_function(fun)) and
+                                                  is_map(opts) do
     input
     |> sanitize_line_endings
-    |> String.replace(~r/\n*(#{Markright.Syntax.blocks()})/, "\n\n\\1") # at least two CRs before
+    |> String.replace(~r/\n*(#{Markright.Syntax.blocks(regex: true)})/, "\n\n\\1") # at least two CRs before
     |> String.split(~r/\n{2,}/)
+    |> IO.inspect
+#    |> Stream.map(& "\n" <> &1 |> String.trim |> Markright.Parsers.Generic.to_ast(fun, Map.put(opts, :only, :ast)))
     |> Stream.map(& &1 |> String.trim |> Markright.Parsers.Generic.to_ast(fun, Map.put(opts, :only, :ast)))
     |> Enum.to_list
+#    |> Markright.Parsers.Generic.to_ast(fun, Map.put(opts, :only, :ast))
   end
 
 end

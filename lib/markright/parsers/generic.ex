@@ -1,7 +1,8 @@
 defmodule Markright.Parsers.Generic do
   @behaviour Markright.Parser
 
-  @max_lookahead     Markright.Syntax.lookahead
+  @max_lookahead Markright.Syntax.lookahead
+  @max_indent    Markright.Syntax.indent
 
   use Markright.Buffer
   import Markright.Utils, only: [leavify: 1, deleavify: 1]
@@ -40,32 +41,47 @@ defmodule Markright.Parsers.Generic do
   ##############################################################################
   ##  CODE BLOCKS
 
-  defp astify(<<"```" :: binary, rest :: binary>>, fun, opts, acc) when is_empty_buffer(acc) do
-    with {code_ast, tail} <- Markright.Parsers.Code.to_ast(rest, fun, opts) do
-      leavify({
-        callback_through(code_ast, fun, acc),
-        astify(tail, fun, opts, acc)
-      })
-    end
-  end
+  # defp astify(<<"```" :: binary, rest :: binary>>, fun, opts, acc) when is_empty_buffer(acc) do
+  #   with {code_ast, tail} <- Markright.Parsers.Code.to_ast(rest, fun, opts) do
+  #     leavify({
+  #       callback_through(code_ast, fun, acc),
+  #       astify(tail, fun, opts, acc)
+  #     })
+  #   end
+  # end
 
   ##############################################################################
   ##  BLOCKS
   ##############################################################################
 
-  defp astify(<<">"  :: binary, rest :: binary>>, fun, opts, acc) when is_empty_buffer(acc) do
-    with {code_ast, tail} <- Markright.Parsers.Generic.to_ast(rest, fun, opts, Buf.unshift(acc, {:blockquote, opts})) do
-      leavify({
-        callback_through({:blockquote, opts, code_ast}, fun, acc),
-        astify(tail, fun, opts, acc)
-      })
-    end
-  end
+  Enum.each(0..@max_indent-1, fn i ->
+    Enum.each(Markright.Syntax.blocks(), fn {tag, delimiter} ->
+      indent = String.duplicate(" ", i)
+      defp astify(<<
+#                    "\n" :: binary,
+                    unquote(indent) :: binary,
+                    unquote(delimiter) :: binary,
+                    rest :: binary
+                  >>, fun, opts, acc) when is_empty_buffer(acc) and not(rest == "") do
+        IO.puts "1 #{inspect(rest)}"
+        with mod <- Markright.Utils.to_module(unquote(tag)),
+            {code_ast, tail} <- apply(mod, :to_ast, [rest, fun, opts, Buf.unshift(acc, {unquote(tag), opts})]) do
+          ast = if mod == Markright.Parsers.Generic, do: {unquote(tag), opts, code_ast}, else: code_ast
+          leavify({
+            callback_through(ast, fun, acc),
+            astify(tail, fun, opts, acc)
+          })
+
+        end
+      end
+    end)
+  end)
 
   ##############################################################################
   ##  Last in BLOCKS
 
   defp astify(input, fun, opts, acc) when is_binary(input) and is_empty_buffer(acc) do
+    IO.puts "2 #{inspect(input)}"
     callback_through({:p, opts, astify(input, fun, opts, Buf.unshift(acc, {:p, %{}}))}, fun, acc)
   end
 
@@ -84,9 +100,11 @@ defmodule Markright.Parsers.Generic do
       end
     end)
 
-    Enum.each(Markright.Syntax.customs(), fn {mod, g} ->
+    Enum.each(Markright.Syntax.customs(), fn {tag, g} ->
       defp astify(<<plain :: binary-size(unquote(i)), unquote(g) :: binary, rest :: binary>>, fun, opts, acc) do
-        with {code_ast, tail} <- apply(unquote(mod), :to_ast, [rest, fun, opts, Buf.empty()]) do
+        IO.puts "3 #{inspect(rest)}"
+        with mod <- Markright.Utils.to_module(unquote(tag)),
+            {code_ast, tail} <- apply(mod, :to_ast, [rest, fun, opts, Buf.empty()]) do
           [
             astify(plain, fun, opts, acc),
             callback_through(code_ast, fun, acc),
@@ -107,7 +125,7 @@ defmodule Markright.Parsers.Generic do
           _ ->
             [astify(plain, fun, opts, acc)] ++
             case astify(rest, fun, opts, Buf.unshift_and_cleanup(acc, {unquote(t), opts})) do
-              s when is_binary(s) -> [s]
+              s when is_binary(s) -> deleavify(s)
               astified when is_list(astified) ->
                 {ready, [{tbd, tail}]} = Enum.split(astified, -1)
                 [

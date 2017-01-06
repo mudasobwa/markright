@@ -32,5 +32,8 @@ defmodule Markright.Parsers.Word do
   defp astify(<<letter :: binary-size(1), rest :: binary>>, fun, opts, acc),
     do: astify(rest, fun, opts, Buf.append(acc, letter))
 
+  defp astify("", _fun, _opts, acc),
+    do: {acc.buffer, ""}
+
   ##############################################################################
 end
