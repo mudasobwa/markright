@@ -5,7 +5,7 @@ defmodule Markright.Buffer do
   """
   @type t :: %Markright.Buffer{}
 
-  @fields [buffer: "", tags: []]
+  @fields [buffer: "", tags: [], bag: []]
 
   def fields, do: @fields
 
@@ -17,6 +17,8 @@ defmodule Markright.Buffer do
   def empty?(%Buf{buffer: "", tags: []}), do: true
   def empty?(%Buf{}), do: false
 
+  ##############################################################################
+
   defmacro __using__(_opts) do
     quote do
       alias Markright.Buffer, as: Buf
@@ -26,21 +28,30 @@ defmodule Markright.Buffer do
     end
   end
 
-  def append(%Buf{} = data, buffer) when is_binary(buffer) do
-    %Buf{data | buffer: data.buffer <> buffer}
-  end
+  ##############################################################################
 
-  def cleanup(%Buf{} = data) do
-    %Buf{data | buffer: ""}
-  end
+  def append(%Buf{} = data, buffer) when is_binary(buffer),
+    do: %Buf{data | buffer: data.buffer <> buffer}
 
-  def append_and_cleanup(%Buf{} = data, buffer) when is_binary(buffer) do
-    {data.buffer <> buffer, %Buf{data | buffer: ""}}
-  end
+  def cleanup(%Buf{} = data), do: %Buf{data | buffer: ""}
 
-  def unshift_and_cleanup(%Buf{} = data, tag) when is_tuple(tag) do
-    %Buf{data | tags: [tag] ++ data.tags, buffer: ""}
-  end
+  def append_and_cleanup(%Buf{} = data, buffer) when is_binary(buffer),
+    do: {data.buffer <> buffer, %Buf{data | buffer: ""}}
+
+  def unshift_and_cleanup(%Buf{} = data, tag) when is_tuple(tag),
+    do: %Buf{data | tags: [tag] ++ data.tags, buffer: ""}
+
+  ##############################################################################
+
+  def put(%Buf{} = data, {key, value}),
+    do: %Buf{data | bag: Keyword.put(data.bag, key, value)}
+
+  def put(%Buf{} = data, kvs) when is_list(kvs),
+    do: %Buf{data | bag: Keyword.merge(data.bag, kvs)}
+
+  def get(%Buf{} = data, key), do: data.bag[key]
+
+  ##############################################################################
 
   def push(%Buf{} = data, tag) when is_tuple(tag) do
     %Buf{data | tags: data.tags ++ [tag]}

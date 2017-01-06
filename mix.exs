@@ -29,7 +29,7 @@ defmodule Markright.Mixfile do
   # Type "mix help deps" for more examples and options
   defp deps do
     [
-      {:xml_builder, github: "am-kantox/xml_builder", only: ~w|dev test|a},
+      {:xml_builder, "~> 0.0.9", only: ~w|dev test|a},
       {:credo, "~> 0.4", only: :dev},
       {:ex_doc, "~> 0.11", only: :dev}
     ]

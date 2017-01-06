@@ -4,7 +4,6 @@ defmodule Markright.Syntax do
   """
   @syntax [
     lookahead: 10,
-    language_name_length: 20,
 
     shield: ~w|/ \\|,
     block: [
@@ -20,6 +19,9 @@ defmodule Markright.Syntax do
       b: "**",
       code: "`",
       strike: "~",
+    ],
+    custom: [
+      link: "["
     ]
   ]
 
@@ -46,5 +48,29 @@ defmodule Markright.Syntax do
   def grips do
     syntax()[:grip]
     |> Enum.sort(fn {_, v1}, {_, v2} -> String.length(v1) > String.length(v2) end)
+  end
+
+  def customs do
+    syntax()[:custom]
+    |> Enum.map(fn {k, v} -> {to_module_name(k), v} end)
+  end
+
+  ##############################################################################
+
+  @spec to_module_name(Atom.t, List.t) :: String.t
+  defp to_module_name(atom, opts \\ [prefix: Markright.Parsers]) do
+    if String.starts_with?("#{atom}", "Elixir.") do
+      atom
+    else
+      mod = atom
+            |> to_string
+            |> String.downcase
+            |> camelize
+      if is_atom(opts[:prefix]), do: Module.concat(opts[:prefix], mod), else: mod
+    end
+  end
+
+  defp camelize(str) when is_binary(str) do
+    Regex.replace(~r/(?:_|\A)(.)/, str, fn _, m -> String.upcase(m) end)
   end
 end
