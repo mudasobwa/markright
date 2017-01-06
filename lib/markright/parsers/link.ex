@@ -20,11 +20,9 @@ defmodule Markright.Parsers.Link do
 
     case astify(rest, fun, opts, acc) do
       {{text, link}, rest} ->
-        IO.puts "REST1: #{rest}"
         label = Markright.Parsers.Generic.to_ast(first <> " " <> text, nil, %{only: :ast}, %Buf{tags: [:span]})
         {{:a, %{href: link}, label}, rest}
       {text, rest} ->
-        IO.puts "REST2: #{rest}"
         label = Markright.Parsers.Generic.to_ast(text, nil, %{only: :ast}, %Buf{tags: [:span]})
         {{:a, %{href: first}, label}, rest}
     end
@@ -33,7 +31,7 @@ defmodule Markright.Parsers.Link do
   ##############################################################################
 
   @spec astify(String.t, Function.t, List.t, Buf.t) :: any
-  defp astify(part, fun, opts, acc \\ Buf.empty())
+  defp astify(part, fun, opts, acc)
 
   ##############################################################################
 

@@ -17,7 +17,7 @@ defmodule Markright.Syntax do
     flush: [
     ],
     lead: [
-      li: "*",
+      li: "-",
     ],
     grip: [
       span: "⇓",

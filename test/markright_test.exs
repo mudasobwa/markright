@@ -57,7 +57,7 @@ defmodule Markright.Test do
   test "generates XML from parsed markright" do
     assert (@input_text
             |> Markright.to_ast
-            |> IO.inspect
+            # |> IO.inspect
             |> XmlBuilder.generate) == String.trim(@output_text)
   end
 end

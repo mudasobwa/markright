@@ -78,6 +78,16 @@ defmodule Markright do
       iex> Markright.to_ast(input)
       [{:p, %{}, "Escaped *asterisk 2"}]
 
+      iex> input = "Hello, world! List here:
+      ...> - item 1
+      ...> - item 2
+      ...> - item 3
+      ...> "
+      iex> Markright.to_ast(input)
+      [{:p, %{},
+             ["Hello, world! List here:", {:li, %{}, "item 1"},
+              {:li, %{}, "item 2"}, {:li, %{}, "item 3"}]}]
+
 
   """
   def to_ast(input, fun \\ nil, opts \\ %{}, _acc \\ Buf.empty())

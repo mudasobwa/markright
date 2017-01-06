@@ -54,8 +54,9 @@ defmodule Markright.Parsers.Generic do
   ##############################################################################
 
   Enum.each(0..@max_indent-1, fn i ->
+    indent = String.duplicate(" ", i)
+
     Enum.each(Markright.Syntax.blocks(), fn {tag, delimiter} ->
-      indent = String.duplicate(" ", i)
       defp astify(<<
 #                    "\n" :: binary,
                     unquote(indent) :: binary,
@@ -106,13 +107,39 @@ defmodule Markright.Parsers.Generic do
       end
     end)
 
+    Enum.each(0..@max_indent-1, fn indent ->
+      indent = String.duplicate(" ", indent)
+      Enum.each(Markright.Syntax.leads(), fn {tag, delimiter} ->
+        defp astify(<<
+                      plain :: binary-size(unquote(i)),
+                      "\n" :: binary,
+                      unquote(indent) :: binary,
+                      unquote(delimiter) :: binary,
+                      rest :: binary
+                    >>, fun, opts, acc) do
+          with mod <- Markright.Utils.to_module(unquote(tag)),
+              {code_ast, tail} <- apply(mod, :to_ast, [rest, fun, opts, Buf.empty()]) do
+            ast = if mod == Markright.Parsers.Generic, do: {unquote(tag), opts, code_ast}, else: code_ast
+            [
+              astify(plain, fun, opts, acc),
+              callback_through(ast, fun, acc),
+              astify(tail, fun, opts, Buf.cleanup(acc))
+            ]
+            |> Enum.map(&deleavify/1)
+            |> Enum.reduce([], &(&2 ++ &1))
+          end
+        end
+      end)
+    end)
+
     Enum.each(Markright.Syntax.customs(), fn {tag, g} ->
       defp astify(<<plain :: binary-size(unquote(i)), unquote(g) :: binary, rest :: binary>>, fun, opts, acc) do
         with mod <- Markright.Utils.to_module(unquote(tag)),
             {code_ast, tail} <- apply(mod, :to_ast, [rest, fun, opts, Buf.empty()]) do
+          ast = if mod == Markright.Parsers.Generic, do: {unquote(tag), opts, code_ast}, else: code_ast
           [
             astify(plain, fun, opts, acc),
-            callback_through(code_ast, fun, acc),
+            callback_through(ast, fun, acc),
             astify(tail, fun, opts, Buf.cleanup(acc))
           ]
           |> Enum.map(&deleavify/1)
