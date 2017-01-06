@@ -19,8 +19,14 @@ defmodule Markright.Parsers.Link do
     {first, rest} = Markright.Parsers.Word.to_ast(input)
 
     case astify(rest, fun, opts, acc) do
-      {{text, link}, rest} -> {{:a, %{href: link}, first <> " " <> text}, rest}
-      {text, rest} -> {{:a, %{href: first}, text}, rest}
+      {{text, link}, rest} ->
+        IO.puts "REST1: #{rest}"
+        label = Markright.Parsers.Generic.to_ast(first <> " " <> text, nil, %{only: :ast}, %Buf{tags: [:span]})
+        {{:a, %{href: link}, label}, rest}
+      {text, rest} ->
+        IO.puts "REST2: #{rest}"
+        label = Markright.Parsers.Generic.to_ast(text, nil, %{only: :ast}, %Buf{tags: [:span]})
+        {{:a, %{href: first}, label}, rest}
     end
   end
 

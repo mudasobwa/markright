@@ -5,14 +5,14 @@ defmodule Markright.Parsers.Link.Test do
   @input ~S"""
   Hello, [GitHub link](https://github.com).
 
-  Hello, [Atlassian link|https://atlassian.com].
+  Hello, [Atlassian **bold** link|https://atlassian.com].
 
   Hello, [https://example.com normal link].
   """
 
   @output [
     {:p, %{}, ["Hello, ", {:a, %{href: "https://github.com"}, "GitHub link"}, "."]},
-    {:p, %{}, ["Hello, ", {:a, %{href: "https://atlassian.com"}, "Atlassian link"}, "."]},
+    {:p, %{}, ["Hello, ", {:a, %{href: "https://atlassian.com"}, ["Atlassian ", {:b, %{}, "bold"}, " link"]}, "."]},
     {:p, %{}, ["Hello, ", {:a, %{href: "https://example.com"}, "normal link"}, "."]}]
 
   test "parses different types of links" do

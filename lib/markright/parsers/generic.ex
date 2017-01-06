@@ -7,9 +7,8 @@ defmodule Markright.Parsers.Generic do
   use Markright.Buffer
   import Markright.Utils, only: [leavify: 1, deleavify: 1]
 
-  def to_ast(input, fun, opts \\ %{}, acc \\ Buf.empty()) when is_binary(input) and
-                                          (is_nil(fun) or is_function(fun)) and
-                                           is_map(opts) do
+  def to_ast(input, fun \\ nil, opts \\ %{}, acc \\ Buf.empty())
+    when is_binary(input) and (is_nil(fun) or is_function(fun)) and is_map(opts) do
 
     ast = astify(input, fun, %{}, acc)
     case opts[:only] do
@@ -114,7 +113,7 @@ defmodule Markright.Parsers.Generic do
           [
             astify(plain, fun, opts, acc),
             callback_through(code_ast, fun, acc),
-            astify(tail, fun, opts, acc)
+            astify(tail, fun, opts, Buf.cleanup(acc))
           ]
           |> Enum.map(&deleavify/1)
           |> Enum.reduce([], &(&2 ++ &1))

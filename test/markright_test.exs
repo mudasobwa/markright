@@ -7,7 +7,7 @@ defmodule Markright.Test do
 
   _Текст Ростислава Чебыкина._
 
-  > Я вам посылку принёс. Только я вам её не отдам, потому что у вас документов нету.
+  > Я вам посылку принёс. Только я вам её [не отдам](http://fbi.org), потому что у вас документов нету.
   > —⇓Почтальон Печкин⇓
 
   Мы вместе с Денисом Лесновым разрабатываем аудиопроигрыватель для сайта,
@@ -30,8 +30,13 @@ defmodule Markright.Test do
   \t<b>Опыт использования пространств имён в клиентском XHTML</b>
   </p>
   <p>
-  \t<em>Текст Ростислава Чебыкина.</em>\n</p>
-  <blockquote> Я вам посылку принёс. Только я вам её не отдам, потому что у вас документов нету.</blockquote>
+  \t<em>Текст Ростислава Чебыкина.</em>
+  </p>
+  <blockquote>
+  \t Я вам посылку принёс. Только я вам её\s
+  \t<a href=\"http://fbi.org\">не отдам</a>
+  \t, потому что у вас документов нету.
+  </blockquote>
   <blockquote>
   \t —
   \t<span>Почтальон Печкин</span>
@@ -52,7 +57,7 @@ defmodule Markright.Test do
   test "generates XML from parsed markright" do
     assert (@input_text
             |> Markright.to_ast
-            # |> IO.inspect
+            |> IO.inspect
             |> XmlBuilder.generate) == String.trim(@output_text)
   end
 end
