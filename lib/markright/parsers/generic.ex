@@ -91,7 +91,8 @@ defmodule Markright.Parsers.Generic do
             astify(plain, fun, opts, acc),
             callback_through(code_ast, fun, acc),
             astify(tail, fun, opts, acc)
-          ] |> Enum.map(&deleavify/1)
+          ]
+          |> Enum.map(&deleavify/1)
           |> Enum.reduce([], &(&2 ++ &1))
         end
       end
@@ -104,16 +105,18 @@ defmodule Markright.Parsers.Generic do
             [astify(plain, fun, opts, acc), {rest, Buf.cleanup(tail)}]
 
           _ ->
-            deleavify(astify(plain, fun, opts, acc)) ++
+            [astify(plain, fun, opts, acc)] ++
             case astify(rest, fun, opts, Buf.unshift_and_cleanup(acc, {unquote(t), opts})) do
-              s when is_binary(s) -> deleavify(s)
+              s when is_binary(s) -> [s]
               astified when is_list(astified) ->
                 {ready, [{tbd, tail}]} = Enum.split(astified, -1)
-
-                deleavify(callback_through({unquote(t), opts, leavify(ready)}, fun, tail)) \
-                  ++ \
-                deleavify(astify(tbd, fun, opts, tail))
+                [
+                  callback_through({unquote(t), opts, leavify(ready)}, fun, tail),
+                  astify(tbd, fun, opts, tail)
+                ]
             end
+            |> Enum.map(&deleavify/1)
+            |> Enum.reduce([], &(&2 ++ &1))
         end
       end
     end)
