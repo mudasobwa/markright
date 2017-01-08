@@ -2,39 +2,9 @@ defmodule Markright.Utils do
 
   ##############################################################################
 
-  defmacro empty_tag?({_, _, value}) do
-    is_nil(value) || \
-      (is_binary(value) && value == "") || \
-      (is_list(value) && Enum.empty?(value)) #  || Enum.all?(&Markright.Utils.empty_tag?/1))
-  end
+  import Markright.Guards
 
-  ##############################################################################
-
-  # def leavify({head, tail}) when empty_tag?(head), do: tail
-  def leavify({head, tail}) when empty_tag?(tail), do: head
-  def leavify({head, tail}), do: [head, tail]
-
-  def leavify(leaves) when is_list(leaves) do
-    case Enum.filter(leaves, fn
-                               e when is_binary(e) -> String.trim(e) != ""
-                              _ -> true
-                             end) do
-      []  -> ""
-      %{} -> ""
-      [h] -> h
-      _   -> leaves
-    end
-  end
-
-  def deleavify(input) do
-    case input do
-      s when "" == s      -> []
-      s when is_binary(s) -> [s]
-      s when is_list(s)   -> s
-      t when is_tuple(t)  -> [t] # NOT Tuple.to_list(t)
-      _                   -> [input]
-    end
-  end
+  def join!(asts, flatten \\ true) when is_list(asts), do: squeeze!(asts, flatten)
 
   ##############################################################################
 
@@ -45,7 +15,7 @@ defmodule Markright.Utils do
   end
 
   @spec to_module_name(Atom.t, List.t) :: Atom.t
-  defp to_module_name(atom, opts \\ [prefix: Markright.Parsers]) do
+  defp to_module_name(atom, opts) do
     if String.starts_with?("#{atom}", "Elixir.") do
       atom
     else

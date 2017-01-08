@@ -3,7 +3,7 @@ defmodule Markright.Buffer do
   @typedoc """
   Buffer to hold a string buffer and the FILO of tags.
   """
-  @type t :: %Markright.Buffer{}
+  @type t :: %__MODULE__{buffer: String.t, tags: List.t, bag: List.t}
 
   @fields [buffer: "", tags: [], bag: []]
 
@@ -22,8 +22,8 @@ defmodule Markright.Buffer do
   defmacro __using__(_opts) do
     quote do
       alias Markright.Buffer, as: Buf
-      defmacrop is_empty_buffer(data) do
-        quote do: %Buf{buffer: "", tags: []} == unquote(data)
+      defmacrop empty?(data) do
+        quote do: %Buf{buffer: "", tags: [], bag: []} == unquote(data)
       end
     end
   end

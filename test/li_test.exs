@@ -9,9 +9,9 @@ defmodule Markright.Parsers.Li.Test do
   - item 3
   """
 
-  @output [
-    {:p, %{}, ["Hello, world! List here:", {:li, %{}, "item 1"}, {:li, %{}, "item 2"}, {:li, %{}, "item 3"}]}
-  ]
+  @output {
+    :article, %{},
+      [{:p, %{}, ["Hello, world! List here:", {:li, %{}, "item 1"}, {:li, %{}, "item 2"}, {:li, %{}, "item 3"}]}]}
 
   test "parses [different types of] line items" do
     assert (@input

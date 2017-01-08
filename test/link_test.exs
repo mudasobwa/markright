@@ -3,38 +3,41 @@ defmodule Markright.Parsers.Link.Test do
   doctest Markright.Parsers.Link
 
   @input ~S"""
-  Hello, [GitHub link](https://github.com).
+  111, [GitHub link](https://github.com).
 
-  Hello, [Atlassian **bold** link|https://atlassian.com].
+  222, [Atlassian **bold** link|https://atlassian.com].
 
-  Hello, [https://example.com normal link].
+  333, [https://example.com normal link].
   """
 
-  @output [
-    {:p, %{}, ["Hello, ", {:a, %{href: "https://github.com"}, "GitHub link"}, "."]},
-    {:p, %{}, ["Hello, ", {:a, %{href: "https://atlassian.com"}, ["Atlassian ", {:b, %{}, "bold"}, " link"]}, "."]},
-    {:p, %{}, ["Hello, ", {:a, %{href: "https://example.com"}, "normal link"}, "."]}]
+  @output {:article, %{}, [
+    {:p, %{}, ["111, ", {:a, %{href: "https://github.com"}, "GitHub link"}, "."]},
+    {:p, %{}, ["222, ", {:a, %{href: "https://atlassian.com"}, ["Atlassian ", {:b, %{}, "bold"}, " link"]}, "."]},
+    {:p, %{}, ["333, ", {:a, %{href: "https://example.com"}, "normal link"}, ".\n"]}]}
 
   @output_xml ~s"""
-  <p>
-  \tHello,\s
-  \t<a href=\"https://github.com\">GitHub link</a>
-  \t.
-  </p>
-  <p>
-  \tHello,\s
-  \t<a href=\"https://atlassian.com\">
-  \t\tAtlassian\s
-  \t\t<b>bold</b>
-  \t\t link
-  \t</a>
-  \t.
-  </p>
-  <p>
-  \tHello,\s
-  \t<a href=\"https://example.com\">normal link</a>
-  \t.
-  </p>
+  <article>
+  \t<p>
+  \t\t111,\s
+  \t\t<a href=\"https://github.com\">GitHub link</a>
+  \t\t.
+  \t</p>
+  \t<p>
+  \t\t222,\s
+  \t\t<a href=\"https://atlassian.com\">
+  \t\t\tAtlassian\s
+  \t\t\t<b>bold</b>
+  \t\t\t link
+  \t\t</a>
+  \t\t.
+  \t</p>
+  \t<p>
+  \t\t333,\s
+  \t\t<a href=\"https://example.com\">normal link</a>
+  \t\t.
+  
+  \t</p>
+  </article>
   """
 
   test "parses different types of links" do

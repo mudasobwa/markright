@@ -1,22 +1,17 @@
-defmodule Markright.Parsers.Li do
+defmodule Markright.Parsers.Blockquote do
   @moduledoc ~S"""
-  Parses the input for the line item.
+  Parses the input for the blockquote block.
 
   ## Examples
 
-      iex> input = " item 1
-      ...> ever
-      ...> - item 2
+      iex> input = "Hello
+      ...> — world!
+      ...>
+      ...> Other text.
       ...> "
-      iex> Markright.Parsers.Li.to_ast(input)
-      %Markright.Continuation{ast: {:li, %{}, "item 1\n ever"}, tail: "\n - item 2\n "}
-
-      iex> input = " item 1
-      ...> *ever*
-      ...> - item 2
-      ...> "
-      iex> Markright.Parsers.Li.to_ast(input)
-      %Markright.Continuation{ast: {:li, %{}, ["item 1\n ", {:strong, %{}, "ever"}]}, tail: "\n - item 2\n "}
+      iex> Markright.Parsers.Blockquote.to_ast(input)
+      %Markright.Continuation{ast: {:blockquote, %{},
+             "Hello\n — world!"}, tail: " Other text.\n "}
   """
 
   ##############################################################################
@@ -26,6 +21,10 @@ defmodule Markright.Parsers.Li do
   ##############################################################################
 
   @max_indent Markright.Syntax.indent
+
+  ##############################################################################
+
+  require Logger
 
   ##############################################################################
 
@@ -39,7 +38,7 @@ defmodule Markright.Parsers.Li do
 
     with %C{ast: ast, tail: tail} <- astify(input, fun, opts),
          %C{ast: block, tail: ""} <- Markright.Parsers.Generic.to_ast(ast) do
-      %C{ast: {:li, opts, block}, tail: tail}
+      %C{ast: {:blockquote, opts, block}, tail: tail}
     end
     |> C.callback(fun)
   end
@@ -51,16 +50,19 @@ defmodule Markright.Parsers.Li do
 
   ##############################################################################
 
-  li = Markright.Syntax.leads()[:li]
+  defp astify(<<"\n\n" :: binary, rest :: binary>>, _fun, _opts, acc) do
+    %C{ast: acc.buffer, tail: rest}
+  end
+
   Enum.each(0..@max_indent-1, fn i ->
     indent = String.duplicate(" ", i)
     defp astify(<<
                   "\n" :: binary,
                   unquote(indent) :: binary,
-                  unquote(li) :: binary,
+                  unquote(Markright.Syntax.blocks()[:blockquote]) :: binary,
                   rest :: binary
-                >>, _fun, _opts, acc) do
-      %C{ast: String.trim(acc.buffer), tail: "\n" <> unquote(indent) <> unquote(li) <> rest}
+                >>, fun, opts, acc) do
+      astify(" " <> rest, fun, opts, acc)
     end
   end)
 
@@ -68,7 +70,7 @@ defmodule Markright.Parsers.Li do
     do: astify(rest, fun, opts, Buf.append(acc, letter))
 
   defp astify("", _fun, _opts, acc),
-    do: %C{ast: String.trim(acc.buffer), tail: ""}
+    do: %C{ast: acc.buffer, tail: ""}
 
   ##############################################################################
 end
