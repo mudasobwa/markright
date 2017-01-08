@@ -95,20 +95,7 @@ defmodule Markright do
 
     input
     |> sanitize_line_endings
-    |> String.replace(~r/\n*(#{Markright.Syntax.blocks(regex: true)})/, "\n\n\\1") # at least two CRs before
-    |> String.split(~r/\n{2,}/)
-#    |> Stream.map(& "\n" <> &1 |> String.trim |> Markright.Parsers.Generic.to_ast(fun, Map.put(opts, :only, :ast)))
-    |> Stream.map(& &1
-                    |> String.trim
-                    |> Markright.Parsers.Generic.to_ast(fun, Map.put(opts, :only, :ast))
-                  )
-    |> Enum.to_list
-    |> Enum.filter(fn # FIXME: Move to dedicated method :cleanup, stack dups
-      {_, _, ""} -> false
-      {_, _, []} -> false
-      _ -> true
-    end)
-#    |> Markright.Parsers.Generic.to_ast(fun, Map.put(opts, :only, :ast))
+    |> Markright.Parsers.Article.to_ast(fun, Map.put(opts, :only, :ast))
   end
 
 end

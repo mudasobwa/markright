@@ -4,6 +4,7 @@ defmodule Markright.Parsers.Generic do
   @max_lookahead Markright.Syntax.lookahead
   @max_indent    Markright.Syntax.indent
 
+  require Logger
   use Markright.Buffer
   import Markright.Utils, only: [leavify: 1, deleavify: 1]
 
@@ -62,15 +63,18 @@ defmodule Markright.Parsers.Generic do
                     unquote(indent) :: binary,
                     unquote(delimiter) :: binary,
                     rest :: binary
-                  >>, fun, opts, acc) when is_empty_buffer(acc) and not(rest == "") do
+                  >>, fun, opts, acc) when not(rest == "") do
+        Logger.debug "★1: #{inspect(rest)}"
         with mod <- Markright.Utils.to_module(unquote(tag)),
             {code_ast, tail} <- apply(mod, :to_ast, [rest, fun, opts, Buf.unshift(acc, {unquote(tag), opts})]) do
+          Logger.debug "★2: #{inspect({code_ast, tail})}"
           ast = if mod == Markright.Parsers.Generic, do: {unquote(tag), opts, code_ast}, else: code_ast
-          leavify({
+          [
             callback_through(ast, fun, acc),
-            astify(tail, fun, opts, acc)
-          })
-
+            astify(tail, fun, opts, Buf.cleanup(acc))
+          ]
+          |> Enum.map(&deleavify/1)
+          |> Enum.reduce([], &(&2 ++ &1))
         end
       end
       ##############################################################################
@@ -88,14 +92,31 @@ defmodule Markright.Parsers.Generic do
   ##############################################################################
   ##  Last in BLOCKS
 
-  defp astify(input, fun, opts, acc) when is_binary(input) and is_empty_buffer(acc) do
-    callback_through({:p, opts, astify(input, fun, opts, Buf.unshift(acc, {:p, %{}}))}, fun, acc)
-  end
+#  defp astify(input, fun, opts, acc) when is_binary(input) and is_empty_buffer(acc) do
+#    callback_through({:p, opts, astify(input, fun, opts, Buf.unshift(acc, {:p, %{}}))}, fun, acc)
+#  end
 
   ##############################################################################
   ##############################################################################
 
   Enum.each(0..@max_lookahead-1, fn i ->
+    defp astify(<<
+                  plain :: binary-size(unquote(i)),
+                  "\n\n" :: binary,
+                  rest :: binary
+                >>, fun, opts, acc) do
+
+      Logger.debug "★5.1: #{inspect({plain, rest})}"
+      result = [
+        astify(plain, fun, opts, acc),
+        astify("\n\n" <> rest, fun, opts, Buf.cleanup(acc))
+      ]
+      |> Enum.map(&deleavify/1)
+      |> Enum.reduce([], &(&2 ++ &1))
+      Logger.debug "★5.2: #{inspect(result)}"
+      result
+    end
+
     Enum.each(Markright.Syntax.shields(), fn shield ->
       defp astify(<<
                     plain :: binary-size(unquote(i)),
@@ -173,6 +194,7 @@ defmodule Markright.Parsers.Generic do
   end)
 
   defp astify(<<plain :: binary-size(@max_lookahead), rest :: binary>>, fun, opts, acc) do
+    Logger.debug "★3: #{inspect({plain, rest})}"
     astify(rest, fun, opts, Buf.append(acc, plain))
   end
 
@@ -181,6 +203,7 @@ defmodule Markright.Parsers.Generic do
   ##############################################################################
 
   defp astify(unmatched, _fun, _opts, acc) when is_binary(unmatched) do
+    Logger.debug "★4: #{inspect(unmatched)}"
     Buf.append(acc, unmatched).buffer
   end
 
