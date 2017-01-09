@@ -28,7 +28,13 @@ defmodule Markright.Parsers.Code do
 
   @behaviour Markright.Parser
 
+  ##############################################################################
+
   @max_indent Markright.Syntax.indent
+
+  ##############################################################################
+
+  require Logger
 
   ##############################################################################
 
@@ -56,8 +62,10 @@ defmodule Markright.Parsers.Code do
 
   Enum.each(0..@max_indent-1, fn i ->
     indent = String.duplicate(" ", i)
-    defp astify(<<"\n" :: binary, unquote(indent) :: binary, "```" :: binary, rest :: binary>>, _fun, _opts, acc),
-      do: %C{ast: acc.buffer, tail: rest}
+    defp astify(<<"\n" :: binary, unquote(indent) :: binary, "```" :: binary, rest :: binary>>, _fun, _opts, acc) do
+      Logger.debug "★ CODE ★ #{rest}"
+      %C{ast: acc.buffer, tail: rest}
+    end
   end)
 
   defp astify(<<letter :: binary-size(1), rest :: binary>>, fun, opts, acc),

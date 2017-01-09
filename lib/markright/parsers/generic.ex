@@ -33,6 +33,26 @@ defmodule Markright.Parsers.Generic do
   ##############################################################################
 
   Enum.each(0..@max_lookahead-1, fn i ->
+    defp astify(<<
+                  plain :: binary-size(unquote(i)),
+                  "\n\n" :: binary,
+                  rest :: binary
+                >>, fun, opts, acc) do
+      Logger.debug "☆BLOCK1☆ #{inspect({plain, rest})}"
+      with %C{ast: post_ast, tail: tail} <- Markright.Parsers.Block.to_ast(rest, fun, opts),
+           %C{ast: pre_ast} <- astify(plain, fun, opts, acc) do
+          Logger.debug "☆BLOCK2☆ #{inspect({post_ast, pre_ast, tail})}"
+          ast = case {pre_ast, post_ast} do
+                  {"", ""} -> []
+                  {"", post_ast} -> [post_ast]
+                  {pre_ast, ""} -> [pre_ast]
+                  _  -> [pre_ast, post_ast]
+                end
+          Logger.debug "☆BLOCK3☆ #{inspect({ast, tail})}"
+          %C{ast: ast, tail: tail}
+      end
+    end
+
     Enum.each(Markright.Syntax.shields(), fn shield ->
       defp astify(<<
                     plain :: binary-size(unquote(i)),
@@ -40,6 +60,7 @@ defmodule Markright.Parsers.Generic do
                     next :: binary-size(1),
                     rest :: binary
                   >>, fun, opts, acc) do
+        Logger.debug("☆SHIELD☆ [#{next}] #{inspect({plain, rest})}")
         astify(rest, fun, opts, Buf.append(acc, plain <> next))
       end
     end)
@@ -54,6 +75,7 @@ defmodule Markright.Parsers.Generic do
                       unquote(delimiter) :: binary,
                       rest :: binary
                     >>, fun, opts, acc) do
+          Logger.debug("☆ LEAD ☆ [#{unquote(delimiter)}] #{inspect({plain, rest})}")
           # FIXME: refactor here and below
           with mod <- Markright.Utils.to_module(unquote(tag)),
               %C{ast: post_ast, tail: tail} <- apply(mod, :to_ast, [rest, fun, opts]),
@@ -72,6 +94,7 @@ defmodule Markright.Parsers.Generic do
                       unquote(delimiter) :: binary,
                       rest :: binary
                   >>, fun, opts, acc) do
+        Logger.debug("☆CUSTOM☆ [#{unquote(delimiter)}] #{inspect({plain, rest})}")
         with mod <- Markright.Utils.to_module(unquote(tag)),
             %C{ast: post_ast, tail: tail} <- apply(mod, :to_ast, [rest, fun, opts]),
             %C{ast: pre_ast} <- astify(plain, fun, opts, acc) do
@@ -90,11 +113,13 @@ defmodule Markright.Parsers.Generic do
                   >>, fun, opts, acc) do
         case Buf.shift(acc) do
           {{unquote(tag), opts}, _tail} ->
+            Logger.debug("☆GRIP <☆ [#{unquote(delimiter)}] #{inspect({plain, rest})}")
             %C{astify(plain, fun, opts, acc) | tail: rest} # TODO: Buf.cleanup(tail)
           _ ->
             with %C{ast: pre_ast} <- astify(plain, fun, opts, acc),
                  %C{ast: post_ast, tail: tail} <- astify(rest, fun, opts, Buf.unshift_and_cleanup(acc, {unquote(tag), opts})) do
-              %C{ast: [pre_ast, post_ast], tail: tail}
+              Logger.debug("☆GRIP >☆ [#{unquote(delimiter)}] #{inspect(%C{ast: [pre_ast, {unquote(tag), %{}, post_ast}], tail: tail})}")
+              %C{ast: [pre_ast, {unquote(tag), %{}, post_ast}], tail: tail}
             end
         end
       end
@@ -102,6 +127,7 @@ defmodule Markright.Parsers.Generic do
   end)
 
   defp astify(<<plain :: binary-size(@max_lookahead), rest :: binary>>, fun, opts, acc) do
+    Logger.debug("☆ASTIFY☆ #{inspect({plain, rest})}")
     astify(rest, fun, opts, Buf.append(acc, plain))
   end
 
@@ -110,6 +136,7 @@ defmodule Markright.Parsers.Generic do
   ##############################################################################
 
   defp astify(unmatched, _fun, _opts, acc) when is_binary(unmatched) do
+    Logger.debug("★ASTIFY★ #{unmatched}")
     %C{ast: Buf.append(acc, unmatched).buffer, tail: ""}
   end
 

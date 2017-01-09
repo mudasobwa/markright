@@ -5,7 +5,8 @@ defmodule Markright.Parsers.Link do
   ## Examples
 
       iex> "http://example.com Hello my] lovely world!" |> Markright.Parsers.Link.to_ast
-      {{:a, %{href: "http://example.com"}, "Hello my"}, " lovely world!"}
+      %Markright.Continuation{
+        ast: {:a, %{href: "http://example.com"}, "Hello my"}, tail: " lovely world!"}
   """
 
   ##############################################################################

@@ -25,6 +25,6 @@ defmodule Markright.Parsers.Code.Test do
 
   test "understands codeblocks in the markright" do
     assert (@input
-            |> Markright.to_ast) == @output
+            |> Markright.to_ast(fn cont -> IO.puts "★★★★★ #{inspect(cont)}" end)) == @output
   end
 end

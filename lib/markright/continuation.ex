@@ -39,6 +39,8 @@ defmodule Markright.Continuation do
 
   def continue(%Markright.Continuation{} = data, {tag, opts}),
     do: %Markright.Continuation{data | ast: {tag, opts, data.ast}}
+  def continue(ast, {tag, opts}),
+    do: %Markright.Continuation{ast: {tag, opts, ast}}
 
   ##############################################################################
 
@@ -51,5 +53,5 @@ defmodule Markright.Continuation do
     do: callback(data, fun.(data))
   def callback(%Markright.Continuation{ast: ast, tail: tail} = data, fun) when is_function(fun, 2),
     do: callback(data, fun.(ast, tail))
-  def callback(%Markright.Continuation{} = data, nil), do: data
+  def callback(%Markright.Continuation{} = data, _), do: data
 end

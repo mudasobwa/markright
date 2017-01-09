@@ -8,17 +8,27 @@ defmodule Markright.Parsers.Block do
   @max_lookahead Markright.Syntax.lookahead
   @max_indent    Markright.Syntax.indent
 
-  use Markright.Buffer
+  ##############################################################################
+
   require Logger
 
-  def to_ast(input, fun \\ nil, opts \\ %{}, acc \\ Buf.empty())
-    when is_binary(input) and (is_nil(fun) or is_function(fun)) and is_map(opts),
-    do: astify(input, fun, opts, acc)
+  ##############################################################################
+
+  use Markright.Buffer
+  use Markright.Continuation
+
+  ##############################################################################
+
+  def to_ast(input, fun \\ nil, opts \\ %{})
+    when is_binary(input) and (is_nil(fun) or is_function(fun)) and is_map(opts) do
+
+    astify(input, fun, opts, Buf.empty())
+  end
 
   ##############################################################################
 
   @spec astify(String.t, Function.t, List.t, Buf.t) :: Markright.Continuation.t
-  defp astify(part, fun, opts, acc)
+  defp astify(part, fun, opts, acc \\ Buf.empty())
 
   ##############################################################################
 
@@ -28,8 +38,11 @@ defmodule Markright.Parsers.Block do
                   "\n\n" :: binary,
                   rest :: binary
                 >>, fun, opts, acc) do
-      Logger.error "★5.5: #{inspect({plain, rest})}"
-      {astify(plain, fun, opts, acc), Markright.Parsers.Generic.to_ast("\n\n" <> rest, fun, opts, Buf.empty())}
+      Logger.debug "★ BLOCK★ [:p] #{inspect({plain, rest})}"
+      with %C{ast: post_ast, tail: tail} <- Markright.Parsers.Generic.to_ast("\n\n" <> rest, fun, opts),
+           %C{ast: pre_ast} <- astify(plain, fun, opts, acc) do
+        %C{ast: [pre_ast, post_ast], tail: tail}
+      end
     end
   end)
 
@@ -42,12 +55,11 @@ defmodule Markright.Parsers.Block do
                     unquote(delimiter) :: binary,
                     rest :: binary
                   >>, fun, opts, acc) when not(rest == "") do
-        Logger.debug "★1: #{inspect(rest)}"
+        Logger.error "☆ BLOCK☆ [#{unquote(delimiter)}] #{rest}"
         with mod <- Markright.Utils.to_module(unquote(tag)),
-            {code_ast, tail} <- apply(mod, :to_ast, [rest, fun, opts, Buf.unshift(acc, {unquote(tag), opts})]) do
-          Logger.debug "★2: #{inspect({code_ast, tail})}"
-          ast = if mod == Markright.Parsers.Generic, do: {unquote(tag), opts, code_ast}, else: code_ast
-          {ast, tail}
+            {post_ast, tail} <- apply(mod, :to_ast, [rest, fun, opts]) do
+          post_ast = if mod == Markright.Parsers.Generic, do: {unquote(tag), opts, post_ast}, else: post_ast
+          %C{ast: post_ast, tail: tail}
         end
       end
       ##############################################################################
@@ -61,9 +73,9 @@ defmodule Markright.Parsers.Block do
   end)
 
   defp astify(input, fun, opts, acc) when is_binary(input) do
-    {ast, rest} = Markright.Parsers.Generic.to_ast(input, fun, opts, Buf.unshift(acc, {:p, %{}}))
-    Logger.debug "★9: #{inspect({ast, rest})}"
-    {{:p, opts, ast}, rest}
+    with cont <- Markright.Parsers.Generic.to_ast(input, fun, opts) do
+      %C{cont | ast: {:p, opts, cont.ast}}
+    end
   end
 
   ##############################################################################
