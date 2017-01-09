@@ -11,9 +11,8 @@ defmodule Markright.Syntax do
 
     shield: ~w|/ \\|,
     block: [
-      blockquote: ">",
       code: "```",
-      p: "\n\n"
+      blockquote: ">"
     ],
     flush: [
     ],

@@ -15,13 +15,13 @@ defmodule Markright.Parsers.Code.Test do
   Normal *para* again.
   """
 
-  @output [
+  @output {:article, %{}, [
     {:p, %{}, "Hello world."},
      {:pre, %{},
       [{:code, %{lang: "ruby"},
        "def method(*args, **args)\n  puts \"method \#{__callee__} called\"\nend"}]},
      {:p, %{},
-      ["Right after.\nNormal ", {:strong, %{}, "para"}, " again."]}]
+      ["Right after.\nNormal ", {:strong, %{}, "para"}, " again."]}]}
 
   test "understands codeblocks in the markright" do
     assert (@input

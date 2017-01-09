@@ -8,42 +8,51 @@ defmodule Markright.Parsers.Link do
       {{:a, %{href: "http://example.com"}, "Hello my"}, " lovely world!"}
   """
 
+  ##############################################################################
+
   @behaviour Markright.Parser
 
+  ##############################################################################
+
   use Markright.Buffer
+  use Markright.Continuation
 
-  def to_ast(input, fun \\ nil, opts \\ %{}, acc \\ Buf.empty()) when is_binary(input) and
-                                                              (is_nil(fun) or is_function(fun)) and
-                                                               is_map(opts) do
+  ##############################################################################
 
-    {first, rest} = Markright.Parsers.Word.to_ast(input)
+  def to_ast(input, fun \\ nil, opts \\ %{})
+    when is_binary(input) and (is_nil(fun) or is_function(fun)) and is_map(opts) do
 
-    case astify(rest, fun, opts, acc) do
-      {{text, link}, rest} ->
-        label = Markright.Parsers.Generic.to_ast(first <> " " <> text, nil, %{only: :ast}, %Buf{tags: [:span]})
-        {{:a, %{href: link}, label}, rest}
-      {text, rest} ->
-        label = Markright.Parsers.Generic.to_ast(text, nil, %{only: :ast}, %Buf{tags: [:span]})
-        {{:a, %{href: first}, label}, rest}
+    %C{ast: first, tail: rest} = Markright.Parsers.Word.to_ast(input)
+
+    with %C{ast: ast, tail: tail} <- astify(rest, fun, opts) do
+      case ast do
+        [text, link] ->
+          %C{ast: label} = Markright.Parsers.Generic.to_ast(first <> " " <> text)
+          %C{ast: {:a, %{href: link}, label}, tail: tail}
+        text when is_binary(text) ->
+          %C{ast: label} = Markright.Parsers.Generic.to_ast(text)
+          %C{ast: {:a, %{href: first}, label}, tail: tail}
+      end
     end
+    |> C.callback(fun)
   end
 
   ##############################################################################
 
-  @spec astify(String.t, Function.t, List.t, Buf.t) :: any
-  defp astify(part, fun, opts, acc)
+  @spec astify(String.t, Function.t, List.t, Buf.t) :: Markright.Continuation.t
+  defp astify(part, fun, opts, acc \\ Buf.empty())
 
   ##############################################################################
 
   Enum.each(~w/]( |/, fn delimiter ->
-    defp astify(<<unquote(delimiter) :: binary, rest :: binary>>, fun, opts, acc) do
-      with {link, tail} <- astify(rest, fun, opts, Buf.empty()), do: {{acc.buffer, link}, tail}
-    end
+    defp astify(<<unquote(delimiter) :: binary, rest :: binary>>, fun, opts, acc),
+      do: with %C{ast: ast, tail: tail} <- astify(rest, fun, opts),
+            do: %C{ast: [acc.buffer, ast], tail: tail}
   end)
 
   Enum.each(~w/] )/, fn delimiter ->
     defp astify(<<unquote(delimiter) :: binary, rest :: binary>>, _fun, _opts, acc),
-      do: {acc.buffer, rest}
+      do: %C{ast: acc.buffer, tail: rest}
   end)
 
   defp astify(<<letter :: binary-size(1), rest :: binary>>, fun, opts, acc),

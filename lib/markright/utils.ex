@@ -45,7 +45,7 @@ defmodule Markright.Utils do
   end
 
   @spec to_module_name(Atom.t, List.t) :: Atom.t
-  defp to_module_name(atom, opts \\ [prefix: Markright.Parsers]) do
+  defp to_module_name(atom, opts) do
     if String.starts_with?("#{atom}", "Elixir.") do
       atom
     else

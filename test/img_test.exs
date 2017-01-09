@@ -10,10 +10,10 @@ defmodule Markright.Parsers.Img.Test do
   Hello, ![https://example.com normal link].
   """
 
-  @output [
+  @output {:article, %{}, [
     {:p, %{}, ["Hello, ", {:img, %{src: "https://github.com", alt: "GitHub link"}, nil}, "."]},
     {:p, %{}, ["Hello, ", {:img, %{src: "https://atlassian.com", alt: "Atlassian link"}, nil}, "."]},
-    {:p, %{}, ["Hello, ", {:img, %{src: "https://example.com", alt: "normal link"}, nil}, "."]}]
+    {:p, %{}, ["Hello, ", {:img, %{src: "https://example.com", alt: "normal link"}, nil}, "."]}]}
 
   test "parses different types of links" do
     assert (@input

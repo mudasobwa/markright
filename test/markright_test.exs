@@ -25,6 +25,8 @@ defmodule Markright.Test do
   не только отдельные треки, но и целые плейлисты.
   """
 
+  @input_blockquote "> Blockquotes!\n> This is level 2."
+
   @output_text ~s"""
   <p>
   \t<b>Опыт использования пространств имён в клиентском XHTML</b>
@@ -55,9 +57,24 @@ defmodule Markright.Test do
   """
 
   test "generates XML from parsed markright" do
-    assert (@input_text
-            |> Markright.to_ast
-            # |> IO.inspect
-            |> XmlBuilder.generate) == String.trim(@output_text)
+    assert(@input_text
+           |> Markright.to_ast
+           # |> IO.inspect
+           |> XmlBuilder.generate == String.trim(@output_text))
   end
+
+  @tag :skip
+  test "properly handles nested blockquotes" do
+    assert(@input_blockquote
+           |> Markright.to_ast ==
+     {:article, %{}, [{:blockquote, %{}, [" Blockquote!", " This is level 2."]}]})
+  end
+
+  @tag :skip
+  test "handles unterminated symbols properly" do
+    assert("Unterminated *asterisk"
+           |> Markright.to_ast ==
+      {:article, %{}, [{:p, %{}, ["Unterminated asterisk"]}]})
+  end
+
 end

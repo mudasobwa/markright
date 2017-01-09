@@ -10,10 +10,10 @@ defmodule Markright.Parsers.Link.Test do
   Hello, [https://example.com normal link].
   """
 
-  @output [
+  @output {:article, %{}, [
     {:p, %{}, ["Hello, ", {:a, %{href: "https://github.com"}, "GitHub link"}, "."]},
     {:p, %{}, ["Hello, ", {:a, %{href: "https://atlassian.com"}, ["Atlassian ", {:b, %{}, "bold"}, " link"]}, "."]},
-    {:p, %{}, ["Hello, ", {:a, %{href: "https://example.com"}, "normal link"}, "."]}]
+    {:p, %{}, ["Hello, ", {:a, %{href: "https://example.com"}, "normal link"}, "."]}]}
 
   @output_xml ~s"""
   <p>
