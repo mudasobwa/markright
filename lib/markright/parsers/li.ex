@@ -6,14 +6,26 @@ defmodule Markright.Parsers.Li do
 
       iex> input = " item 1
       ...> ever
+      ...> - item 2
       ...> "
       iex> Markright.Parsers.Li.to_ast(input)
-      %Markright.Continuation{ast: {:li, %{}, "item 1"}, tail: "\n ever\n "}
+      %Markright.Continuation{ast: {:li, %{}, "item 1\n ever"}, tail: "\n - item 2\n "}
+
+      iex> input = " item 1
+      ...> *ever*
+      ...> - item 2
+      ...> "
+      iex> Markright.Parsers.Li.to_ast(input)
+      %Markright.Continuation{ast: {:li, %{}, ["item 1\n ", {:strong, %{}, "ever"}]}, tail: "\n - item 2\n "}
   """
 
   ##############################################################################
 
   @behaviour Markright.Parser
+
+  ##############################################################################
+
+  @max_indent Markright.Syntax.indent
 
   ##############################################################################
 
@@ -25,11 +37,9 @@ defmodule Markright.Parsers.Li do
   def to_ast(input, fun \\ nil, opts \\ %{})
     when is_binary(input) and (is_nil(fun) or is_function(fun)) and is_map(opts) do
 
-    with %C{ast: ast, tail: tail} <- astify(input, fun, opts) do
-      case tail do
-        "" -> %C{ast: {:li, %{}, ast}, tail: ""}
-        rest -> %C{ast: {:li, %{}, ast}, tail: "\n" <> rest}
-      end
+    with %C{ast: ast, tail: tail} <- astify(input, fun, opts),
+         %C{ast: block, tail: ""} <- Markright.Parsers.Generic.to_ast(ast) do
+      %C{ast: {:li, opts, block}, tail: tail}
     end
     |> C.callback(fun)
   end
@@ -41,9 +51,18 @@ defmodule Markright.Parsers.Li do
 
   ##############################################################################
 
-  # FIXME: Make it to accept multilines and markup itself
-  defp astify(<<"\n" :: binary, rest :: binary>>, _fun, _opts, acc),
-    do: %C{ast: String.trim(acc.buffer), tail: rest}
+  li = Markright.Syntax.leads()[:li]
+  Enum.each(0..@max_indent-1, fn i ->
+    indent = String.duplicate(" ", i)
+    defp astify(<<
+                  "\n" :: binary,
+                  unquote(indent) :: binary,
+                  unquote(li) :: binary,
+                  rest :: binary
+                >>, _fun, _opts, acc) do
+      %C{ast: String.trim(acc.buffer), tail: "\n" <> unquote(indent) <> unquote(li) <> rest}
+    end
+  end)
 
   defp astify(<<letter :: binary-size(1), rest :: binary>>, fun, opts, acc),
     do: astify(rest, fun, opts, Buf.append(acc, letter))

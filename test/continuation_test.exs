@@ -8,7 +8,7 @@ defmodule Markright.Continuation.Test do
     defmodule Sample do
       use Markright.Continuation
       def guarded(%C{tail: tail} = _data) when tail == "", do: :last
-      def guarded(%C{tail: tail} = _data), do: :leading
+      def guarded(%C{tail: _tail} = _data), do: :leading
     end
     """
     data = %Markright.Continuation{}
