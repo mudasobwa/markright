@@ -31,7 +31,12 @@ defmodule Markright.Guards do
 
   ##############################################################################
 
-  def unlist([]), do: []
-  def unlist([single]), do: single
-  def unlist({[single], any}), do: {single, any}
+  def unlist({list, any}) when is_list(list), do: {unlist(list), any}
+  def unlist(list) when is_list(list) do
+    case squeeze!(list) do
+#      [single] -> single # FIXME: Do we want to unlist single item?
+      many -> many
+    end
+  end
+  def unlist(anything), do: squeeze!(anything)
 end

@@ -23,6 +23,27 @@ defmodule Markright.Parsers.Generic do
     astify(input, fun, opts)
   end
 
+  @spec astify!(Atom.t, Atom.t, {String.t, String.t, Function.t, List.t, Markright.Buffer.t}) :: Markright.Continuation.t
+  def astify!(:split, tag, {plain, rest, fun, opts, acc}) do
+    with %C{ast: pre_ast, tail: ""} <- astify(plain, fun, opts, acc),
+         %C{ast: ast, tail: more} <- astify(rest, fun, opts, Buf.unshift_and_cleanup(acc, {tag, opts})),
+         %C{ast: post_ast, tail: tail} <- astify(more, fun, opts, Buf.empty()) do
+
+      C.continue(Markright.Utils.join!([pre_ast, {tag, %{}, ast}, post_ast]), tail)
+    end
+  end
+
+  def astify!(:fork, tag, {plain, rest, fun, opts, acc}) do
+    with mod <- Markright.Utils.to_module(tag),
+        %C{ast: pre_ast, tail: ""} <- astify(plain, fun, opts, acc),
+        %C{ast: ast, tail: more} <- apply(mod, :to_ast, [rest, fun, opts]),
+        %C{ast: post_ast, tail: tail} <- Markright.Parsers.Generic.to_ast(more, fun, opts) do
+
+      post_ast = if mod == Markright.Parsers.Generic, do: {tag, opts, post_ast}, else: post_ast
+      C.continue(Markright.Utils.join!([pre_ast, ast, post_ast]), tail)
+    end
+  end
+
   ##############################################################################
 
   @spec astify(String.t, Function.t, List.t, Buf.t) :: Markright.Continuation.t
@@ -30,25 +51,13 @@ defmodule Markright.Parsers.Generic do
 
   ##############################################################################
 
-  Enum.each(0..@max_lookahead-1, fn i ->
+  Enum.each(0..@max_lookahead, fn i ->
     defp astify(<<
                   plain :: binary-size(unquote(i)),
                   "\n\n" :: binary,
                   rest :: binary
-                >>, fun, opts, acc) do
-      Logger.debug "☆BLOCK1☆ #{inspect({plain, rest})}"
-      with %C{ast: post_ast, tail: tail} <- Markright.Parsers.Block.to_ast(rest, fun, opts),
-           %C{ast: pre_ast} <- astify(plain, fun, opts, acc) do
-          Logger.debug "☆BLOCK2☆ #{inspect({post_ast, pre_ast, tail})}"
-          ast = case {pre_ast, post_ast} do
-                  {"", ""} -> []
-                  {"", post_ast} -> [post_ast]
-                  {pre_ast, ""} -> [pre_ast]
-                  _  -> [pre_ast, post_ast]
-                end
-          Logger.debug "☆BLOCK3☆ #{inspect({ast, tail})}"
-          C.continue(ast, tail)
-      end
+                >>, fun, opts, acc) when (rest != "")  do
+      astify!(:fork, :block, {plain, rest, fun, opts, acc})
     end
 
     Enum.each(Markright.Syntax.shields(), fn shield ->
@@ -58,12 +67,11 @@ defmodule Markright.Parsers.Generic do
                     next :: binary-size(1),
                     rest :: binary
                   >>, fun, opts, acc) do
-        Logger.debug("☆SHIELD☆ [#{next}] #{inspect({plain, rest})}")
         astify(rest, fun, opts, Buf.append(acc, plain <> next))
       end
     end)
 
-    Enum.each(0..@max_indent-1, fn indent ->
+    Enum.each(0..@max_indent, fn indent ->
       indent = String.duplicate(" ", indent)
       Enum.each(Markright.Syntax.leads(), fn {tag, delimiter} ->
         defp astify(<<
@@ -73,17 +81,7 @@ defmodule Markright.Parsers.Generic do
                       unquote(delimiter) :: binary,
                       rest :: binary
                     >>, fun, opts, acc) do
-          Logger.debug("☆ LEAD1☆ [#{unquote(delimiter)}] #{inspect({plain, rest})}")
-          # FIXME: refactor here and below
-          with mod <- Markright.Utils.to_module(unquote(tag)),
-              %C{ast: pre_ast} <- astify(plain, fun, opts, acc),
-              %C{ast: ast, tail: rest} <- apply(mod, :to_ast, [rest, fun, opts]),
-              %C{ast: post_ast, tail: tail} <- Markright.Parsers.Generic.to_ast(rest, fun, opts) do
-            post_ast = if mod == Markright.Parsers.Generic, do: {unquote(tag), opts, post_ast}, else: post_ast
-            Logger.debug("☆ LEAD2☆ #{inspect({pre_ast, ast, post_ast})}")
-            # FIXME: C.callback() if Generic
-            %C{ast: Markright.Utils.join!([pre_ast, ast, post_ast]), tail: tail}
-          end
+          astify!(:fork, unquote(tag), {plain, rest, fun, opts, acc})
         end
       end)
     end)
@@ -94,14 +92,7 @@ defmodule Markright.Parsers.Generic do
                       unquote(delimiter) :: binary,
                       rest :: binary
                   >>, fun, opts, acc) do
-        Logger.debug("☆CUSTOM☆ [#{unquote(delimiter)}] #{inspect({plain, rest})}")
-        with mod <- Markright.Utils.to_module(unquote(tag)),
-            %C{ast: post_ast, tail: tail} <- apply(mod, :to_ast, [rest, fun, opts]),
-            %C{ast: pre_ast} <- astify(plain, fun, opts, acc) do
-          post_ast = if mod == Markright.Parsers.Generic, do: {unquote(tag), opts, post_ast}, else: post_ast
-          # FIXME: C.callback() if Generic
-          %C{ast: [pre_ast, post_ast], tail: tail}
-        end
+          astify!(:split, unquote(tag), {plain, rest, fun, opts, acc})
       end
     end)
 
@@ -113,21 +104,15 @@ defmodule Markright.Parsers.Generic do
                   >>, fun, opts, acc) do
         case Buf.shift(acc) do
           {{unquote(tag), opts}, _tail} ->
-            Logger.debug("☆GRIP <☆ [#{unquote(delimiter)}] #{inspect({plain, rest})}")
             %C{astify(plain, fun, opts, acc) | tail: rest} # TODO: Buf.cleanup(tail)
           _ ->
-            with %C{ast: pre_ast} <- astify(plain, fun, opts, acc),
-                 %C{ast: post_ast, tail: tail} <- astify(rest, fun, opts, Buf.unshift_and_cleanup(acc, {unquote(tag), opts})) do
-              Logger.debug("☆GRIP >☆ [#{unquote(delimiter)}] #{inspect(%C{ast: [pre_ast, {unquote(tag), %{}, post_ast}], tail: tail})}")
-              %C{ast: [pre_ast, {unquote(tag), %{}, post_ast}], tail: tail}
-            end
+            astify!(:split, unquote(tag), {plain, rest, fun, opts, acc})
         end
       end
     end)
   end)
 
   defp astify(<<plain :: binary-size(@max_lookahead), rest :: binary>>, fun, opts, acc) do
-    Logger.debug("☆ASTIFY☆ #{inspect({plain, rest})}")
     astify(rest, fun, opts, Buf.append(acc, plain))
   end
 
@@ -136,7 +121,6 @@ defmodule Markright.Parsers.Generic do
   ##############################################################################
 
   defp astify(unmatched, _fun, _opts, acc) when is_binary(unmatched) do
-    Logger.debug("★ASTIFY★ #{unmatched}")
     %C{ast: Buf.append(acc, unmatched).buffer, tail: ""}
   end
 
