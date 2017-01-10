@@ -42,6 +42,7 @@ defmodule Markright.Parsers.Block do
                   >>, fun, opts, _acc) when not(rest == "") do
         with mod <- Markright.Utils.to_module(unquote(tag)),
              %C{ast: ast, tail: tail} <- apply(mod, :to_ast, [rest, fun, opts]) do
+          Logger.warn "#{inspect %C{ast: ast, tail: tail}}"
           ast = if mod == Markright.Parsers.Generic, do: {unquote(tag), opts, ast}, else: ast
           %C{ast: ast, tail: tail}
         end
