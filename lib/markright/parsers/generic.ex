@@ -81,7 +81,7 @@ defmodule Markright.Parsers.Generic do
                       unquote(delimiter) :: binary,
                       rest :: binary
                     >>, fun, opts, acc) do
-          astify!(:split, unquote(tag), {plain, rest, fun, opts, acc})
+          astify!(:fork, unquote(tag), {plain, rest, fun, opts, acc})
         end
       end)
     end)
@@ -92,7 +92,7 @@ defmodule Markright.Parsers.Generic do
                       unquote(delimiter) :: binary,
                       rest :: binary
                   >>, fun, opts, acc) do
-          astify!(:split, unquote(tag), {plain, rest, fun, opts, acc})
+          astify!(:fork, unquote(tag), {plain, rest, fun, opts, acc})
       end
     end)
 
