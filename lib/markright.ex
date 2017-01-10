@@ -17,26 +17,6 @@ defmodule Markright do
       iex> Markright.to_ast("Plain string.")
       {:article, %{}, [{:p, %{}, "Plain string."}]}
 
-      iex> input = "Hello, *world*!
-      ...>
-      ...> > This is a _blockquote_.
-      ...>   It is multiline.
-      ...>
-      ...> Cordially, _Markright_."
-      iex> {:article, %{}, ast} = Markright.to_ast(input)
-      iex> Enum.count(ast)
-      3
-      iex> Enum.at(ast, 0)
-      {:p, %{}, ["Hello, ", {:strong, %{}, "world"}, "!"]}
-      iex> Enum.at(ast, 1)
-      {:blockquote, %{}, [
-        " This is a ",
-        {:em, %{}, "blockquote"},
-        ".\n       It is multiline."
-      ]}
-      iex> Enum.at(ast, 2)
-      {:p, %{}, ["Cordially, ", {:em, %{}, "Markright"}, "."] }
-
       iex> input = "plain *bold* rest!"
       iex> Markright.to_ast(input)
       {:article, %{}, [{:p, %{}, ["plain ", {:strong, %{}, "bold"}, " rest!"]}]}
@@ -71,17 +51,6 @@ defmodule Markright do
       iex> input = "Escaped \\\\*asterisk 2"
       iex> Markright.to_ast(input)
       {:article, %{}, [{:p, %{}, "Escaped *asterisk 2"}]}
-
-#      iex> input = "Hello, world! List here:
-#      ...> - item 1
-#      ...> - item 2
-#      ...> - item 3
-#      ...> "
-#      iex> Markright.to_ast(input)
-#      {:article, %{},
-#        [{:p, %{},
-#             ["Hello, world! List here:", {:li, %{}, "item 1"},
-#              {:li, %{}, "item 2"}, {:li, %{}, "item 3"}, "\n "]}]}
 
 
   """

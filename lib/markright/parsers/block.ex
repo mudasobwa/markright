@@ -5,7 +5,6 @@ defmodule Markright.Parsers.Block do
 
   @behaviour Markright.Parser
 
-  @max_lookahead Markright.Syntax.lookahead
   @max_indent    Markright.Syntax.indent
 
   ##############################################################################
@@ -42,7 +41,6 @@ defmodule Markright.Parsers.Block do
                   >>, fun, opts, _acc) when not(rest == "") do
         with mod <- Markright.Utils.to_module(unquote(tag)),
              %C{ast: ast, tail: tail} <- apply(mod, :to_ast, [rest, fun, opts]) do
-          Logger.warn "#{inspect %C{ast: ast, tail: tail}}"
           ast = if mod == Markright.Parsers.Generic, do: {unquote(tag), opts, ast}, else: ast
           %C{ast: ast, tail: tail}
         end
@@ -55,7 +53,7 @@ defmodule Markright.Parsers.Block do
                          list when is_list(list) -> Enum.split_while(cont.ast, fn
                                                       {:p, _, _} -> false
                                                       {:pre, _, _} -> false
-                                                      e -> true
+                                                      _ -> true
                                                     end)
                          string when is_binary(string) -> {string, []}
                        end
