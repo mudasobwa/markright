@@ -2,16 +2,41 @@ defmodule Markright.Utils do
 
   ##############################################################################
 
-  defmacro empty_tag?({_, _, value}) do
-    is_nil(value) || \
-      (is_binary(value) && value == "") || \
-      (is_list(value) && Enum.empty?(value)) #  || Enum.all?(&Markright.Utils.empty_tag?/1))
+  defmacro is_empty(nil), do: true
+  defmacro is_empty(""), do: true
+  defmacro is_empty([]), do: true
+  defmacro is_empty({}), do: true
+  defmacro is_empty(%{}), do: true
+  defmacro is_empty({_, _, ""}), do: true
+
+#  defmacro is_empty(list) when is_list(list), do: Enum.all?(list, &is_empty/1)
+#  defmacro is_empty(map) when is_map(map), do: Enum.all?(map, fn
+#    v -> is_empty(v)
+#    {_, v} -> is_empty(v)
+#  end)
+#  defmacro is_empty(arg1, arg2) when is_empty(arg1) and is_empty(arg2), do: true
+  defmacro is_empty(_), do: false
+  defmacro is_empty(_, _), do: false
+  defmacro is_empty(_, _, _), do: false
+
+  def clean!({_tag, _opts, ast}) when is_empty(ast), do: []
+  def clean!(ast) when is_list(ast), do: Enum.filter(ast, &(not is_empty(&1)))
+  def clean!(anything), do: anything
+  def join!(asts) when is_list(asts) do
+    IO.inspect(asts)
+    asts
+    |> Enum.map(& clean!/1)
+    |> clean!
+    |> Enum.reduce([], fn e, acc ->
+      IO.puts("★★★ ★★★ #{inspect(e)}")
+      unless is_empty(e), do: acc ++ [e], else: acc
+    end)
   end
 
   ##############################################################################
 
-  # def leavify({head, tail}) when empty_tag?(head), do: tail
-  def leavify({head, tail}) when empty_tag?(tail), do: head
+  # def leavify({head, tail}) when is_empty(head), do: tail
+  # def leavify({head, tail}) when is_empty(tail), do: head
   def leavify({head, tail}), do: [head, tail]
 
   def leavify(leaves) when is_list(leaves) do

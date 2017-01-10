@@ -78,11 +78,12 @@ defmodule Markright.Parsers.Generic do
           Logger.debug("☆ LEAD ☆ [#{unquote(delimiter)}] #{inspect({plain, rest})}")
           # FIXME: refactor here and below
           with mod <- Markright.Utils.to_module(unquote(tag)),
-              %C{ast: post_ast, tail: tail} <- apply(mod, :to_ast, [rest, fun, opts]),
-              %C{ast: pre_ast} <- astify(plain, fun, opts, acc) do
+              %C{ast: pre_ast} <- astify(plain, fun, opts, acc),
+              %C{ast: ast, tail: rest} <- apply(mod, :to_ast, [rest, fun, opts]),
+              %C{ast: post_ast, tail: tail} <- Markright.Parsers.Generic.to_ast(rest, fun, opts) do
             post_ast = if mod == Markright.Parsers.Generic, do: {unquote(tag), opts, post_ast}, else: post_ast
             # FIXME: C.callback() if Generic
-            %C{ast: [pre_ast, post_ast], tail: tail}
+            %C{ast: Markright.Utils.join!([pre_ast, ast, post_ast]), tail: tail}
           end
         end
       end)
