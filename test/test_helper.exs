@@ -1,6 +1,3 @@
-IO.puts "☆☆☆ SOME TESTS ARE SKIPPED ☆☆☆"
-ExUnit.start(exclude: :skip)
-
 defmodule Markright.Tester do
   defmacro __using__(_opts) do
     quote do
@@ -15,3 +12,6 @@ defmodule Markright.Tester do
     end
   end
 end
+
+IO.puts "☆☆☆ SOME TESTS ARE SKIPPED ☆☆☆"
+ExUnit.start(exclude: :skip)

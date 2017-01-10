@@ -53,6 +53,7 @@ defmodule Markright.Parsers.Block do
                          list when is_list(list) -> Enum.split_while(cont.ast, fn
                                                       {:p, _, _} -> false
                                                       {:pre, _, _} -> false
+                                                      {:blockquote, _, _} -> false
                                                       _ -> true
                                                     end)
                          string when is_binary(string) -> {string, []}
