@@ -5,6 +5,7 @@ defmodule Markright.Guards do
   def empty?({}), do: true
   def empty?(%{}), do: true
   def empty?({_, _, ""}), do: true
+  def empty?({_, _, []}), do: true
 
   def empty?(list) when is_list(list), do: Enum.all?(list, &empty?/1)
   def empty?(map) when is_map(map), do: Enum.all?(map, fn

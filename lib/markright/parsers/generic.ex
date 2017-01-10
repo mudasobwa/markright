@@ -44,6 +44,14 @@ defmodule Markright.Parsers.Generic do
     end
   end
 
+  def astify!(:join, tag, {plain, rest, fun, opts, acc}) do
+    with %C{ast: pre_ast, tail: more} <- astify(plain, fun, opts, acc),
+         %C{ast: post_ast, tail: tail} <- Markright.Parsers.Block.to_ast(more <> rest, fun, opts) do
+
+      C.continue(Markright.Utils.join!([pre_ast, post_ast]), tail)
+    end
+  end
+
   ##############################################################################
 
   @spec astify(String.t, Function.t, List.t, Buf.t) :: Markright.Continuation.t
@@ -57,7 +65,9 @@ defmodule Markright.Parsers.Generic do
                   "\n\n" :: binary,
                   rest :: binary
                 >>, fun, opts, acc) when (rest != "")  do
-      astify!(:fork, :block, {plain, rest, fun, opts, acc})
+      # with %C{ast: ast, tail: tail} <- astify(plain, fun, opts, acc) do
+        astify!(:join, :block, {plain, rest, fun, opts, acc})
+      # end
     end
 
     Enum.each(Markright.Syntax.shields(), fn shield ->

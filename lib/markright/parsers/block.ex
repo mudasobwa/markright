@@ -49,8 +49,17 @@ defmodule Markright.Parsers.Block do
     end)
     defp astify("", _fun, _opts, _acc), do: %C{}
     defp astify(rest, fun, opts, _acc) when is_binary(rest) do
-      with cont <- Markright.Parsers.Generic.to_ast(rest, fun, opts),
-        do: %C{ast: {:p, %{}, cont.ast}, tail: (if Markright.Guards.empty?(cont.tail), do: "", else: "\n\n" <> cont.tail)}
+      with cont <- Markright.Parsers.Generic.to_ast(rest, fun, opts) do
+        {mine, rest} = case cont.ast do
+                         list when is_list(list) -> Enum.split_while(cont.ast, fn
+                                                      {:p, _, _} -> false
+                                                      {:pre, _, _} -> false
+                                                      e -> true
+                                                    end)
+                         string when is_binary(string) -> {string, []}
+                       end
+        %C{ast: [{:p, %{}, mine}, rest], tail: (if Markright.Guards.empty?(cont.tail), do: "", else: "\n\n" <> cont.tail)}
+      end
     end
   end)
 end
