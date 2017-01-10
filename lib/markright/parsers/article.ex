@@ -27,7 +27,7 @@ defmodule Markright.Parsers.Article do
     when is_binary(input) and (is_nil(fun) or is_function(fun)) and is_map(opts) do
 
     with %C{ast: ast, tail: tail} <- C.callback(C.continue(astify(input), {:article, %{}}), fun) do
-      Logger.error "☆ARTICL☆ #{inspect({ast, tail})}"
+      Logger.debug "☆ARTICL☆ #{inspect({ast, tail})}"
       if opts[:only] == :ast, do: ast, else: %C{ast: ast, tail: tail}
     end
   end

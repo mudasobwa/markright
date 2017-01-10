@@ -15,14 +15,12 @@ defmodule Markright.Parsers.Generic do
   use Markright.Buffer
   use Markright.Continuation
 
-  import Markright.Utils, only: [leavify: 1, deleavify: 1]
-
   ##############################################################################
 
   def to_ast(input, fun \\ nil, opts \\ %{})
     when is_binary(input) and (is_nil(fun) or is_function(fun)) and is_map(opts) do
 
-    astify(input, fun, opts, Buf.empty())
+    astify(input, fun, opts)
   end
 
   ##############################################################################
@@ -49,7 +47,7 @@ defmodule Markright.Parsers.Generic do
                   _  -> [pre_ast, post_ast]
                 end
           Logger.debug "☆BLOCK3☆ #{inspect({ast, tail})}"
-          %C{ast: ast, tail: tail}
+          C.continue(ast, tail)
       end
     end
 
@@ -75,13 +73,14 @@ defmodule Markright.Parsers.Generic do
                       unquote(delimiter) :: binary,
                       rest :: binary
                     >>, fun, opts, acc) do
-          Logger.debug("☆ LEAD ☆ [#{unquote(delimiter)}] #{inspect({plain, rest})}")
+          Logger.debug("☆ LEAD1☆ [#{unquote(delimiter)}] #{inspect({plain, rest})}")
           # FIXME: refactor here and below
           with mod <- Markright.Utils.to_module(unquote(tag)),
               %C{ast: pre_ast} <- astify(plain, fun, opts, acc),
               %C{ast: ast, tail: rest} <- apply(mod, :to_ast, [rest, fun, opts]),
               %C{ast: post_ast, tail: tail} <- Markright.Parsers.Generic.to_ast(rest, fun, opts) do
             post_ast = if mod == Markright.Parsers.Generic, do: {unquote(tag), opts, post_ast}, else: post_ast
+            Logger.debug("☆ LEAD2☆ #{inspect({pre_ast, ast, post_ast})}")
             # FIXME: C.callback() if Generic
             %C{ast: Markright.Utils.join!([pre_ast, ast, post_ast]), tail: tail}
           end

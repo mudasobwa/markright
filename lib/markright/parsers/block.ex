@@ -22,7 +22,7 @@ defmodule Markright.Parsers.Block do
   def to_ast(input, fun \\ nil, opts \\ %{})
     when is_binary(input) and (is_nil(fun) or is_function(fun)) and is_map(opts) do
 
-    astify(input, fun, opts, Buf.empty())
+    astify(input, fun, opts)
   end
 
   ##############################################################################
@@ -54,7 +54,7 @@ defmodule Markright.Parsers.Block do
                     unquote(indent) :: binary,
                     unquote(delimiter) :: binary,
                     rest :: binary
-                  >>, fun, opts, acc) when not(rest == "") do
+                  >>, fun, opts, _acc) when not(rest == "") do
         Logger.error "☆ BLOCK☆ [#{unquote(delimiter)}] #{rest}"
         with mod <- Markright.Utils.to_module(unquote(tag)),
             {post_ast, tail} <- apply(mod, :to_ast, [rest, fun, opts]) do
@@ -72,7 +72,7 @@ defmodule Markright.Parsers.Block do
     end)
   end)
 
-  defp astify(input, fun, opts, acc) when is_binary(input) do
+  defp astify(input, fun, opts, _acc) when is_binary(input) do
     with cont <- Markright.Parsers.Generic.to_ast(input, fun, opts) do
       %C{cont | ast: {:p, opts, cont.ast}}
     end

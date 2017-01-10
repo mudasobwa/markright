@@ -22,7 +22,7 @@ defmodule Markright.Buffer do
   defmacro __using__(_opts) do
     quote do
       alias Markright.Buffer, as: Buf
-      defmacrop is_empty_buffer(data) do
+      defmacrop empty?(data) do
         quote do: %Buf{buffer: "", tags: [], bag: []} == unquote(data)
       end
     end
