@@ -3,7 +3,7 @@ defmodule Markright.Buffer do
   @typedoc """
   Buffer to hold a string buffer and the FILO of tags.
   """
-  @type t :: %Markright.Buffer{}
+  @type t :: %__MODULE__{buffer: String.t, tags: List.t, bag: List.t}
 
   @fields [buffer: "", tags: [], bag: []]
 

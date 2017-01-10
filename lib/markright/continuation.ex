@@ -8,7 +8,7 @@ defmodule Markright.Continuation do
   @typedoc """
   The continuation, returned from any call to `Parser.to_ast/3`.
   """
-  @type t :: %Markright.Continuation{}
+  @type t :: %__MODULE__{ast: Tuple.t, tail: String.t}
 
   ##############################################################################
 
