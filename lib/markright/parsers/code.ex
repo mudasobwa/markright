@@ -22,6 +22,19 @@ defmodule Markright.Parsers.Code do
       iex> Markright.Parsers.Code.to_ast(input)
       %Markright.Continuation{
         ast: {:pre, %{}, [{:code, %{}, " $ ls -la"}]}, tail: "\n Other text.\n "}
+
+      iex> input = "elixir
+      ...> def f(\"\"), do: :empty_string
+      ...>
+      ...> def f([]), do: :empty_list
+      ...> ```
+      ...> Other text.
+      ...> "
+      iex> Markright.Parsers.Code.to_ast(input)
+      %Markright.Continuation{ast: {:pre, %{},
+             [{:code, %{lang: "elixir"},
+               " def f(\"\"), do: :empty_string\n\n def f([]), do: :empty_list"}]},
+            tail: "\n Other text.\n "}
   """
 
   ##############################################################################

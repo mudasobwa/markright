@@ -27,7 +27,7 @@ defmodule Markright.Parsers.Generic do
   def astify!(:split, tag, {plain, rest, fun, opts, acc}) do
     with %C{ast: pre_ast, tail: ""} <- astify(plain, fun, opts, acc),
          %C{ast: ast, tail: more} <- astify(rest, fun, opts, Buf.unshift_and_cleanup(acc, {tag, opts})),
-         %C{ast: post_ast, tail: tail} <- astify(more, fun, opts, Buf.empty()) do
+         %C{ast: post_ast, tail: tail} <- astify(more, fun, opts, Buf.cleanup(acc)) do
 
       C.continue(Markright.Utils.join!([pre_ast, {tag, %{}, ast}, post_ast]), tail)
     end
@@ -113,8 +113,8 @@ defmodule Markright.Parsers.Generic do
                       rest :: binary
                   >>, fun, opts, acc) do
         case Buf.shift(acc) do
-          {{unquote(tag), opts}, _tail} ->
-            %C{astify(plain, fun, opts, acc) | tail: rest} # TODO: Buf.cleanup(tail)
+          {{unquote(tag), opts}, tail} ->
+            %C{astify(plain, fun, opts, tail) | tail: rest} # TODO: Buf.cleanup(tail)
           _ ->
             astify!(:split, unquote(tag), {plain, rest, fun, opts, acc})
         end

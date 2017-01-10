@@ -61,8 +61,8 @@ defmodule Markright do
         [{:p, %{}, [
           {:em, %{},
             ["Please ", {:strike, %{}, "use"}, " love ",
-             {:b, %{}, {:code, %{}, "Markright"}}, " since it is ",
-             {:strong, %{}, "great"}, ""]}, "!"]}]}
+             {:b, %{}, [{:code, %{}, "Markright"}]}, " since it is ",
+             {:strong, %{}, "great"}]}, "!"]}]}
 
       iex> input = "Escaped /*asterisk"
       iex> Markright.to_ast(input)
