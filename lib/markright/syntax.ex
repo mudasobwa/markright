@@ -15,7 +15,7 @@ defmodule Markright.Syntax do
     flush: [
     ],
     lead: [
-      li: "-",
+      ul: [li: "-"],
     ],
     grip: [
       span: "⇓",
@@ -61,7 +61,23 @@ defmodule Markright.Syntax do
 
   def leads do
     syntax()[:lead]
+    |> Keyword.values
+    |> Enum.reduce(& &1 ++ &2)
     |> Enum.sort(fn {_, v1}, {_, v2} -> String.length(v1) > String.length(v2) end)
+  end
+
+  def surrounding(value) when is_binary(value) do
+    syntax()[:lead]
+    |> Enum.find_value(nil, fn {k, v} ->
+      if v |> Keyword.values |> Enum.any?(& &1 == value), do: k
+    end)
+  end
+
+  def surrounding(value) when is_atom(value) do
+    syntax()[:lead]
+    |> Enum.find_value(nil, fn {k, v} ->
+      if v |> Keyword.keys |> Enum.any?(& &1 == value), do: k
+    end)
   end
 
   def customs do

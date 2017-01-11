@@ -56,7 +56,7 @@ defmodule Markright.Parsers.Generic do
 
       [Markright.Utils.join!([pre_ast, {tag, opts, mine}, post_ast]), rest]
       |> C.continue(tail)
-      |> Markright.Utils.surround(tag, :ul) # FIXME: FIXME: FIXME: HARDCODED TAG!!!
+      |> Markright.Utils.surround(tag, Markright.Syntax.surrounding(tag))
     end
   end
 
