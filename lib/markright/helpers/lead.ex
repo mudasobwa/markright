@@ -4,7 +4,7 @@ defmodule Markright.Helpers.Lead do
 
   ```elixir
   defmodule Markright.Parsers.Li do
-    use Markright.Parsers.Lead
+    use Markright.Helpers.Lead
   end
   ```
   """

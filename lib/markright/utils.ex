@@ -13,7 +13,9 @@ defmodule Markright.Utils do
   ##############################################################################
 
   @spec to_module_name(Atom.t, List.t) :: Atom.t
-  def to_module(atom, opts \\ [prefix: Markright.Parsers, fallback: Markright.Parsers.Generic]) do
+  def to_module(atom, opts \\ []) do
+    opts = Keyword.merge(
+      [prefix: Markright.Parsers, fallback: Markright.Parsers.Generic], opts)
     mod = to_module_name(atom, [prefix: opts[:prefix]])
     if Code.ensure_loaded?(mod), do: mod, else: opts[:fallback]
   end

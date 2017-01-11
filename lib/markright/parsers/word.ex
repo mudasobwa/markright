@@ -10,37 +10,13 @@ defmodule Markright.Parsers.Word do
 
   ##############################################################################
 
-  @behaviour Markright.Parser
-
-  ##############################################################################
-
-  use Markright.Buffer
-  use Markright.Continuation
+  use Markright.Helpers.Magnet
 
   ##############################################################################
 
   def to_ast(input, fun \\ nil, opts \\ %{}) \
     when is_binary(input) and (is_nil(fun) or is_function(fun)) and is_map(opts),
-  do: astify(input, fun)
-
-  ##############################################################################
-
-  @spec astify(String.t, Function.t, Buf.t) :: Markright.Continuation.t
-  defp astify(part, fun, acc \\ Buf.empty())
-
-  ##############################################################################
-
-  # FIXME: make this list dynamic
-  Enum.each([" ", @unix_newline, "\t", "\r"], fn delimiter ->
-    defp astify(<<unquote(delimiter) :: binary, rest :: binary>>, _fun, acc),
-      do: %C{ast: acc.buffer, tail: rest}
-  end)
-
-  defp astify(<<letter :: binary-size(1), rest :: binary>>, fun, acc),
-    do: astify(rest, fun, Buf.append(acc, letter))
-
-  defp astify("", _fun, acc),
-    do: %C{ast: acc.buffer}
+  do: astify(input)
 
   ##############################################################################
 end
