@@ -1,6 +1,6 @@
 defmodule Markright.Parsers.Article do
   @moduledoc ~S"""
-  Parses the whole text.
+  Parses the whole text, producing a single article item.
 
   ## Examples
 
@@ -27,13 +27,13 @@ defmodule Markright.Parsers.Article do
   def to_ast(input, fun \\ nil, opts \\ %{})
     when is_binary(input) and (is_nil(fun) or is_function(fun)) and is_map(opts) do
 
-    with %C{ast: ast, tail: tail} <- C.callback(C.continue(astify(input), {:article, %{}}), fun) do
-      if opts[:only] == :ast, do: ast, else: %C{ast: ast, tail: tail}
-    end
+    Markright.Utils.continuation(astify(input), {:article, opts, fun})
   end
 
+  ##############################################################################
+
   defp astify(input, acc \\ []) do
-    case Markright.Parsers.Generic.to_ast("\n\n" <> input) do
+    case Markright.Parsers.Generic.to_ast(@splitter <> input) do
       %C{ast: "", tail: ""} -> %C{ast: acc}
       %C{ast: ast, tail: ""} -> %C{ast: acc ++ [ast]}
       %C{ast: "", tail: tail} -> astify(tail, acc)

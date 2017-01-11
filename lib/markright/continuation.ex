@@ -12,6 +12,8 @@ defmodule Markright.Continuation do
 
   ##############################################################################
 
+  @unix_newline "\n"
+
   @fields [ast: {:nil, %{}, ""}, tail: ""]
 
   def fields, do: @fields
@@ -22,6 +24,8 @@ defmodule Markright.Continuation do
 
   defmacro __using__(_opts) do
     quote do
+      @unix_newline unquote(@unix_newline)
+      @splitter @unix_newline <> @unix_newline
       alias Markright.Continuation, as: C
     end
   end

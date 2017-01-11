@@ -31,7 +31,7 @@ defmodule Markright.Parsers.Word do
   ##############################################################################
 
   # FIXME: make this list dynamic
-  Enum.each([" ", "\n", "\t", "\r"], fn delimiter ->
+  Enum.each([" ", @unix_newline, "\t", "\r"], fn delimiter ->
     defp astify(<<unquote(delimiter) :: binary, rest :: binary>>, _fun, _opts, acc),
       do: %C{ast: acc.buffer, tail: rest}
   end)

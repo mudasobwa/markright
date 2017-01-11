@@ -55,12 +55,12 @@ defmodule Markright.Parsers.Li do
   Enum.each(0..@max_indent-1, fn i ->
     indent = String.duplicate(" ", i)
     defp astify(<<
-                  "\n" :: binary,
+                  @unix_newline :: binary,
                   unquote(indent) :: binary,
                   unquote(li) :: binary,
                   rest :: binary
                 >>, _fun, _opts, acc) do
-      %C{ast: String.trim(acc.buffer), tail: "\n" <> unquote(indent) <> unquote(li) <> rest}
+      %C{ast: String.trim(acc.buffer), tail: @unix_newline <> unquote(indent) <> unquote(li) <> rest}
     end
   end)
 

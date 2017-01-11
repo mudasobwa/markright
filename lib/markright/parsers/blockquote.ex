@@ -50,14 +50,16 @@ defmodule Markright.Parsers.Blockquote do
 
   ##############################################################################
 
-  defp astify(<<"\n\n" :: binary, rest :: binary>>, _fun, _opts, acc) do
-    %C{ast: acc.buffer, tail: rest}
-  end
+  defp astify(<<
+                unquote(@splitter) :: binary, # @splitter declared in Continuation#__using__
+                rest :: binary
+              >>, _fun, _opts, acc),
+    do: %C{ast: acc.buffer, tail: rest}
 
   Enum.each(0..@max_indent-1, fn i ->
     indent = String.duplicate(" ", i)
     defp astify(<<
-                  "\n" :: binary,
+                  @unix_newline :: binary,
                   unquote(indent) :: binary,
                   unquote(Markright.Syntax.blocks()[:blockquote]) :: binary,
                   rest :: binary

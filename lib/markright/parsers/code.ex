@@ -76,7 +76,7 @@ defmodule Markright.Parsers.Code do
   Enum.each(0..@max_indent-1, fn i ->
     indent = String.duplicate(" ", i)
     defp astify(<<
-                  "\n" :: binary,
+                  @unix_newline :: binary,
                   unquote(indent) :: binary,
                   unquote(Markright.Syntax.blocks()[:code]) :: binary,
                   rest :: binary

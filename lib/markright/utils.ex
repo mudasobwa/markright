@@ -2,7 +2,11 @@ defmodule Markright.Utils do
 
   ##############################################################################
 
+  use Markright.Continuation
+
   import Markright.Guards
+
+  ##############################################################################
 
   def join!(asts, flatten \\ true) when is_list(asts), do: squeeze!(asts, flatten)
 
@@ -13,6 +17,31 @@ defmodule Markright.Utils do
     mod = to_module_name(atom, [prefix: opts[:prefix]])
     if Code.ensure_loaded?(mod), do: mod, else: opts[:fallback]
   end
+
+  ##############################################################################
+
+  @spec continuation(Atom.t, Markright.Continuation.t, {Atom.t, List.t, Function.t}) :: Markright.Continuation.t
+  def continuation(:continuation, cont, {tag, opts, fun}) do
+    case C.callback(C.continue(cont, {tag, opts}), fun) do
+      %C{} = c -> c
+      other    -> raise Markright.Errors.UnexpectedContinuation, value: other
+    end
+  end
+
+  def continuation(:ast, cont, {tag, opts, fun}) do
+    continuation(:continuation, cont, {tag, opts, fun}).ast
+  end
+
+  def continuation(:tail, cont, {tag, opts, fun}) do
+    continuation(:continuation, cont, {tag, opts, fun}).tail
+  end
+
+  @spec continuation(Markright.Continuation.t, {Atom.t, List.t, Function.t}) :: Markright.Continuation.t
+  def continuation(cont, {tag, opts, fun}) do
+    continuation(:continuation, cont, {tag, opts, fun})
+  end
+
+  ##############################################################################
 
   @spec to_module_name(Atom.t, List.t) :: Atom.t
   defp to_module_name(atom, opts) do
@@ -29,12 +58,6 @@ defmodule Markright.Utils do
 
   defp camelize(str) when is_binary(str) do
     Regex.replace(~r/(?:_|\A)(.)/, str, fn _, m -> String.upcase(m) end)
-  end
-
-  ##############################################################################
-
-  def sanitize_line_endings(input) do
-    Regex.replace(~r/\r\n|\r/, input, "\n")
   end
 
   ##############################################################################

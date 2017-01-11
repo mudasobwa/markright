@@ -58,7 +58,7 @@ defmodule Markright.Parsers.Block do
                                                     end)
                          string when is_binary(string) -> {string, []}
                        end
-        %C{ast: [{:p, %{}, mine}, rest], tail: (if Markright.Guards.empty?(cont.tail), do: "", else: "\n\n" <> cont.tail)}
+        %C{ast: [{:p, %{}, mine}, rest], tail: (if Markright.Guards.empty?(cont.tail), do: "", else: @splitter <> cont.tail)}
       end
     end
   end)

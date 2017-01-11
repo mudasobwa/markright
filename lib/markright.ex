@@ -5,12 +5,11 @@ defmodule Markright do
 
   @behaviour Markright.Parser
 
-  import Markright.Utils, only: [sanitize_line_endings: 1]
-  use Markright.Buffer, as: Buf
-
-
   @doc """
-  Hello world.
+  Main application helper: call
+  `Markright.to_ast(input, fn {ast, tail} -> IO.inspect(ast) end)`
+  to transform the markright into the AST, optionally being called back
+  on every subsequent transform.
 
   ## Examples
 
@@ -54,12 +53,21 @@ defmodule Markright do
 
 
   """
-  def to_ast(input, fun \\ nil, opts \\ %{}, _acc \\ Buf.empty())
+  def to_ast(input, fun \\ nil, opts \\ %{})
     when is_binary(input) and (is_nil(fun) or is_function(fun)) and is_map(opts) do
 
-    input
-    |> sanitize_line_endings
-    |> Markright.Parsers.Article.to_ast(fun, Map.put(opts, :only, :ast))
+    with %Markright.Continuation{ast: ast} <- Markright.Parsers.Article.to_ast(input, fun, opts) do
+      ast
+    end
+  end
+
+  @doc """
+  Most shame part of this package: here we use `Regex` because, you know, fuck Windows.
+
+  @fixme
+  """
+  def to_ast_safe_input(input, fun \\ nil, opts \\ %{}) do
+    to_ast(Regex.replace(~r/\r\n|\r/, input, "\n"), fun, opts)
   end
 
 end

@@ -24,7 +24,7 @@ defmodule Markright.Parsers.Generic do
   end
 
   @spec astify!(Atom.t, Atom.t, {String.t, String.t, Function.t, List.t, Markright.Buffer.t}) :: Markright.Continuation.t
-  def astify!(:split, tag, {plain, rest, fun, opts, acc}) do
+  defp astify!(:split, tag, {plain, rest, fun, opts, acc}) do
     with %C{ast: pre_ast, tail: ""} <- astify(plain, fun, opts, acc),
          %C{ast: ast, tail: more} <- astify(rest, fun, opts, Buf.unshift_and_cleanup(acc, {tag, opts})),
          %C{ast: post_ast, tail: tail} <- astify(more, fun, opts, Buf.cleanup(acc)) do
@@ -33,7 +33,7 @@ defmodule Markright.Parsers.Generic do
     end
   end
 
-  def astify!(:fork, tag, {plain, rest, fun, opts, acc}) do
+  defp astify!(:fork, tag, {plain, rest, fun, opts, acc}) do
     with mod <- Markright.Utils.to_module(tag),
         %C{ast: pre_ast, tail: ""} <- astify(plain, fun, opts, acc),
         %C{ast: ast, tail: more} <- apply(mod, :to_ast, [rest, fun, opts]),
@@ -44,7 +44,7 @@ defmodule Markright.Parsers.Generic do
     end
   end
 
-  def astify!(:join, _tag, {plain, rest, fun, opts, acc}) do
+  defp astify!(:join, _tag, {plain, rest, fun, opts, acc}) do
     with %C{ast: pre_ast, tail: more} <- astify(plain, fun, opts, acc),
          %C{ast: post_ast, tail: tail} <- Markright.Parsers.Block.to_ast(more <> rest, fun, opts) do
 
@@ -62,7 +62,7 @@ defmodule Markright.Parsers.Generic do
   Enum.each(0..@max_lookahead, fn i ->
     defp astify(<<
                   plain :: binary-size(unquote(i)),
-                  "\n\n" :: binary,
+                  @splitter :: binary,
                   rest :: binary
                 >>, fun, opts, acc) when (rest != "")  do
       # with %C{ast: ast, tail: tail} <- astify(plain, fun, opts, acc) do
@@ -86,7 +86,7 @@ defmodule Markright.Parsers.Generic do
       Enum.each(Markright.Syntax.leads(), fn {tag, delimiter} ->
         defp astify(<<
                       plain :: binary-size(unquote(i)),
-                      "\n" :: binary,
+                      @unix_newline :: binary,
                       unquote(indent) :: binary,
                       unquote(delimiter) :: binary,
                       rest :: binary
