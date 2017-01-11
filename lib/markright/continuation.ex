@@ -40,6 +40,8 @@ defmodule Markright.Continuation do
   def last?(%Markright.Continuation{} = _data), do: false
 
   def empty?(%Markright.Continuation{ast: {:nil, _, _}} = _data), do: true
+  def empty?(%Markright.Continuation{ast: {_, _, []}, tail: ""} = _data), do: true
+  def empty?(%Markright.Continuation{ast: {_, _, ""}, tail: ""} = _data), do: true
   def empty?(%Markright.Continuation{} = _data), do: false
 
   def last!(tag, opts, value), do: last!({tag, opts, value})
@@ -62,8 +64,8 @@ defmodule Markright.Continuation do
   def callback(%Markright.Continuation{} = data, %Markright.Continuation{} = result),
     do: Map.merge(data, result)
   def callback(%Markright.Continuation{} = data, fun) when is_function(fun, 1),
-    do: callback(data, fun.(data))
+    do: callback(data, (unless Markright.Continuation.empty?(data), do: fun.(data)))
   def callback(%Markright.Continuation{ast: ast, tail: tail} = data, fun) when is_function(fun, 2),
-    do: callback(data, fun.(ast, tail))
+    do: callback(data, (unless Markright.Continuation.empty?(data), do: fun.(ast, tail)))
   def callback(%Markright.Continuation{} = data, _), do: data
 end
