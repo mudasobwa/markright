@@ -19,6 +19,8 @@ defmodule Markright.Guards do
   ##############################################################################
 
   def squeeze!(ast, flatten \\ true)
+  def squeeze!({ast1, ast2}, flatten), do: {squeeze!(ast1, flatten), squeeze!(ast2, flatten)}
+  def squeeze!({tag, opts, ast}, flatten), do: {tag, opts, squeeze!(ast, flatten)}
   def squeeze!(ast, flatten) when is_list(ast) do
     Enum.reduce(ast, [], fn e, acc ->
       cond do
@@ -27,17 +29,12 @@ defmodule Markright.Guards do
         true       -> acc ++ [e]
       end
     end)
+    |> unlist
   end
   def squeeze!(anything, _flatten), do: if empty?(anything), do: [], else: anything
 
   ##############################################################################
 
-  def unlist({list, any}) when is_list(list), do: {unlist(list), any}
-  def unlist(list) when is_list(list) do
-    case squeeze!(list) do
-#      [single] -> single # FIXME: Do we want to unlist single item?
-      many -> many
-    end
-  end
-  def unlist(anything), do: squeeze!(anything)
+  defp unlist([string]) when is_binary(string), do: string
+  defp unlist(anything), do: anything
 end

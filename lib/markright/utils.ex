@@ -59,7 +59,31 @@ defmodule Markright.Utils do
       {:blockquote, _, _} -> false
       _ -> true
     end)
-   end
+    |> Markright.Guards.squeeze!
+  end
+
+  ##############################################################################
+
+  @spec surround(Markright.Continuation.t | List.t | String.t, Atom.t, Atom.t) :: Markright.Continuation.t | List.t | String.t
+  # {["Hello, world! List here:",
+  #    {:li, %{}, "item 1"},
+  #    {:li, %{}, "item 2"},
+  #    {:li, %{}, "item 3"},
+  #  {:p, %{}, "Afterparty."}], []}
+  def surround(%C{} = cont, tag, surrounding),
+    do: %C{cont | ast: surround(cont.ast, tag, surrounding)}
+  def surround(ast, tag, surrounding) when is_list(ast) do
+    {head, middle_and_tail} = Enum.split_while(ast, fn
+      {^tag, _, _} -> false
+      _ -> true
+    end)
+    {middle, tail} = Enum.split_while(middle_and_tail, fn
+      {^tag, _, _} -> true
+      _ -> false
+    end)
+    (if Enum.empty?(head), do: middle, else: head ++ [[{surrounding, %{}, middle}]]) ++ tail
+  end
+  def surround(ast, _tag, _surrounding), do: ast
 
   ##############################################################################
 

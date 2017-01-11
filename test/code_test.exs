@@ -16,7 +16,7 @@ defmodule Markright.Parsers.Code.Test do
   """
 
   @output {:article, %{}, [
-    {:p, %{}, ["Hello world."]},
+    {:p, %{}, "Hello world."},
      {:pre, %{},
       [{:code, %{lang: "ruby"},
        "def method(*args, **args)\n  puts \"method \#{__callee__} called\"\nend"}]},

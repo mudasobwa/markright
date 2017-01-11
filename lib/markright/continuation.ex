@@ -46,13 +46,13 @@ defmodule Markright.Continuation do
   def last!({tag, opts, value}), do: %Markright.Continuation{ast: {tag, opts, value}}
 
   def continue(%Markright.Continuation{} = data, {tag, opts}),
-    do: %Markright.Continuation{data | ast: {tag, opts, unlist(data.ast)}}
+    do: %Markright.Continuation{data | ast: {tag, opts, squeeze!(data.ast)}}
   def continue(ast, {tag, opts}) when is_tuple(ast) or is_list(ast),
     do: %Markright.Continuation{ast: {tag, opts, ast}}
   def continue({tag, opts, nil}, tail) when is_binary(tail),
     do: %Markright.Continuation{ast: {tag, opts, nil}, tail: tail}
   def continue(ast, tail) when (is_tuple(ast) or is_list(ast)) and is_binary(tail),
-    do: %Markright.Continuation{ast: unlist(ast), tail: tail}
+    do: %Markright.Continuation{ast: squeeze!(ast), tail: tail}
 
   ##############################################################################
 

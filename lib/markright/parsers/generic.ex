@@ -54,8 +54,9 @@ defmodule Markright.Parsers.Generic do
       {tag, opts, ast} = if mod == Markright.Parsers.Generic, do: {tag, opts, ast}, else: ast
       {mine, rest} = Markright.Utils.split_ast(ast)
 
-      IO.puts "★[FORK]★ #{inspect({[Markright.Utils.join!([pre_ast, {tag, opts, mine}, post_ast]), rest], tail})}"
-      C.continue([Markright.Utils.join!([pre_ast, {tag, opts, mine}, post_ast]), rest], tail)
+      [Markright.Utils.join!([pre_ast, {tag, opts, mine}, post_ast]), rest]
+      |> C.continue(tail)
+      |> Markright.Utils.surround(tag, :ul) # FIXME: FIXME: FIXME: HARDCODED TAG!!!
     end
   end
 
