@@ -21,7 +21,7 @@ defmodule Markright.Helpers.Lead do
       def to_ast(input, fun \\ nil, opts \\ %{})
         when is_binary(input) and (is_nil(fun) or is_function(fun)) and is_map(opts) do
 
-        with %Markright.Continuation{ast: ast, tail: tail} <- astify(input, fun),
+        with %Markright.Continuation{ast: ast, tail: tail} <- astify(input),
              %Markright.Continuation{ast: block, tail: ""} <- Markright.Parsers.Generic.to_ast(ast) do
 
           Markright.Utils.continuation(%Markright.Continuation{ast: block, tail: tail}, {:li, opts, fun})
@@ -30,8 +30,8 @@ defmodule Markright.Helpers.Lead do
 
       ##############################################################################
 
-      @spec astify(String.t, Function.t, Markright.Buffer.t) :: Markright.Continuation.t
-      defp astify(part, fun, acc \\ Markright.Buffer.empty())
+      @spec astify(String.t, Markright.Buffer.t) :: Markright.Continuation.t
+      defp astify(part, acc \\ Markright.Buffer.empty())
 
       Enum.each(0..Markright.Syntax.indent-1, fn i ->
         @indent String.duplicate(" ", i)
@@ -40,15 +40,15 @@ defmodule Markright.Helpers.Lead do
                       @indent :: binary,
                       @lead :: binary,
                       rest :: binary
-                    >>, _fun, acc) do
+                    >>, acc) do
           %Markright.Continuation{ast: String.trim(acc.buffer), tail: @unix_newline <> @indent <> @lead <> rest}
         end
       end)
 
-      defp astify(<<letter :: binary-size(1), rest :: binary>>, fun, acc),
-        do: astify(rest, fun, Markright.Buffer.append(acc, letter))
+      defp astify(<<letter :: binary-size(1), rest :: binary>>, acc),
+        do: astify(rest, Markright.Buffer.append(acc, letter))
 
-      defp astify("", _fun, acc),
+      defp astify("", acc),
         do: %Markright.Continuation{ast: String.trim(acc.buffer), tail: ""}
     end
   end
