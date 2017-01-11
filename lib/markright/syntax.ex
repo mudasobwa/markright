@@ -17,6 +17,9 @@ defmodule Markright.Syntax do
     lead: [
       ul: [li: "-"],
     ],
+    magnet: [
+      maillink: "mailto:"
+    ],
     grip: [
       span: "⇓",
       em: "_",
@@ -38,12 +41,18 @@ defmodule Markright.Syntax do
     end)
   end
 
-  def lookahead, do: syntax()[:lookahead]
-  def indent, do: syntax()[:indent]
+  Enum.each(~w|lookahead indent shield|a, fn e ->
+    def unquote(e)(), do: syntax()[unquote(e)]
+  end)
 
-  def shields, do: syntax()[:shield]
+  Enum.each(~w|grip magnet|a, fn e ->
+    def unquote(e)() do
+      syntax()[unquote(e)]
+      |> Enum.sort(fn {_, v1}, {_, v2} -> String.length(v1) > String.length(v2) end)
+    end
+  end)
 
-  def blocks(opts \\ [regex: false]) do
+  def block(opts \\ [regex: false]) do
     if opts[:regex] do
       syntax()[:block]
       |> Keyword.values
@@ -54,12 +63,7 @@ defmodule Markright.Syntax do
     end
   end
 
-  def grips do
-    syntax()[:grip]
-    |> Enum.sort(fn {_, v1}, {_, v2} -> String.length(v1) > String.length(v2) end)
-  end
-
-  def leads do
+  def lead do
     syntax()[:lead]
     |> Keyword.values
     |> Enum.reduce(& &1 ++ &2)
@@ -82,7 +86,6 @@ defmodule Markright.Syntax do
 
   def customs do
     syntax()[:custom]
-#    |> Enum.map(fn {k, v} -> {to_module(k), v} end)
   end
 
 end

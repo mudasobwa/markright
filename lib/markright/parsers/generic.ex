@@ -84,7 +84,7 @@ defmodule Markright.Parsers.Generic do
         astify!(:join, :block, {plain, rest, fun, opts, acc})
     end
 
-    Enum.each(Markright.Syntax.shields(), fn shield ->
+    Enum.each(Markright.Syntax.shield(), fn shield ->
       defp astify(<<
                     plain :: binary-size(unquote(i)),
                     unquote(shield) :: binary,
@@ -97,7 +97,7 @@ defmodule Markright.Parsers.Generic do
 
     Enum.each(0..@max_indent, fn indent ->
       indent = String.duplicate(" ", indent)
-      Enum.each(Markright.Syntax.leads(), fn {tag, delimiter} ->
+      Enum.each(Markright.Syntax.lead(), fn {tag, delimiter} ->
         defp astify(<<
                       plain :: binary-size(unquote(i)),
                       @unix_newline :: binary,
@@ -120,7 +120,7 @@ defmodule Markright.Parsers.Generic do
       end
     end)
 
-    Enum.each(Markright.Syntax.grips(), fn {tag, delimiter} ->
+    Enum.each(Markright.Syntax.grip(), fn {tag, delimiter} ->
       defp astify(<<
                       plain :: binary-size(unquote(i)),
                       unquote(delimiter) :: binary,

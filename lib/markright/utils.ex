@@ -95,14 +95,25 @@ defmodule Markright.Utils do
       mod = atom
             |> to_string
             |> String.downcase
-            |> camelize
+            |> Macro.camelize
       if is_atom(opts[:prefix]), do: Module.concat(opts[:prefix], mod), else: mod
     end
   end
 
-  defp camelize(str) when is_binary(str) do
+  def camelize(str) when is_binary(str) do
     Regex.replace(~r/(?:_|\A)(.)/, str, fn _, m -> String.upcase(m) end)
   end
+
+  def decamelize(atom) when is_atom(atom), do: atom |> to_string |> decamelize
+  def decamelize(str) when is_binary(str) do
+    ~r/(?<!\A)\p{Lu}/
+    |> Regex.replace(str, fn _, m -> "_" <> m end)
+    |> String.downcase
+  end
+
+  def denamespace(atom) when is_atom(atom), do: atom |> to_string |> denamespace
+  def denamespace(string) when is_binary(string),
+    do: string |> String.split(".") |> Enum.at(-1)
 
   ##############################################################################
 

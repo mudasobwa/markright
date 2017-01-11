@@ -79,7 +79,7 @@ defmodule Markright.Parsers.Code do
     defp astify(<<
                   @unix_newline :: binary,
                   unquote(indent) :: binary,
-                  unquote(Markright.Syntax.blocks()[:code]) :: binary,
+                  unquote(Markright.Syntax.block()[:code]) :: binary,
                   rest :: binary
                 >>, _fun, acc) do
       %C{ast: acc.buffer, tail: rest}

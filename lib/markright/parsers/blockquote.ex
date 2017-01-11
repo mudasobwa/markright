@@ -59,7 +59,7 @@ defmodule Markright.Parsers.Blockquote do
     defp astify(<<
                   @unix_newline :: binary,
                   unquote(indent) :: binary,
-                  unquote(Markright.Syntax.blocks()[:blockquote]) :: binary,
+                  unquote(Markright.Syntax.block()[:blockquote]) :: binary,
                   rest :: binary
                 >>, fun, acc) do
       astify(" " <> rest, fun, acc)

@@ -23,7 +23,7 @@ defmodule Markright.Parsers.Code.Test do
      {:p, %{},
       ["Right after.\nNormal ", {:strong, %{}, "para"}, " again.\n"]}]}
 
-  test "understands codeblocks in the markright" do
+  test "understands codeblock in the markright" do
     assert (@input
             |> Markright.to_ast(fn cont -> IO.puts "\n\n★[TEST]★ #{inspect(cont)}\n\n" end)) == @output
   end

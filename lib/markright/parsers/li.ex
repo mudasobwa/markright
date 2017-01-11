@@ -19,56 +19,6 @@ defmodule Markright.Parsers.Li do
       %Markright.Continuation{ast: {:li, %{}, ["item 1\n ", {:strong, %{}, "ever"}]}, tail: "\n - item 2\n "}
   """
 
-  ##############################################################################
-
-  @behaviour Markright.Parser
-
-  ##############################################################################
-
-  @max_indent Markright.Syntax.indent
-
-  ##############################################################################
-
-  use Markright.Buffer
-  use Markright.Continuation
-
-  ##############################################################################
-
-  def to_ast(input, fun \\ nil, opts \\ %{})
-    when is_binary(input) and (is_nil(fun) or is_function(fun)) and is_map(opts) do
-
-    with %C{ast: ast, tail: tail} <- astify(input, fun),
-         %C{ast: block, tail: ""} <- Markright.Parsers.Generic.to_ast(ast) do
-
-      Markright.Utils.continuation(%C{ast: block, tail: tail}, {:li, opts, fun})
-    end
-  end
-
-  ##############################################################################
-
-  @spec astify(String.t, Function.t, Buf.t) :: Markright.Continuation.t
-  defp astify(part, fun, acc \\ Buf.empty())
-
-  ##############################################################################
-
-  li = Markright.Syntax.leads()[:li]
-  Enum.each(0..@max_indent-1, fn i ->
-    indent = String.duplicate(" ", i)
-    defp astify(<<
-                  @unix_newline :: binary,
-                  unquote(indent) :: binary,
-                  unquote(li) :: binary,
-                  rest :: binary
-                >>, _fun, acc) do
-      %C{ast: String.trim(acc.buffer), tail: @unix_newline <> unquote(indent) <> unquote(li) <> rest}
-    end
-  end)
-
-  defp astify(<<letter :: binary-size(1), rest :: binary>>, fun, acc),
-    do: astify(rest, fun, Buf.append(acc, letter))
-
-  defp astify("", _fun, acc),
-    do: %C{ast: String.trim(acc.buffer), tail: ""}
-
-  ##############################################################################
+  use Markright.Helpers.Lead
+  
 end
