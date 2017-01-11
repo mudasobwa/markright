@@ -20,7 +20,7 @@ defmodule Markright.Utils do
 
   ##############################################################################
 
-  @spec continuation(Atom.t, Markright.Continuation.t, {Atom.t, List.t, Function.t}) :: Markright.Continuation.t
+  @spec continuation(Atom.t, Markright.Continuation.t, {Atom.t, Map.t, Function.t}) :: Markright.Continuation.t
   def continuation(:continuation, cont, {tag, opts, fun}) do
     case C.callback(C.continue(cont, {tag, opts}), fun) do
       %C{} = c -> c
@@ -36,7 +36,14 @@ defmodule Markright.Utils do
     continuation(:continuation, cont, {tag, opts, fun}).tail
   end
 
-  @spec continuation(Markright.Continuation.t, {Atom.t, List.t, Function.t}) :: Markright.Continuation.t
+  def continuation(:empty, cont, {tag, opts, fun}) do
+    case C.callback(C.continue({tag, opts, nil}, cont.tail), fun) do
+      %C{} = c -> c
+      other    -> raise Markright.Errors.UnexpectedContinuation, value: other
+    end
+  end
+
+  @spec continuation(Markright.Continuation.t, {Atom.t, Map.t, Function.t}) :: Markright.Continuation.t
   def continuation(cont, {tag, opts, fun}) do
     continuation(:continuation, cont, {tag, opts, fun})
   end

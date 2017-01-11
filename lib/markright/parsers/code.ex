@@ -59,17 +59,18 @@ defmodule Markright.Parsers.Code do
   def to_ast(input, fun \\ nil, opts \\ %{})
     when is_binary(input) and (is_nil(fun) or is_function(fun)) and is_map(opts) do
 
-    %C{ast: lang, tail: tail} = Markright.Parsers.Word.to_ast(input)
-    with %C{ast: code, tail: rest} <- astify(tail, fun, opts, Buf.empty()) do
-      %C{ast: {:pre, opts, [{:code, (if String.trim(lang) == "", do: %{}, else: %{lang: lang}), code}]}, tail: rest}
+    with %C{ast: lang, tail: tail} <- Markright.Parsers.Word.to_ast(input),
+         %C{ast: code, tail: rest} <- astify(tail, fun) do
+      code_opts = if Markright.Guards.empty?(lang), do: %{}, else: %{lang: lang}
+      # TODO: Should we fire another continuation event on `code` explicitly?
+      Markright.Utils.continuation(%C{ast: [{:code, code_opts, code}], tail: rest}, {:pre, opts, fun})
     end
-    |> C.callback(fun)
   end
 
   ##############################################################################
 
-  @spec astify(String.t, Function.t, List.t, Buf.t) :: Markright.Continuation.t
-  defp astify(part, fun, opts, acc)
+  @spec astify(String.t, Function.t, Buf.t) :: Markright.Continuation.t
+  defp astify(part, fun, acc \\ Buf.empty())
 
   ##############################################################################
 
@@ -80,15 +81,15 @@ defmodule Markright.Parsers.Code do
                   unquote(indent) :: binary,
                   unquote(Markright.Syntax.blocks()[:code]) :: binary,
                   rest :: binary
-                >>, _fun, _opts, acc) do
+                >>, _fun, acc) do
       %C{ast: acc.buffer, tail: rest}
     end
   end)
 
-  defp astify(<<letter :: binary-size(1), rest :: binary>>, fun, opts, acc),
-    do: astify(rest, fun, opts, Buf.append(acc, letter))
+  defp astify(<<letter :: binary-size(1), rest :: binary>>, fun, acc),
+    do: astify(rest, fun, Buf.append(acc, letter))
 
-  defp astify("", _fun, _opts, acc),
+  defp astify("", _fun, acc),
     do: %C{ast: acc.buffer, tail: ""}
 
   ##############################################################################

@@ -39,10 +39,11 @@ defmodule Markright.Parsers.Block do
                     unquote(delimiter) :: binary,
                     rest :: binary
                   >>, fun, opts, _acc) when not(rest == "") do
-        with mod <- Markright.Utils.to_module(unquote(tag)),
-             %C{ast: ast, tail: tail} <- apply(mod, :to_ast, [rest, fun, opts]) do
-          ast = if mod == Markright.Parsers.Generic, do: {unquote(tag), opts, ast}, else: ast
-          %C{ast: ast, tail: tail}
+        with mod <- Markright.Utils.to_module(unquote(tag)), # TODO: extract this with into Utils fun
+             %C{} = ast <- apply(mod, :to_ast, [rest, fun, opts]) do
+          if mod == Markright.Parsers.Generic,
+            do: Markright.Utils.continuation(ast, {unquote(tag), opts, ast}),
+            else: ast
         end
       end
     end)
@@ -58,7 +59,9 @@ defmodule Markright.Parsers.Block do
                                                     end)
                          string when is_binary(string) -> {string, []}
                        end
-        %C{ast: [{:p, %{}, mine}, rest], tail: (if Markright.Guards.empty?(cont.tail), do: "", else: @splitter <> cont.tail)}
+
+        %C{ast: [Markright.Utils.continuation(:ast, %C{ast: mine}, {:p, opts, fun}), rest],
+           tail: (if Markright.Guards.empty?(cont.tail), do: "", else: @splitter <> cont.tail)}
       end
     end
   end)

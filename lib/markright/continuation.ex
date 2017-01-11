@@ -8,7 +8,7 @@ defmodule Markright.Continuation do
   @typedoc """
   The continuation, returned from any call to `Parser.to_ast/3`.
   """
-  @type t :: %__MODULE__{ast: Tuple.t, tail: String.t}
+  @type t :: %__MODULE__{ast: Tuple.t | List.t, tail: String.t}
 
   ##############################################################################
 
@@ -49,6 +49,8 @@ defmodule Markright.Continuation do
     do: %Markright.Continuation{data | ast: {tag, opts, unlist(data.ast)}}
   def continue(ast, {tag, opts}) when is_tuple(ast) or is_list(ast),
     do: %Markright.Continuation{ast: {tag, opts, ast}}
+  def continue({tag, opts, nil}, tail) when is_binary(tail),
+    do: %Markright.Continuation{ast: {tag, opts, nil}, tail: tail}
   def continue(ast, tail) when (is_tuple(ast) or is_list(ast)) and is_binary(tail),
     do: %Markright.Continuation{ast: unlist(ast), tail: tail}
 

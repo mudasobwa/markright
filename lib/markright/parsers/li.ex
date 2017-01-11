@@ -39,9 +39,9 @@ defmodule Markright.Parsers.Li do
 
     with %C{ast: ast, tail: tail} <- astify(input, fun, opts),
          %C{ast: block, tail: ""} <- Markright.Parsers.Generic.to_ast(ast) do
-      %C{ast: {:li, opts, block}, tail: tail}
+
+      Markright.Utils.continuation(%C{ast: block, tail: tail}, {:li, opts, fun})
     end
-    |> C.callback(fun)
   end
 
   ##############################################################################

@@ -21,25 +21,25 @@ defmodule Markright.Parsers.Word do
 
   def to_ast(input, fun \\ nil, opts \\ %{}) \
     when is_binary(input) and (is_nil(fun) or is_function(fun)) and is_map(opts),
-  do: astify(input, fun, opts, Buf.empty())
+  do: astify(input, fun)
 
   ##############################################################################
 
-  @spec astify(String.t, Function.t, List.t, Buf.t) :: Markright.Continuation.t
-  defp astify(part, fun, opts, acc)
+  @spec astify(String.t, Function.t, Buf.t) :: Markright.Continuation.t
+  defp astify(part, fun, acc \\ Buf.empty())
 
   ##############################################################################
 
   # FIXME: make this list dynamic
   Enum.each([" ", @unix_newline, "\t", "\r"], fn delimiter ->
-    defp astify(<<unquote(delimiter) :: binary, rest :: binary>>, _fun, _opts, acc),
+    defp astify(<<unquote(delimiter) :: binary, rest :: binary>>, _fun, acc),
       do: %C{ast: acc.buffer, tail: rest}
   end)
 
-  defp astify(<<letter :: binary-size(1), rest :: binary>>, fun, opts, acc),
-    do: astify(rest, fun, opts, Buf.append(acc, letter))
+  defp astify(<<letter :: binary-size(1), rest :: binary>>, fun, acc),
+    do: astify(rest, fun, Buf.append(acc, letter))
 
-  defp astify("", _fun, _opts, acc),
+  defp astify("", _fun, acc),
     do: %C{ast: acc.buffer}
 
   ##############################################################################
