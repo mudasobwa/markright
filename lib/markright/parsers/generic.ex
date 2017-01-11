@@ -34,7 +34,7 @@ defmodule Markright.Parsers.Generic do
     end
   end
 
-  defp astify!(:fork, tag, {plain, rest, fun, opts, acc}) do
+  defp astify!(:inplace, tag, {plain, rest, fun, opts, acc}) do
     with mod <- Markright.Utils.to_module(tag),
         %C{ast: pre_ast, tail: ""} <- astify(plain, fun, opts, acc),
         %C{ast: ast, tail: more} <- apply(mod, :to_ast, [rest, fun, opts]),
@@ -42,6 +42,20 @@ defmodule Markright.Parsers.Generic do
 
       post_ast = if mod == Markright.Parsers.Generic, do: {tag, opts, post_ast}, else: post_ast
       C.continue(Markright.Utils.join!([pre_ast, ast, post_ast]), tail)
+    end
+  end
+
+  defp astify!(:fork, tag, {plain, rest, fun, opts, acc}) do
+    with mod <- Markright.Utils.to_module(tag),
+        %C{ast: pre_ast, tail: ""} <- astify(plain, fun, opts, acc),
+        %C{ast: ast, tail: more} <- apply(mod, :to_ast, [rest, fun, opts]),
+        %C{ast: post_ast, tail: tail} <- Markright.Parsers.Generic.to_ast(more, fun, opts) do
+
+      {tag, opts, ast} = if mod == Markright.Parsers.Generic, do: {tag, opts, ast}, else: ast
+      {mine, rest} = Markright.Utils.split_ast(ast)
+
+      IO.puts "★[FORK]★ #{inspect({[Markright.Utils.join!([pre_ast, {tag, opts, mine}, post_ast]), rest], tail})}"
+      C.continue([Markright.Utils.join!([pre_ast, {tag, opts, mine}, post_ast]), rest], tail)
     end
   end
 
@@ -101,7 +115,7 @@ defmodule Markright.Parsers.Generic do
                       unquote(delimiter) :: binary,
                       rest :: binary
                   >>, fun, opts, acc) do
-          astify!(:fork, unquote(tag), {plain, rest, fun, opts, acc})
+          astify!(:inplace, unquote(tag), {plain, rest, fun, opts, acc})
       end
     end)
 

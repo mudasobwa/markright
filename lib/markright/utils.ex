@@ -50,6 +50,19 @@ defmodule Markright.Utils do
 
   ##############################################################################
 
+  @spec split_ast(String.t | List.t) :: {String.t | List.t, List.t}
+  def split_ast(ast) when is_binary(ast), do: {ast, []}
+  def split_ast(ast) when is_list(ast) do
+    Enum.split_while(ast, fn
+      {:p, _, _} -> false
+      {:pre, _, _} -> false
+      {:blockquote, _, _} -> false
+      _ -> true
+    end)
+   end
+
+  ##############################################################################
+
   @spec to_module_name(Atom.t, List.t) :: Atom.t
   defp to_module_name(atom, opts) do
     if String.starts_with?("#{atom}", "Elixir.") do
