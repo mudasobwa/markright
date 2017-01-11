@@ -26,7 +26,7 @@ defmodule Markright.Parsers.Block do
 
   ##############################################################################
 
-  @spec astify(String.t, Function.t, List.t, Buf.t) :: Markright.Continuation.t
+  @spec astify(String.t, Function.t, Map.t, Buf.t) :: Markright.Continuation.t
   defp astify(part, fun, opts, acc \\ Buf.empty())
 
   ##############################################################################

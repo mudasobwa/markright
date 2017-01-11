@@ -3,8 +3,6 @@ defmodule Markright.Syntax do
   The syntax definition/helpers.
   """
 
-#  import Markright.Utils, only: [to_module: 1]
-
   @syntax [
     lookahead: 10,
     indent: 10,
