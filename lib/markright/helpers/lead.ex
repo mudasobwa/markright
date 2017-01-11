@@ -8,10 +8,10 @@ defmodule Markright.Helpers.Lead do
   end
   ```
   """
-  defmacro __using__(_opts) do
-    quote do
+  defmacro __using__(opts) do
+    quote bind_quoted: [opts: opts, module: __MODULE__] do
       @behaviour Markright.Parser
-      @li Markright.Syntax.lead()[__MODULE__ |> Markright.Utils.denamespace |> Markright.Utils.decamelize |> String.to_atom]
+      @lead opts[:lead] || Markright.Syntax.get(Markright.Utils.atomic_module_name(module), Markright.Utils.atomic_module_name(__MODULE__))
 
       use Markright.Buffer
       use Markright.Continuation
@@ -38,10 +38,10 @@ defmodule Markright.Helpers.Lead do
         defp astify(<<
                       @unix_newline :: binary,
                       @indent :: binary,
-                      @li :: binary,
+                      @lead :: binary,
                       rest :: binary
                     >>, _fun, acc) do
-          %Markright.Continuation{ast: String.trim(acc.buffer), tail: @unix_newline <> @indent <> @li <> rest}
+          %Markright.Continuation{ast: String.trim(acc.buffer), tail: @unix_newline <> @indent <> @lead <> rest}
         end
       end)
 

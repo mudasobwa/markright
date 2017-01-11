@@ -17,9 +17,9 @@ defmodule Markright.Helpers.Magnet do
   **NYI:** This file also declares all default magnets. **FIXME** **TODO**
   """
   defmacro __using__(opts) do
-    quote bind_quoted: [opts: opts] do
+    quote bind_quoted: [opts: opts, module: __MODULE__] do
       @behaviour Markright.Parser
-      @magnet opts[:magnet] || Markright.Syntax.magnet()[__MODULE__ |> Markright.Utils.denamespace |> Markright.Utils.decamelize |> String.to_atom]
+      @magnet opts[:magnet] || Markright.Syntax.get(Markright.Utils.atomic_module_name(module), Markright.Utils.atomic_module_name(__MODULE__))
       @tag opts[:tag] || :a
       @attr opts[:attr] || :href
 

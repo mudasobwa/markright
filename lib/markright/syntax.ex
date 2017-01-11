@@ -41,6 +41,10 @@ defmodule Markright.Syntax do
     end)
   end
 
+  def get(key) when is_atom(key), do: syntax()[key]
+  def get(key, subkey) when is_atom(key) and is_atom(subkey),
+    do: syntax()[key][subkey] || apply(Markright.Syntax, key, [])[subkey]
+
   Enum.each(~w|lookahead indent shield|a, fn e ->
     def unquote(e)(), do: syntax()[unquote(e)]
   end)

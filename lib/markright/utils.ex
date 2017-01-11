@@ -20,6 +20,14 @@ defmodule Markright.Utils do
     if Code.ensure_loaded?(mod), do: mod, else: opts[:fallback]
   end
 
+  @spec atomic_module_name(Atom.t) :: Atom.t
+  def atomic_module_name(mod) do
+    mod
+    |> denamespace
+    |> decamelize
+    |> String.to_atom
+  end
+
   ##############################################################################
 
   @spec continuation(Atom.t, Markright.Continuation.t, {Atom.t, Map.t, Function.t}) :: Markright.Continuation.t
