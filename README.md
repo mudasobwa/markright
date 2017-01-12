@@ -29,17 +29,17 @@ end
 ## Basic usage
 
 ```elixir
-@input ~s"""
-If [available in Hex](https://hex.pm/docs/publish), the package can be installed
-by adding `markright` to your list of dependencies in `mix.exs`:
+  @input ~s"""
+  If [available in Hex](https://hex.pm/docs/publish), the package can be installed
+  by adding `markright` to your list of dependencies in `mix.exs`:
 
-```elixir
-def deps do
-  [{:markright, "~> 0.1.0"}]
-end
-```
+  ```elixir
+  def deps do
+    [{:markright, "~> 0.1.0"}]
+  end
+  ```
 
-## Basic Usage
+  ## Basic Usage
 """
 
 assert(
