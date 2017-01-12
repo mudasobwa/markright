@@ -78,6 +78,77 @@ defmodule Markright.Test do
       {:article, %{}, [{:p, %{}, ["Unterminated ", {:strong, %{}, "asterisk"}]}]})
   end
 
+  @readme ~s"""
+  If [available in Hex](https://hex.pm/docs/publish), the package can be installed
+  by adding `markright` to your list of dependencies in `mix.exs`:
+
+  ```elixir
+  def deps do
+    [{:markright, "~> 0.1.0"}]
+  end
+  ```
+
+  ## Basic Usage
+  """
+
+  test "understands our own README" do
+    assert(Markright.to_ast(@readme) ==
+      {:article, %{}, [
+        {:p, %{}, [
+          "If ",
+          {:a, %{href: "https://hex.pm/docs/publish"},
+          "available in Hex"},
+          ", the package can be installed\nby adding ",
+          {:code, %{}, "markright"},
+          " to your list of dependencies in ",
+          {:code, %{}, "mix.exs"},
+          ":"]},
+        {:pre, %{}, [
+          {:code, %{lang: "elixir"},
+            "def deps do\n  [{:markright, \"~> 0.1.0\"}]\nend"}]},
+        {:p, %{}, "## Basic Usage\n"}]}
+    )
+  end
+
+  @input ~S"""
+  Hello world.
+
+  ```ruby
+  def method(*args, **args)
+    puts "method #{__callee__} called"
+  end
+  ```
+
+  Right after.
+  Normal *para* again.
+  """
+
+  @output {:article, %{}, [
+    {:div, %{}, "Hello world."},
+     {:pre, %{},
+      [{:code, %{lang: "ruby"},
+       "def method(*args, **args)\n  puts \"method \#{__callee__} called\"\nend"}]},
+     {:div, %{},
+      ["Right after.\nNormal ", {:strong, %{}, "para"}, " again.\n"]}]}
+
+  test "makes changes in the callbacks" do
+    fun1 = fn
+      %Markright.Continuation{ast: {:p, %{}, text}} = cont ->
+        %Markright.Continuation{cont | ast: {:div, %{}, text}}
+      cont -> cont
+    end
+    assert Markright.to_ast(@input, fun1) == @output
+
+    fun2 = fn
+      {:p, %{}, text}, tail ->
+        %Markright.Continuation{ast: {:div, %{}, text}, tail: tail}
+      ast, tail ->
+        %Markright.Continuation{ast: ast, tail: tail}
+    end
+    assert Markright.to_ast(@input, fun2) == @output
+  end
+
+
   @badge_url "http://mel.fm/2016/05/22/plural"
 
 
