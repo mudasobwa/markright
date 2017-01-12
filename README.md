@@ -3,7 +3,7 @@
 [![Build Status](https://travis-ci.org/mudasobwa/markright.svg?branch=master)](https://travis-ci.org/mudasobwa/markright) **The extended, configurable markdown-like syntax parser, that produces an AST.**
 
 Out of the box is supports the full set of `markdown`, plus some extensions.
-The user of this librray might easily extend the functionality with her own
+The user of this library might easily extend the functionality with her own
 markup definition and a bit of elixir code to handle parsing.
 
 There is no one single call to `Regex` used. The whole parsing is done solely
@@ -29,17 +29,17 @@ end
 ## Basic usage
 
 ```elixir
-  @input ~s"""
-  If [available in Hex](https://hex.pm/docs/publish), the package can be installed
-  by adding `markright` to your list of dependencies in `mix.exs`:
+    @input ~s"""
+    If [available in Hex](https://hex.pm/docs/publish), the package can be installed
+    by adding `markright` to your list of dependencies in `mix.exs`:
 
-  ```elixir
-  def deps do
-    [{:markright, "~> 0.1.0"}]
-  end
-  ```
+    ```elixir
+    def deps do
+      [{:markright, "~> 0.1.0"}]
+    end
+    ```
 
-  ## Basic Usage
+    ## Basic Usage
 """
 
 assert(
