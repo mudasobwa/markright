@@ -16,45 +16,20 @@ defmodule Markright.Parsers.Img do
 
   ##############################################################################
 
-  use Markright.Buffer
-  use Markright.Continuation
-
-  ##############################################################################
-
   def to_ast(input, fun \\ nil, opts \\ %{})
     when is_binary(input) and (is_nil(fun) or is_function(fun)) and is_map(opts) do
 
-    with %C{ast: first, tail: rest} <- Markright.Parsers.Word.to_ast(input),
-         %C{ast: ast, tail: tail} <- astify(rest, fun) do
+    with %Markright.Continuation{ast: first, tail: rest} <- Markright.Parsers.Word.to_ast(input),
+         %Markright.Continuation{ast: ast, tail: tail} <- astify(rest, fun) do
       attrs = Map.merge(
         opts, case ast do
                 [text, link] -> %{src: link, alt: first <> " " <> text}
                 text when is_binary(text) -> %{src: first, alt: text}
               end)
-      Markright.Utils.continuation(:empty, %C{tail: tail}, {:img, attrs, fun})
+      Markright.Utils.continuation(:empty, %Markright.Continuation{tail: tail}, {:img, attrs, fun})
     end
   end
 
-  ##############################################################################
+  use Markright.Helpers.ImgLink
 
-  @spec astify(String.t, Function.t, Buf.t) :: Markright.Continuation.t
-  defp astify(part, fun, acc \\ Buf.empty())
-
-  ##############################################################################
-
-  Enum.each(~w/]( |/, fn delimiter ->
-    defp astify(<<unquote(delimiter) :: binary, rest :: binary>>, fun, acc),
-      do: with %C{ast: ast, tail: tail} <- astify(rest, fun),
-            do: %C{ast: [acc.buffer, ast], tail: tail}
-  end)
-
-  Enum.each(~w/] )/, fn delimiter ->
-    defp astify(<<unquote(delimiter) :: binary, rest :: binary>>, _fun, acc),
-      do: %C{ast: acc.buffer, tail: rest}
-  end)
-
-  defp astify(<<letter :: binary-size(1), rest :: binary>>, fun, acc),
-    do: astify(rest, fun, Buf.append(acc, letter))
-
-  ##############################################################################
 end

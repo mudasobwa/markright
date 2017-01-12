@@ -33,7 +33,7 @@ defmodule Markright.Helpers.Lead do
       @spec astify(String.t, Markright.Buffer.t) :: Markright.Continuation.t
       defp astify(part, acc \\ Markright.Buffer.empty())
 
-      Enum.each(0..Markright.Syntax.indent-1, fn i ->
+      Enum.each(0..Markright.Syntax.indent - 1, fn i ->
         @indent String.duplicate(" ", i)
         defp astify(<<
                       @unix_newline :: binary,

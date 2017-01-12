@@ -1,4 +1,8 @@
 defmodule Markright.Buffer do
+  @moduledoc ~S"""
+  The buffer, used in continuations, stores the tail of the string parsed,
+  tags that are already opened and arbitrary values in `bag` field.
+  """
 
   @typedoc """
   Buffer to hold a string buffer and the FILO of tags.
@@ -69,7 +73,7 @@ defmodule Markright.Buffer do
     case data.tags do
       [] -> {nil, data}
       list when is_list(list) ->
-        {List.last(list), %Buf{data | tags: Enum.slice(list, 0..Enum.count(list)-2)}}
+        {List.last(list), %Buf{data | tags: Enum.slice(list, 0..Enum.count(list) - 2)}}
     end
   end
 

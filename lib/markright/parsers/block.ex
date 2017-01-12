@@ -53,7 +53,7 @@ defmodule Markright.Parsers.Block do
         {mine, rest} = Markright.Utils.split_ast(cont.ast)
 
         %C{ast: [Markright.Utils.continuation(:ast, %C{ast: mine}, {:p, opts, fun}), rest],
-           tail: (if Markright.Guards.empty?(cont.tail), do: "", else: @splitter <> cont.tail)}
+           tail: (if Markright.Utils.empty?(cont.tail), do: "", else: @splitter <> cont.tail)}
       end
     end
   end)

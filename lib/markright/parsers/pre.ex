@@ -61,7 +61,7 @@ defmodule Markright.Parsers.Pre do
 
     with %C{ast: lang, tail: tail} <- Markright.Parsers.Word.to_ast(input),
          %C{ast: code, tail: rest} <- astify(tail, fun) do
-      code_opts = if Markright.Guards.empty?(lang), do: %{}, else: %{lang: lang}
+      code_opts = if Markright.Utils.empty?(lang), do: %{}, else: %{lang: lang}
       # TODO: Should we fire another continuation event on `code` explicitly?
       Markright.Utils.continuation(%C{ast: [{:code, code_opts, code}], tail: rest}, {:pre, opts, fun})
     end

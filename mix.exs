@@ -30,7 +30,7 @@ defmodule Markright.Mixfile do
   defp deps do
     [
       {:xml_builder, "~> 0.0.9", only: ~w|dev test|a},
-      {:credo, "~> 0.4", only: :dev},
+      {:credo, "~> 0.5", only: :dev},
       {:ex_doc, "~> 0.11", only: :dev}
     ]
   end

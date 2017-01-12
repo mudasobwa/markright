@@ -32,10 +32,6 @@ defmodule Markright.Continuation do
 
   ##############################################################################
 
-  import Markright.Guards
-
-  ##############################################################################
-
   def last?(%Markright.Continuation{tail: ""} = _data), do: true
   def last?(%Markright.Continuation{} = _data), do: false
 
@@ -48,13 +44,13 @@ defmodule Markright.Continuation do
   def last!({tag, opts, value}), do: %Markright.Continuation{ast: {tag, opts, value}}
 
   def continue(%Markright.Continuation{} = data, {tag, opts}),
-    do: %Markright.Continuation{data | ast: {tag, opts, squeeze!(data.ast)}}
+    do: %Markright.Continuation{data | ast: {tag, opts, Markright.Utils.squeeze!(data.ast)}}
   def continue(ast, {tag, opts}) when is_tuple(ast) or is_list(ast),
     do: %Markright.Continuation{ast: {tag, opts, ast}}
   def continue({tag, opts, nil}, tail) when is_binary(tail),
     do: %Markright.Continuation{ast: {tag, opts, nil}, tail: tail}
   def continue(ast, tail) when (is_tuple(ast) or is_list(ast)) and is_binary(tail),
-    do: %Markright.Continuation{ast: squeeze!(ast), tail: tail}
+    do: %Markright.Continuation{ast: Markright.Utils.squeeze!(ast), tail: tail}
 
   ##############################################################################
 
