@@ -1,4 +1,4 @@
-defmodule Markright.Parsers.Code do
+defmodule Markright.Parsers.Pre do
   @moduledoc ~S"""
   Parses the input for the code block.
 
@@ -9,7 +9,7 @@ defmodule Markright.Parsers.Code do
       ...> ```
       ...> Other text.
       ...> "
-      iex> Markright.Parsers.Code.to_ast(input)
+      iex> Markright.Parsers.Pre.to_ast(input)
       %Markright.Continuation{
         ast: {:pre, %{}, [{:code, %{lang: "ruby"}, " $ ls -la"}]},
         tail: "\n Other text.\n "}
@@ -19,7 +19,7 @@ defmodule Markright.Parsers.Code do
       ...> ```
       ...> Other text.
       ...> "
-      iex> Markright.Parsers.Code.to_ast(input)
+      iex> Markright.Parsers.Pre.to_ast(input)
       %Markright.Continuation{
         ast: {:pre, %{}, [{:code, %{}, " $ ls -la"}]}, tail: "\n Other text.\n "}
 
@@ -30,7 +30,7 @@ defmodule Markright.Parsers.Code do
       ...> ```
       ...> Other text.
       ...> "
-      iex> Markright.Parsers.Code.to_ast(input)
+      iex> Markright.Parsers.Pre.to_ast(input)
       %Markright.Continuation{ast: {:pre, %{},
              [{:code, %{lang: "elixir"},
                " def f(\"\"), do: :empty_string\n\n def f([]), do: :empty_list"}]},
@@ -79,7 +79,7 @@ defmodule Markright.Parsers.Code do
     defp astify(<<
                   @unix_newline :: binary,
                   unquote(indent) :: binary,
-                  unquote(Markright.Syntax.block()[:code]) :: binary,
+                  unquote(Markright.Syntax.get(:block, :pre)) :: binary,
                   rest :: binary
                 >>, _fun, acc) do
       %C{ast: acc.buffer, tail: rest}

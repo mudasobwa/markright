@@ -16,6 +16,7 @@ defmodule Markright.Test do
   ```elixir
   defmodule Xml.Namespaces do
     @var 42
+
     def method(param \\ 3.14) do
       if is_nil(param), do: @var, else: @var * param
     end
@@ -47,6 +48,7 @@ defmodule Markright.Test do
   \t<pre>
   \t\t<code lang=\"elixir\">defmodule Xml.Namespaces do
     @var 42
+
     def method(param \\\\ 3.14) do
       if is_nil(param), do: @var, else: @var * param
     end</code>
@@ -75,5 +77,8 @@ defmodule Markright.Test do
            |> Markright.to_ast ==
       {:article, %{}, [{:p, %{}, ["Unterminated ", {:strong, %{}, "asterisk"}]}]})
   end
+
+  @badge_url "http://mel.fm/2016/05/22/plural"
+
 
 end

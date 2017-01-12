@@ -9,7 +9,7 @@ defmodule Markright.Syntax do
 
     shield: ~w|/ \\|,
     block: [
-      code: "```",
+      pre: "```",
       blockquote: ">"
     ],
     flush: [

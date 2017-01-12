@@ -61,14 +61,16 @@ defmodule Markright.Utils do
   ##############################################################################
 
   @spec split_ast(String.t | List.t) :: {String.t | List.t, List.t}
+
+  @splitters ~w|p div|a ++ Keyword.keys(Markright.Syntax.block())
+  @clauses Enum.map(@splitters, fn tag ->
+    {:->, [], [[{:{}, [], [tag, {:_, [], Elixir}, {:_, [], Elixir}]}], false]}
+  end) ++ [{:->, [], [[{:_, [], Elixir}], true]}]
+  defmacrop split_while_ast_function, do: {:fn, [], @clauses}
+
   def split_ast(ast) when is_binary(ast), do: {ast, []}
   def split_ast(ast) when is_list(ast) do
-    Enum.split_while(ast, fn
-      {:p, _, _} -> false
-      {:pre, _, _} -> false
-      {:blockquote, _, _} -> false
-      _ -> true
-    end)
+    Enum.split_while(ast, split_while_ast_function())
     |> Markright.Guards.squeeze!
   end
 
