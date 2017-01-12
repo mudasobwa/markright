@@ -29,7 +29,7 @@ end
 ## Basic usage
 
 ```elixir
-    @input ~s"""
+@input ~s"""
     If [available in Hex](https://hex.pm/docs/publish), the package can be installed
     by adding `markright` to your list of dependencies in `mix.exs`:
 
@@ -70,7 +70,13 @@ horizontal rules are not yet implemented. Pull requests are welcome.
 iex> "Hello, *[address]Aleksei*!"
 ...> |> Markright.to_ast
 ...> |> XmlBuilder.generate
-"<article>\n\t<p>\n\t\tHello, \n\t\t<strong class=\"address\">Aleksei</strong>\n\t\t!\n\t</p>\n</article>"
+"<article>
+\t<p>
+\t\tHello,
+\t\t<strong class=\"address\">Aleksei</strong>
+\t\t!
+\t</p>
+</article>"
 ```
 
 ## Power tools
