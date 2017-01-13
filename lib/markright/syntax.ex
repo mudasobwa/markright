@@ -9,6 +9,7 @@ defmodule Markright.Syntax do
 
     shield: ~w|/ \\|,
     block: [
+      h: "#",
       pre: "```",
       blockquote: ">"
     ],

@@ -3,7 +3,7 @@ defmodule Markright.Test do
   doctest Markright
 
   @input_text ~S"""
-  **Опыт использования пространств имён в клиентском XHTML**
+  # Опыт использования пространств имён в клиентском XHTML
 
   _Текст Ростислава Чебыкина._
 
@@ -30,10 +30,10 @@ defmodule Markright.Test do
 
   @output_text ~s"""
   <article>
+  \t<h1>Опыт использования пространств имён в клиентском XHTML</h1>
   \t<p>
-  \t\t<b>Опыт использования пространств имён в клиентском XHTML</b>
-  \t</p>
-  \t<p>
+  \t\t
+
   \t\t<em>Текст Ростислава Чебыкина.</em>
   \t</p>
   \t<blockquote>
@@ -106,7 +106,7 @@ defmodule Markright.Test do
         {:pre, %{}, [
           {:code, %{lang: "elixir"},
             "def deps do\n  [{:markright, \"~> 0.1.0\"}]\nend"}]},
-        {:p, %{}, "## Basic Usage\n"}]}
+        {:p, %{}, [{:h2, %{}, "Basic Usage"}]}]}
     )
   end
 

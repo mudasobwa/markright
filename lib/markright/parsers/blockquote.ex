@@ -5,13 +5,15 @@ defmodule Markright.Parsers.Blockquote do
   ## Examples
 
       iex> input = "Hello
-      ...> — world!
+      ...> — _world_!
       ...>
       ...> Other text.
       ...> "
       iex> Markright.Parsers.Blockquote.to_ast(input)
-      %Markright.Continuation{ast: {:blockquote, %{},
-             "Hello\n — world!"}, tail: " Other text.\n "}
+      %Markright.Continuation{
+        ast: {:blockquote, %{}, [
+          "Hello\n — ", {:em, %{}, "world"}, "!"]},
+        tail: " Other text.\n "}
   """
 
   ##############################################################################
