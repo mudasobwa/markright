@@ -148,6 +148,27 @@ defmodule Markright.Test do
     assert Markright.to_ast(@input, fun2) == @output
   end
 
+  @input_flush ~s"""
+  Robin Hood  \nwas a skilled archer.  \nThis is good  \nRye needs her marcher.
+  ---
+  Adiós!
+  """
+
+  @output_flush {:article, %{}, [
+    {:p, %{}, [
+      "Robin Hood",
+      {:br, %{}, nil},
+      "a skilled archer.",
+      {:br, %{}, nil},
+      "is good",
+      {:br, %{}, nil},
+      "needs her marcher.",
+      {:hr, %{}, nil},
+      "Adiós!\n"]}]}
+
+  test "understands flush tags" do
+    assert Markright.to_ast(@input_flush) == @output_flush
+  end
 
   @badge_url "http://mel.fm/2016/05/22/plural"
 

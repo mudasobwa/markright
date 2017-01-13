@@ -39,23 +39,13 @@ defmodule Markright.Parsers.Generic do
     end
   end
 
-  defp astify!(:inplace, tag, {plain, rest, fun, opts, acc}) do
+  defp astify!(:customs, tag, {plain, rest, fun, opts, acc}) do
     with mod <- Markright.Utils.to_module(tag),
         %C{ast: pre_ast, tail: ""} <- astify(plain, fun, opts, acc),
         %C{ast: ast, tail: more} <- apply(mod, :to_ast, [rest, fun, opts]),
         %C{ast: post_ast, tail: tail} <- Markright.Parsers.Generic.to_ast(more, fun, opts) do
 
       post_ast = if mod == Markright.Parsers.Generic, do: {tag, opts, post_ast}, else: post_ast
-      C.continue(Markright.Utils.join!([pre_ast, ast, post_ast]), tail)
-    end
-  end
-
-  defp astify!(:magnet, tag, {plain, rest, fun, opts, acc}) do
-    with mod <- Markright.Utils.to_module(tag, [fallback: Markright.Parsers.Magnet]),
-        %C{ast: pre_ast, tail: ""} <- astify(plain, fun, opts, acc),
-        %C{ast: ast, tail: more} <- apply(mod, :to_ast, [rest, fun, opts]),
-        %C{ast: post_ast, tail: tail} <- Markright.Parsers.Generic.to_ast(more, fun, opts) do
-
       C.continue(Markright.Utils.join!([pre_ast, ast, post_ast]), tail)
     end
   end
@@ -83,6 +73,17 @@ defmodule Markright.Parsers.Generic do
     end
   end
 
+  # :magnet, :flush
+  defp astify!(type, tag, {plain, rest, fun, opts, acc}) do
+    with mod <- Markright.Utils.to_module(tag, [fallback: Markright.Utils.to_module(type)]),
+        %C{ast: pre_ast, tail: ""} <- astify(plain, fun, opts, acc),
+        %C{ast: ast, tail: more} <- apply(mod, :to_ast, [rest, fun, opts]),
+        %C{ast: post_ast, tail: tail} <- Markright.Parsers.Generic.to_ast(more, fun, opts) do
+
+      C.continue(Markright.Utils.join!([pre_ast, ast, post_ast]), tail)
+    end
+  end
+
   ##############################################################################
 
   @spec astify(String.t, Function.t, List.t, Buf.t) :: Markright.Continuation.t
@@ -99,6 +100,26 @@ defmodule Markright.Parsers.Generic do
         astify!(:join, :block, {plain, rest, fun, opts, acc})
     end
 
+    Enum.each(Markright.Syntax.magnet(), fn {tag, delimiter} ->
+      defp astify(<<
+                    plain :: binary-size(unquote(i)),
+                    unquote(delimiter) :: binary,
+                    rest :: binary
+                  >>, fun, opts, acc) do
+          astify!(:magnet, unquote(tag), {plain, rest, fun, opts, acc})
+      end
+    end)
+
+    Enum.each(Markright.Syntax.flush(), fn {tag, delimiter} ->
+      defp astify(<<
+                    plain :: binary-size(unquote(i)),
+                    unquote(delimiter) :: binary,
+                    rest :: binary
+                  >>, fun, opts, acc) do
+          astify!(:flush, unquote(tag), {plain, rest, fun, opts, acc})
+      end
+    end)
+
     Enum.each(Markright.Syntax.shield(), fn shield ->
       defp astify(<<
                     plain :: binary-size(unquote(i)),
@@ -107,16 +128,6 @@ defmodule Markright.Parsers.Generic do
                     rest :: binary
                   >>, fun, opts, acc) do
         astify(rest, fun, opts, Buf.append(acc, plain <> next))
-      end
-    end)
-
-    Enum.each(Markright.Syntax.magnet(), fn {tag, delimiter} ->
-      defp astify(<<
-                    plain :: binary-size(unquote(i)),
-                    unquote(delimiter) :: binary,
-                    rest :: binary
-                  >>, fun, opts, acc) do
-          astify!(:magnet, unquote(tag), {plain, rest, fun, opts, acc})
       end
     end)
 
@@ -141,7 +152,7 @@ defmodule Markright.Parsers.Generic do
                       unquote(delimiter) :: binary,
                       rest :: binary
                   >>, fun, opts, acc) do
-          astify!(:inplace, unquote(tag), {plain, rest, fun, opts, acc})
+          astify!(:customs, unquote(tag), {plain, rest, fun, opts, acc})
       end
     end)
 

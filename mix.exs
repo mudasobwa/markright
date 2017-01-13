@@ -41,12 +41,8 @@ defmodule Markright.Mixfile do
     """
     **The extended, configurable markdown-like syntax parser, that produces an AST.**
 
-    Out of the box is supports the full set of `markdown`, plus some extensions.
-    The user of this library might easily extend the functionality with her own
-    markup definition and a bit of elixir code to handle parsing.
-
-    There is no one single call to `Regex` used. The whole parsing is done solely
-    on pattern matching the input binary.
+    Supports the full set of `markdown`, plus extensions
+    (custom markup with a bit of elixir code to handle parsing.)
 
     The AST produced is understandable by [`XmlBuilder`](https://github.com/joshnuss/xml_builder).
     """
@@ -55,7 +51,7 @@ defmodule Markright.Mixfile do
   defp package do
     [
      name: :markright,
-     files: ["lib", "mix.exs", "README.md", "LICENSE"],
+     files: ["lib", "mix.exs", "README.md"],
      maintainers: ["Aleksei Matiushkin"],
      licenses: ["MIT"],
      links: %{"GitHub" => "https://github.com/mudasobwa/markright",

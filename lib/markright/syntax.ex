@@ -13,6 +13,8 @@ defmodule Markright.Syntax do
       blockquote: ">"
     ],
     flush: [
+      hr: "\n---",
+      br: "  \n"
     ],
     lead: [
       ul: [li: "-"],
@@ -49,7 +51,7 @@ defmodule Markright.Syntax do
     def unquote(e)(), do: syntax()[unquote(e)]
   end)
 
-  Enum.each(~w|grip magnet|a, fn e ->
+  Enum.each(~w|grip magnet flush|a, fn e ->
     def unquote(e)() do
       syntax()[unquote(e)]
       |> Enum.sort(fn {_, v1}, {_, v2} -> String.length(v1) > String.length(v2) end)
