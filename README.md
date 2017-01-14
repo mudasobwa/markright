@@ -37,7 +37,7 @@ end
     def deps do
       [{:markright, "~> 0.2.0"}]
     end
-  ```
+    ```
 
     ## Basic Usage
     Blah...
