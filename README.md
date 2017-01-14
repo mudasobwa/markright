@@ -29,32 +29,32 @@ end
 ## Basic usage
 
 ```elixir
-  @input ~s"""
-  If [available in Hex](https://hex.pm/docs/publish), the package can be installed
-  by adding `markright` to your list of dependencies in `mix.exs`:
+    @input ~s"""
+    If [available in Hex](https://hex.pm/docs/publish), the package can be installed
+    by adding `markright` to your list of dependencies in `mix.exs`:
 
-  ```elixir
-  def deps do
-    [{:markright, "~> 0.2.0"}]
-  end
+    ```elixir
+    def deps do
+      [{:markright, "~> 0.2.0"}]
+    end
   ```
 
-  ## Basic Usage
-  Blah...
-  """
+    ## Basic Usage
+    Blah...
+    """
 
-assert(
-  Markright.to_ast(@input) ==
-  {:article, %{},
-     [{:p, %{},
-       ["If ", {:a, %{href: "https://hex.pm/docs/publish"}, "available in Hex"},
-        ", the package can be installed\nby adding ", {:code, %{}, "markright"},
-        " to your list of dependencies in ", {:code, %{}, "mix.exs"}, ":"]},
-      {:pre, %{},
-       [{:code, %{lang: "elixir"},
-         "def deps do\n  [{:markright, \"~> 0.1.0\"}]\nend"}]},
-      {:p, %{}, [{:h2, %{}, "Basic Usage"}]}, {:p, %{}, "Blah...\n"}]}
-)
+    assert(
+      Markright.to_ast(@input) ==
+        {:article, %{},
+           [{:p, %{}, [
+              "If ", {:a, %{href: "https://hex.pm/docs/publish"}, "available in Hex"},
+              ", the package can be installed\nby adding ", {:code, %{}, "markright"},
+              " to your list of dependencies in ", {:code, %{}, "mix.exs"}, ":"]},
+            {:pre, %{},
+              [{:code, %{lang: "elixir"},
+              "def deps do\n  [{:markright, \"~> 0.1.0\"}]\nend"}]},
+            {:p, %{}, [{:h2, %{}, "Basic Usage"}]}, {:p, %{}, "Blah...\n"}]}
+    )
 ```
 
 Yes, for unknown reason headers are yet parsed inside `:p` tag, no idea why.
