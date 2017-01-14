@@ -29,19 +29,19 @@ end
 ## Basic usage
 
 ```elixir
-@input ~s"""
-If [available in Hex](https://hex.pm/docs/publish), the package can be installed
-by adding `markright` to your list of dependencies in `mix.exs`:
+  @input ~s"""
+  If [available in Hex](https://hex.pm/docs/publish), the package can be installed
+  by adding `markright` to your list of dependencies in `mix.exs`:
 
-```elixir
-def deps do
-  [{:markright, "~> 0.2.0"}]
-end
-```
+  ```elixir
+  def deps do
+    [{:markright, "~> 0.2.0"}]
+  end
+  ```
 
-## Basic Usage
-Blah...
-"""
+  ## Basic Usage
+  Blah...
+  """
 
 assert(
   Markright.to_ast(@input) ==
