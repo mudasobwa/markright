@@ -1,12 +1,15 @@
 defmodule Markright.Mixfile do
   use Mix.Project
 
+  @app :markright
+
   def project do
-    [app: :markright,
-     version: "0.1.2",
+    [app: @app,
+     version: "0.2.0",
      elixir: "~> 1.3",
      build_embedded: Mix.env == :prod,
      start_permanent: Mix.env == :prod,
+     escript: [main_module: Markright, path: "bin/#{@app}"],
      description: description(),
      package: package(),
      deps: deps()]
@@ -51,7 +54,7 @@ defmodule Markright.Mixfile do
   defp package do
     [
      name: :markright,
-     files: ["lib", "mix.exs", "README.md"],
+     files: ~w|bin lib mix.exs README.md|,
      maintainers: ["Aleksei Matiushkin"],
      licenses: ["MIT"],
      links: %{"GitHub" => "https://github.com/mudasobwa/markright",

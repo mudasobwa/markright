@@ -70,4 +70,33 @@ defmodule Markright do
     to_ast(Regex.replace(~r/\r\n|\r/, input, "\n"), fun, opts)
   end
 
+  ##############################################################################
+
+  def main(args) do
+    args |> parse_args |> process
+  end
+
+  def process([]) do
+    IO.puts "Usage: markright --file=filename.md"
+  end
+
+  def process(options) do
+    if File.exists?(options[:file]) do
+      result = options[:file]
+               |> File.read!
+               |> to_ast
+               |> XmlBuilder.generate
+      # result = if options[:squeeze], do: result |> String.split |> Enum.join(" "), else: result
+      result = if options[:silent], do: result, else: IO.inspect(result)
+    else
+      IO.puts "Unable to read file #{options[:file]}"
+    end
+  end
+
+  defp parse_args(args) do
+    {options, _, _} = OptionParser.parse(args,
+      switches: [file: :string]
+    )
+    options
+  end
 end
