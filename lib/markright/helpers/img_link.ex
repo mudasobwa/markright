@@ -24,6 +24,7 @@ defmodule Markright.Helpers.ImgLink do
         defp astify(<<@delimiter :: binary, rest :: binary>>, _fun, acc),
           do: %Markright.Continuation{ast: acc.buffer, tail: rest}
       end)
+      Module.delete_attribute(__MODULE__, :delimiter)
 
       defp astify(<<letter :: binary-size(1), rest :: binary>>, fun, acc),
         do: astify(rest, fun, Markright.Buffer.append(acc, letter))

@@ -19,7 +19,10 @@ defmodule Markright.Helpers.Magnet do
   defmacro __using__(opts) do
     quote bind_quoted: [opts: opts, module: __MODULE__] do
       @behaviour Markright.Parser
+
       @magnet opts[:magnet] || Markright.Syntax.get(Markright.Utils.atomic_module_name(module), Markright.Utils.atomic_module_name(__MODULE__))
+      @terminators [" ", "\n", "\t", "\r", "]", "|"]
+
       @tag opts[:tag] || :a
       @continuation opts[:continuation] || :continuation
       @attr opts[:attr] || :href
@@ -56,11 +59,12 @@ defmodule Markright.Helpers.Magnet do
 
       ##############################################################################
 
-      Enum.each([" ", @unix_newline, "\t", "\r"], fn delimiter ->
+      Enum.each(@terminators, fn delimiter ->
         @delimiter delimiter
-        defp astify(<<@delimiter :: binary, rest :: binary>>, acc),
+        defp astify(<<@delimiter :: binary, _rest :: binary>> = rest, acc),
           do: %Markright.Continuation{ast: acc.buffer, tail: rest}
       end)
+      Module.delete_attribute(__MODULE__, :delimiter)
 
       defp astify(<<letter :: binary-size(1), rest :: binary>>, acc),
         do: astify(rest, Markright.Buffer.append(acc, letter))

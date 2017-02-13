@@ -6,14 +6,14 @@
 
         iex> input = "mailto:am@mudasobwa.ru "
         iex> Markright.Parsers.Maillink.to_ast(input)
-        %Markright.Continuation{ast: {:a, %{href: "mailto:am@mudasobwa.ru"}, "mailto:am@mudasobwa.ru"}, tail: ""}
+        %Markright.Continuation{ast: {:a, %{href: "mailto:am@mudasobwa.ru"}, "mailto:am@mudasobwa.ru"}, tail: " "}
 
         iex> input = "Hello mailto:am@mudasobwa.ru !"
         iex> Markright.to_ast(input)
         {:article, %{},
             [{:p, %{},
-              ["Hello ", {:a, %{href: "am@mudasobwa.ru"}, "am@mudasobwa.ru"},
-               "!"]}]}
+              ["Hello ", {:a, %{href: "mailto:am@mudasobwa.ru"}, "mailto:am@mudasobwa.ru"},
+               " !"]}]}
     """
 
     use Markright.Helpers.Magnet

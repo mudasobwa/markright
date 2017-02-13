@@ -21,7 +21,9 @@ defmodule Markright.Syntax do
       ul: [li: "-"],
     ],
     magnet: [
-      maillink: "mailto:"
+      maillink: "mailto:",
+      httplink: "http://",
+      httpslink: "https://",
     ],
     grip: [
       span: "⇓",

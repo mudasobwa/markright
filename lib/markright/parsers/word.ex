@@ -5,7 +5,7 @@ defmodule Markright.Parsers.Word do
   ## Examples
 
       iex> "Hello my lovely world!" |> Markright.Parsers.Word.to_ast
-      %Markright.Continuation{ast: "Hello", tail: "my lovely world!"}
+      %Markright.Continuation{ast: "Hello", tail: " my lovely world!"}
   """
 
   ##############################################################################
@@ -14,9 +14,15 @@ defmodule Markright.Parsers.Word do
 
   ##############################################################################
 
-  def to_ast(input, fun \\ nil, opts \\ %{}) \
-    when is_binary(input) and (is_nil(fun) or is_function(fun)) and is_map(opts),
-  do: astify(input)
+  def to_ast(input, fun \\ nil, opts \\ %{trim: true}) \
+    when is_binary(input) and (is_nil(fun) or is_function(fun)) and is_map(opts) do
+      cont = astify(input)
+      if Map.get(opts, :trim) do
+        %Markright.Continuation{cont | tail: String.trim(cont.tail)}
+      else
+        cont
+      end
+  end
 
   ##############################################################################
 end
