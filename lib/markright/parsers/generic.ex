@@ -106,7 +106,7 @@ defmodule Markright.Parsers.Generic do
                     unquote(delimiter) :: binary,
                     rest :: binary
                   >>, fun, opts, acc) do
-          astify!(:magnet, unquote(tag), {plain, rest, fun, opts, acc})
+          astify!(:magnet, unquote(tag), {plain, unquote(delimiter) <> rest, fun, opts, acc})
       end
     end)
 

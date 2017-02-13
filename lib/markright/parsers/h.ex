@@ -10,7 +10,7 @@ defmodule Markright.Parsers.H do
       iex> Markright.Parsers.H.to_ast(input)
       %Markright.Continuation{
         ast: {:h3, %{}, ["Hello ", {:em, %{}, "world"}, "!"]},
-        tail: " Other text.\n "}
+        tail: " Other text."}
 
       iex> input = "## Hello _world_!
       ...> Other text.
@@ -18,7 +18,7 @@ defmodule Markright.Parsers.H do
       iex> Markright.to_ast(input)
       {:article, %{}, [
         {:h2, %{}, ["Hello ", {:em, %{}, "world"}, "!"]},
-        {:p, %{}, " Other text.\n "}]}
+        {:p, %{}, " Other text."}]}
   """
 
   ##############################################################################
@@ -39,7 +39,7 @@ defmodule Markright.Parsers.H do
   def to_ast(input, fun \\ nil, opts \\ %{})
     when is_binary(input) and (is_nil(fun) or is_function(fun)) and is_map(opts) do
 
-    with %C{ast: first, tail: rest} <- Markright.Parsers.Word.to_ast(input),
+    with %C{ast: first, tail: rest} <- Markright.Parsers.Word.to_ast(input, nil, %{trim: true}),
          %C{ast: ast, tail: tail} <- astify(rest),
          %C{ast: block, tail: ""} <- Markright.Parsers.Generic.to_ast(ast) do
 

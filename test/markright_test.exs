@@ -46,7 +46,8 @@ defmodule Markright.Test do
   \t<p>Мы вместе с Денисом Лесновым разрабатываем аудиопроигрыватель для сайта,
   о котором уже рассказывали здесь в 2015 году.</p>
   \t<pre>
-  \t\t<code lang=\"elixir\">defmodule Xml.Namespaces do
+  \t\t<code lang=\"elixir\">
+  defmodule Xml.Namespaces do
     @var 42
 
     def method(param \\\\ 3.14) do
@@ -54,8 +55,7 @@ defmodule Markright.Test do
     end</code>
   \t</pre>
   \t<p>Сейчас на подходе обновлённая версия, которая умеет играть
-  не только отдельные треки, но и целые плейлисты.
-  </p>
+  не только отдельные треки, но и целые плейлисты.</p>
   </article>
   """
 
@@ -105,7 +105,7 @@ defmodule Markright.Test do
           ":"]},
         {:pre, %{}, [
           {:code, %{lang: "elixir"},
-            "def deps do\n  [{:markright, \"~> 0.1.0\"}]\nend"}]},
+            "\ndef deps do\n  [{:markright, \"~> 0.1.0\"}]\nend"}]},
         {:p, %{}, [{:h2, %{}, "Basic Usage"}]}]}
     )
   end
@@ -127,7 +127,7 @@ defmodule Markright.Test do
     {:div, %{}, "Hello world."},
      {:pre, %{},
       [{:code, %{lang: "ruby"},
-       "def method(*args, **args)\n  puts \"method \#{__callee__} called\"\nend"}]},
+       "\ndef method(*args, **args)\n  puts \"method \#{__callee__} called\"\nend"}]},
      {:div, %{},
       ["Right after.\nNormal ", {:strong, %{}, "para"}, " again.\n"]}]}
 
@@ -158,13 +158,13 @@ defmodule Markright.Test do
     {:p, %{}, [
       "Robin Hood",
       {:br, %{}, nil},
-      "a skilled archer.",
+      " a skilled archer.",
       {:br, %{}, nil},
-      "is good",
+      " is good",
       {:br, %{}, nil},
-      "needs her marcher.",
+      " needs her marcher.",
       {:hr, %{}, nil},
-      "Adiós!\n"]}]}
+      "\nAdiós!\n"]}]}
 
   test "understands flush tags" do
     assert Markright.to_ast(@input_flush) == @output_flush

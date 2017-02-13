@@ -23,8 +23,8 @@ defmodule Markright.Parsers.Img do
          %Markright.Continuation{ast: ast, tail: tail} <- astify(rest, fun) do
       attrs = Map.merge(
         opts, case ast do
-                [text, link] -> %{src: link, alt: first <> " " <> text}
-                text when is_binary(text) -> %{src: first, alt: text}
+                [text, link] -> %{src: link, alt: first <> text}
+                text when is_binary(text) -> %{src: first, alt: String.trim(text)}
               end)
       Markright.Utils.continuation(:empty, %Markright.Continuation{tail: tail}, {:img, attrs, fun})
     end

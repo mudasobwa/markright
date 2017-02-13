@@ -19,7 +19,7 @@ defmodule Markright.Parsers.Pre.Test do
     {:p, %{}, "Hello world."},
      {:pre, %{},
       [{:code, %{lang: "ruby"},
-       "def method(*args, **args)\n  puts \"method \#{__callee__} called\"\nend"}]},
+       "\ndef method(*args, **args)\n  puts \"method \#{__callee__} called\"\nend"}]},
      {:p, %{},
       ["Right after.\nNormal ", {:strong, %{}, "para"}, " again.\n"]}]}
 
