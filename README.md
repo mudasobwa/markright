@@ -95,6 +95,35 @@ end
 assert Markright.to_ast(@input, fun) == @output
 ```
 
+### Make fancy links inside blockquotes
+
+When a last blockquote’s element is a link, make it to show the favicon,
+and make the blockquote itself to have `cite` attribute:
+
+```elixir
+bq_patch = fn
+  {:blockquote, bq_attrs, list} when is_list(list) ->
+    case :lists.reverse(list) do
+      [{:a, %{href: href} = attrs, text} | t] ->
+        img = with [capture] <- Regex.run(~r|\Ahttps?://[^/]+|, href) do
+          {:img,
+              %{alt: "favicon",
+                src: capture <> "/favicon.png",
+                style: "height:16px;margin-bottom:-2px;"},
+              nil}
+        end
+        patched = :lists.reverse([{:br, %{}, nil}, "— ", img, " ", {:a, attrs, text}])
+        {:blockquote, Map.put(bq_attrs, :cite, href), :lists.reverse(patched ++ t)}
+      _ -> {:blockquote, bq_attrs, list}
+    end
+  other -> other
+end
+fun = fn %Markright.Continuation{ast: ast} = cont ->
+  %Markright.Continuation{cont | ast: bq_patch.(ast)}
+end
+
+```
+
 ### Custom classes
 
 All the “grip” elements (like `*bold*` or `*strike*`) have an option to specify
