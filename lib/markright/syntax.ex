@@ -10,8 +10,8 @@ defmodule Markright.Syntax do
     shield: ~w|/ \\|,
     block: [
       h: "#",
-      pre: "\n```",
-      blockquote: "\n>"
+      pre: "```",
+      blockquote: ">"
     ],
     flush: [
       hr: "\n---",

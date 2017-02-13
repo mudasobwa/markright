@@ -37,17 +37,17 @@ defmodule Markright.Helpers.Magnet do
         when is_binary(input) and (is_nil(fun) or is_function(fun)) and is_map(opts) do
 
         link = astify(input)
-        IO.puts "★★★ #{inspect [link, input]}"
         value = case @value do
-                  :empty -> %Markright.Continuation{tail: link.ast <> " " <> link.tail}
                   :text  -> link
+                  # :empty -> %Markright.Continuation{tail: link.ast <> " " <> link.tail}
+                  :empty -> nil
                 end
         attrs = case @attr do
                   :empty -> %{}
                   some -> %{some => link.ast}
                 end
 
-        Markright.Utils.continuation(@continuation, value, {@tag, attrs, fun})
+        Markright.Utils.continuation(@continuation, link, {@tag, attrs, fun})
       end
 
       @dialyzer {:nowarn_function, to_ast: 3}
