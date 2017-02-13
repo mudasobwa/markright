@@ -39,6 +39,7 @@ defmodule Markright.Helpers.Magnet do
         link = astify(input)
         value = case @value do
                   :text  -> link
+                  # :empty -> %Markright.Continuation{tail: link.ast <> " " <> link.tail}
                   :empty -> nil
                 end
         attrs = case @attr do

@@ -15,7 +15,8 @@ defmodule Markright.Syntax do
     ],
     flush: [
       hr: "\n---",
-      br: "  \n"
+      br: "  \n",
+      br: "  \n"
     ],
     lead: [
       ul: [li: "-"],
