@@ -2,7 +2,7 @@ defmodule Markright.Parsers.Li.Test do
   use ExUnit.Case
   doctest Markright.Parsers.Li
 
-  @input ~S"""
+  @input """
   Hello, world! List here:
   - item 1
   - item 2

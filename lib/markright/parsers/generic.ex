@@ -40,7 +40,7 @@ defmodule Markright.Parsers.Generic do
   end
 
   defp astify!(:customs, tag, {plain, rest, fun, opts, acc}) do
-    with mod <- Markright.Utils.to_module(tag),
+    with mod <- Markright.Utils.to_parser_module(tag),
         %C{ast: pre_ast, tail: ""} <- astify(plain, fun, opts, acc),
         %C{ast: ast, tail: more} <- apply(mod, :to_ast, [rest, fun, opts]),
         %C{ast: post_ast, tail: tail} <- Markright.Parsers.Generic.to_ast(more, fun, opts) do
@@ -51,15 +51,25 @@ defmodule Markright.Parsers.Generic do
   end
 
   defp astify!(:fork, tag, {plain, rest, fun, opts, acc}) do
-    with mod <- Markright.Utils.to_module(tag),
+    with mod <- Markright.Utils.to_parser_module(tag),
         %C{ast: pre_ast, tail: ""} <- astify(plain, fun, opts, acc),
         %C{ast: ast, tail: more} <- apply(mod, :to_ast, [rest, fun, opts]),
         %C{ast: post_ast, tail: tail} <- Markright.Parsers.Generic.to_ast(more, fun, opts) do
 
-      {tag, opts, ast} = if mod == Markright.Parsers.Generic, do: {tag, opts, ast}, else: ast
-      {mine, rest} = Markright.Utils.split_ast(ast)
+      {mine, rest} = case (if mod == Markright.Parsers.Generic, do: {tag, opts, ast}, else: ast) do
+        {tag, opts, ast} ->
+          {m, r} = Markright.Utils.split_ast(ast)
+          {{tag, opts, m}, r}
+        few when is_list(few) ->
+          case :lists.reverse(few) do
+            [{tag, opts, ast} | t] ->
+              {m, r} = Markright.Utils.split_ast(ast)
+              {:lists.reverse([{tag, opts, m} | t]), r}
+            list when is_list(list) -> {:lists.reverse(list), []}
+          end
+      end
 
-      [Markright.Utils.join!([pre_ast, {tag, opts, mine}, post_ast]), rest]
+      [Markright.Utils.join!([pre_ast, mine, post_ast]), rest]
       |> C.continue(tail)
       |> Markright.Utils.surround(tag, Markright.Syntax.surrounding(tag))
     end
@@ -75,7 +85,7 @@ defmodule Markright.Parsers.Generic do
 
   # :magnet, :flush
   defp astify!(type, tag, {plain, rest, fun, opts, acc}) do
-    with mod <- Markright.Utils.to_module(tag, [fallback: Markright.Utils.to_module(type)]),
+    with mod <- Markright.Utils.to_parser_module(tag, [fallback: Markright.Utils.to_parser_module(type)]),
         %C{ast: pre_ast, tail: ""} <- astify(plain, fun, opts, acc),
         %C{ast: ast, tail: more} <- apply(mod, :to_ast, [rest, fun, opts]),
         %C{ast: post_ast, tail: tail} <- Markright.Parsers.Generic.to_ast(more, fun, opts) do

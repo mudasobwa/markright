@@ -38,7 +38,7 @@ defmodule Markright.Parsers.Block do
                     rest :: binary
                   >>, fun, opts, _acc) when not(rest == "") do
 
-        with mod <- Markright.Utils.to_module(unquote(tag)), # TODO: extract this with into Utils fun
+        with mod <- Markright.Utils.to_parser_module(unquote(tag)), # TODO: extract this with into Utils fun
              %C{} = ast <- apply(mod, :to_ast, [rest, fun, opts]) do
           if mod == Markright.Parsers.Generic,
             do: Markright.Utils.continuation(ast, {unquote(tag), opts, ast}),
