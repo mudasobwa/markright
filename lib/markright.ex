@@ -53,12 +53,28 @@ defmodule Markright do
 
 
   """
-  def to_ast(input, fun \\ nil, opts \\ %{})
+  def to_ast(input, fun_or_collector \\ nil, opts \\ %{})
+
+  def to_ast(input, fun, opts)
     when is_binary(input) and (is_nil(fun) or is_function(fun)) and is_map(opts) do
 
     with %Markright.Continuation{ast: ast} <- Markright.Parsers.Article.to_ast(input, fun, opts) do
       ast
     end
+  end
+
+  def to_ast(input, collector, opts)
+    when is_binary(input) and is_atom(collector) and is_map(opts) do
+
+    apply(collector, :start_link, [])
+    fun = apply(collector, :on_ast_callback, [])
+
+    ast = to_ast(input, fun, opts)
+    collected = apply(collector, :ast_collected, [])
+
+    {ast, collected}
+  after
+    apply(collector, :stop, [])
   end
 
   @doc """
