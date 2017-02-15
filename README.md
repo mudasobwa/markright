@@ -125,7 +125,6 @@ end
 fun = fn %Markright.Continuation{ast: ast} = cont ->
   %Markright.Continuation{cont | ast: bq_patch.(ast)}
 end
-
 ```
 
 ### Custom classes
@@ -152,6 +151,30 @@ config :markright, syntax: [
     sup: "^^"
   ]
 ]
+```
+
+### Ninja handling: collectors
+
+Collectors play the role of accumulators, used for accumulating some data
+during the parsing stage. The good example of it would be
+`Markright.Collectors.OgpTwitter` collector, that is used to build the
+twitter/ogp card to embed into head section of the resulting html.
+
+```elixir
+  test "builds the twitter/ogp card" do
+    Code.eval_string """
+    defmodule Sample do
+      use Markright.Collector, collectors: Markright.Collectors.OgpTwitter
+
+      def on_ast(%Markright.Continuation{ast: {tag, _, _}} = cont), do: tag
+    end
+    """
+    {ast, acc} = Markright.to_ast(@input, Sample)
+    assert {ast, acc} == {@output, @accumulated}
+    assert XmlBuilder.generate(acc[Markright.Collectors.OgpTwitter]) == @html
+  after
+    purge Sample
+  end
 ```
 
 Voilà—you have this grip on hand:
