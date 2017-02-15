@@ -58,9 +58,8 @@ defmodule Markright do
   def to_ast(input, fun, opts)
     when is_binary(input) and (is_nil(fun) or is_function(fun)) and is_map(opts) do
 
-    with %Markright.Continuation{ast: ast} <- Markright.Parsers.Article.to_ast(input, fun, opts) do
-      ast
-    end
+    with %Markright.Continuation{ast: ast} <- Markright.Parsers.Article.to_ast(input, fun, opts),
+      do: ast
   end
 
   def to_ast(input, collector, opts)
@@ -71,8 +70,9 @@ defmodule Markright do
 
     ast = to_ast(input, fun, opts)
     collected = apply(collector, :ast_collected, [])
+    afterwards = apply(collector, :afterwards, [collected])
 
-    {ast, collected}
+    {ast, afterwards}
   after
     apply(collector, :stop, [])
   end

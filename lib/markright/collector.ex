@@ -8,7 +8,9 @@ defmodule Markright.Collector do
   which is responsible for collecting the title, the image and the description
   of the content data being parsed.
   """
+
   @callback on_ast(Markright.Continuation.t, any) :: any
+  @callback afterwards(Keyword.t) :: any
 
   defmacro __using__(opts) do
     quote bind_quoted: [collectors: opts[:collectors] || [], module: __MODULE__] do
@@ -45,13 +47,22 @@ defmodule Markright.Collector do
         unless is_nil(internal = on_ast(cont)), do: ast_collect!(__MODULE__, ast_collected(__MODULE__) ++ [internal])
       end
 
+      def afterwards(opts) do
+        Enum.each(@collectors, fn collector when is_atom(collector) ->
+          ast_collect!(collector, apply(collector, :afterwards, [ast_collected(collector), opts]))
+        end)
+        ast_collect!(__MODULE__, __MODULE__ |> ast_collected |> afterwards(opts))
+        ast_collected()
+      end
+
       def on_ast_callback, do: fn(%Markright.Continuation{} = cont) -> on_ast(cont, []) end
 
       ##########################################################################
 
       def on_ast(%Markright.Continuation{} = _cont), do: nil
+      def afterwards(accumulator, opts), do: accumulator
 
-      defoverridable [on_ast: 1]
+      defoverridable [on_ast: 1, afterwards: 2]
     end
   end
 end
