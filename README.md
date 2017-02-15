@@ -100,7 +100,9 @@ assert Markright.to_ast(@input, fun) == @output
 ### Make fancy links inside blockquotes
 
 When a last blockquote’s element is a link, make it to show the favicon,
-and make the blockquote itself to have `cite` attribute:
+and make the blockquote itself to have `cite` attribute (in fact, this particular
+transform is already done in `Markright.Finalizers.Blockquote` finalizer, but if
+it were not, this is how it could be implemented internally):
 
 ```elixir
 bq_patch = fn
