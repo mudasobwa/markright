@@ -50,10 +50,17 @@ defmodule Markright.Utils do
 
   ##############################################################################
 
-  @spec to_module_name(Atom.t, List.t) :: Atom.t
-  def to_module(atom, opts \\ []) do
-    opts = Keyword.merge(
-      [prefix: Markright.Parsers, fallback: Markright.Parsers.Generic], opts)
+  @spec to_parser_module(Atom.t, List.t) :: Atom.t
+  def to_parser_module(atom, opts \\ []),
+    do: to_module(Markright.Parsers, atom, opts)
+
+  @spec to_finalizer_module(Atom.t, List.t) :: Atom.t
+  def to_finalizer_module(atom, opts \\ []),
+    do: to_module(Markright.Finalizers, atom, opts)
+
+  @spec to_module(Atom.t, Atom.t, List.t) :: Atom.t
+  defp to_module(prefix, atom, opts) do
+    opts = Keyword.merge([prefix: prefix, fallback: Module.concat(prefix, Generic)], opts)
     mod = to_module_name(atom, [prefix: opts[:prefix]])
     if Code.ensure_loaded?(mod), do: mod, else: opts[:fallback]
   end
@@ -71,7 +78,7 @@ defmodule Markright.Utils do
   @spec continuation(Atom.t, Markright.Continuation.t, {Atom.t, Map.t, Function.t}) :: Markright.Continuation.t
   def continuation(:continuation, cont, {tag, opts, fun}) do
     case C.callback(C.continue(cont, {tag, opts}), fun) do
-      %C{} = c -> c
+      %C{} = c -> apply(to_finalizer_module(tag), :finalize, [c])
       other    -> raise Markright.Errors.UnexpectedContinuation, value: other
     end
   end
@@ -86,7 +93,7 @@ defmodule Markright.Utils do
 
   def continuation(:empty, cont, {tag, opts, fun}) do
     case C.callback(C.continue({tag, opts, nil}, cont.tail), fun) do
-      %C{} = c -> c
+      %C{} = c -> apply(to_finalizer_module(tag), :finalize, [c])
       other    -> raise Markright.Errors.UnexpectedContinuation, value: other
     end
   end
@@ -125,7 +132,8 @@ defmodule Markright.Utils do
     end)
     {middle, tail} = Enum.split_while(middle_and_tail, fn
       {^tag, _, _} -> true
-      _ -> false
+      {t, _, _} ->
+        tag == :dt && t == :dd # FIXME!!!!
     end)
     (if Enum.empty?(head), do: middle, else: head ++ [[{surrounding, %{}, middle}]]) ++ tail
   end

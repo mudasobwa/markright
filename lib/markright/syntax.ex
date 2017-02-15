@@ -20,6 +20,7 @@ defmodule Markright.Syntax do
     ],
     lead: [
       ul: [li: "-"],
+      dl: [dt: "▷"]
     ],
     magnet: [
       maillink: "mailto:",

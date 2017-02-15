@@ -11,6 +11,8 @@ defmodule Markright.Helpers.Lead do
   defmacro __using__(opts) do
     quote bind_quoted: [opts: opts, module: __MODULE__] do
       @behaviour Markright.Parser
+
+      @tag opts[:tag] || Markright.Utils.atomic_module_name(__MODULE__)
       @lead opts[:lead] || Markright.Syntax.get(Markright.Utils.atomic_module_name(module), Markright.Utils.atomic_module_name(__MODULE__))
 
       use Markright.Buffer
@@ -24,7 +26,7 @@ defmodule Markright.Helpers.Lead do
         with %Markright.Continuation{ast: ast, tail: tail} <- astify(input),
              %Markright.Continuation{ast: block, tail: ""} <- Markright.Parsers.Generic.to_ast(ast) do
 
-          Markright.Utils.continuation(%Markright.Continuation{ast: block, tail: tail}, {:li, opts, fun})
+          Markright.Utils.continuation(%Markright.Continuation{ast: block, tail: tail}, {@tag, opts, fun})
         end
       end
 
