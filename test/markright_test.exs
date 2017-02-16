@@ -46,8 +46,7 @@ defmodule Markright.Test do
   \t<p>Мы вместе с Денисом Лесновым разрабатываем аудиопроигрыватель для сайта,
   о котором уже рассказывали здесь в 2015 году.</p>
   \t<pre>
-  \t\t<code lang=\"elixir\">
-  defmodule Xml.Namespaces do
+  \t\t<code lang=\"elixir\">defmodule Xml.Namespaces do
     @var 42
 
     def method(param \\\\ 3.14) do
@@ -105,7 +104,7 @@ defmodule Markright.Test do
           ":"]},
         {:pre, %{}, [
           {:code, %{lang: "elixir"},
-            "\ndef deps do\n  [{:markright, \"~> 0.1.0\"}]\nend"}]},
+            "def deps do\n  [{:markright, \"~> 0.1.0\"}]\nend"}]},
         {:p, %{}, [{:h2, %{}, "Basic Usage"}]}]}
     )
   end
@@ -127,9 +126,9 @@ defmodule Markright.Test do
     {:div, %{}, "Hello world."},
      {:pre, %{},
       [{:code, %{lang: "ruby"},
-       "\ndef method(*args, **args)\n  puts \"method \#{__callee__} called\"\nend"}]},
+       "def method(*args, **args)\n  puts \"method \#{__callee__} called\"\nend"}]},
      {:div, %{},
-      ["Right after.\nNormal ", {:strong, %{}, "para"}, " again.\n"]}]}
+      ["Right after.\nNormal ", {:strong, %{}, "para"}, " again."]}]}
 
   test "makes changes in the callbacks" do
     fun1 = fn

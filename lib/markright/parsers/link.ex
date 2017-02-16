@@ -21,7 +21,8 @@ defmodule Markright.Parsers.Link do
     with %Markright.Continuation{ast: first, tail: rest} <- Markright.Parsers.Word.to_ast(input),
          %Markright.Continuation{ast: ast, tail: tail} <- astify(rest, fun) do
       {subinput, href} = case ast do
-                           [text, link] -> {first <> text, link}
+                           ["", link] -> {first, link}
+                           [text, link] -> {first <> " " <> text, link}
                            text when is_binary(text) -> {String.trim(text), first}
                          end
 

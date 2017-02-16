@@ -11,8 +11,8 @@ defmodule Markright.Parsers.Pre do
       ...> "
       iex> Markright.Parsers.Pre.to_ast(input)
       %Markright.Continuation{
-        ast: {:pre, %{}, [{:code, %{lang: "ruby"}, "\n $ ls -la"}]},
-        tail: "\n Other text.\n "}
+        ast: {:pre, %{}, [{:code, %{lang: "ruby"}, "$ ls -la"}]},
+        tail: "\n Other text."}
 
       iex> input = "
       ...> $ ls -la
@@ -21,7 +21,7 @@ defmodule Markright.Parsers.Pre do
       ...> "
       iex> Markright.Parsers.Pre.to_ast(input)
       %Markright.Continuation{
-        ast: {:pre, %{}, [{:code, %{}, "\n $ ls -la"}]}, tail: "\n Other text.\n "}
+        ast: {:pre, %{}, [{:code, %{}, "$ ls -la"}]}, tail: "\n Other text."}
 
       iex> input = "elixir
       ...> def f(\"\"), do: :empty_string
@@ -33,8 +33,8 @@ defmodule Markright.Parsers.Pre do
       iex> Markright.Parsers.Pre.to_ast(input)
       %Markright.Continuation{ast: {:pre, %{},
              [{:code, %{lang: "elixir"},
-               "\n def f(\"\"), do: :empty_string\n\n def f([]), do: :empty_list"}]},
-            tail: "\n Other text.\n "}
+               "def f(\"\"), do: :empty_string\n\n def f([]), do: :empty_list"}]},
+            tail: "\n Other text."}
   """
 
   ##############################################################################

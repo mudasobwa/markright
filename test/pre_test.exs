@@ -19,9 +19,9 @@ defmodule Markright.Parsers.Pre.Test do
     {:p, %{}, "Hello world."},
      {:pre, %{},
       [{:code, %{lang: "ruby"},
-       "\ndef method(*args, **args)\n  puts \"method \#{__callee__} called\"\nend"}]},
+       "def method(*args, **args)\n  puts \"method \#{__callee__} called\"\nend"}]},
      {:p, %{},
-      ["Right after.\nNormal ", {:strong, %{}, "para"}, " again.\n"]}]}
+      ["Right after.\nNormal ", {:strong, %{}, "para"}, " again."]}]}
 
   test "understands codeblock in the markright" do
     assert Markright.to_ast(@input) == @output

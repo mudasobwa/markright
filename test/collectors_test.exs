@@ -35,7 +35,7 @@ defmodule Markright.Collectors.Test do
                         {:span, %{}, "Почтальон Печкин"}]},
              {:p, %{}, [{:img, %{alt: "alt text", src: "http://example.com/picture.png"}, nil}]},
              {:p, %{}, "Мы вместе с Денисом Лесновым разрабатываем аудиопроигрыватель для сайта,\nо котором уже рассказывали здесь в 2015 году."},
-             {:pre, %{}, [{:code, %{lang: "elixir"}, "\ndefmodule Xml.Namespaces do\n  @var 42\n\n  def method(param \\ 3.14) do\n    if is_nil(param), do: @var, else: @var * param\n  end"}]},
+             {:pre, %{}, [{:code, %{lang: "elixir"}, "defmodule Xml.Namespaces do\n  @var 42\n\n  def method(param \\ 3.14) do\n    if is_nil(param), do: @var, else: @var * param\n  end"}]},
              {:p, %{}, "Сейчас на подходе обновлённая версия, которая умеет играть\nне только отдельные треки, но и целые плейлисты."}]}
 
   @accumulated [{Sample, [:h1, :a, :img, :pre, :p, :p, :p, :p, :article]},

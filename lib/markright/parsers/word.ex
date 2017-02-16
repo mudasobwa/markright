@@ -5,7 +5,7 @@ defmodule Markright.Parsers.Word do
   ## Examples
 
       iex> "Hello my lovely world!" |> Markright.Parsers.Word.to_ast
-      %Markright.Continuation{ast: "Hello", tail: " my lovely world!"}
+      %Markright.Continuation{ast: "Hello", tail: "my lovely world!"}
   """
 
   ##############################################################################

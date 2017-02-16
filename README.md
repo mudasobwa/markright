@@ -129,7 +129,7 @@ end
 
 ### Custom classes
 
-All the “grip” elements (like `*bold*` or `*strike*`) have an option to specify
+All the “grip” elements (like `*strong*` or `~strike~`) have an option to specify
 a class:
 
 ```elixir

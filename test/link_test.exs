@@ -13,7 +13,7 @@ defmodule Markright.Parsers.Link.Test do
   @output {:article, %{}, [
     {:p, %{}, ["111, ", {:a, %{href: "https://github.com"}, "GitHub link"}, "."]},
     {:p, %{}, ["222, ", {:a, %{href: "https://atlassian.com"}, ["Atlassian ", {:b, %{}, "bold"}, " link"]}, "."]},
-    {:p, %{}, ["333, ", {:a, %{href: "https://example.com"}, "normal link"}, ".\n"]}]}
+    {:p, %{}, ["333, ", {:a, %{href: "https://example.com"}, "normal link"}, "."]}]}
 
   @output_xml ~s"""
   <article>
@@ -35,7 +35,6 @@ defmodule Markright.Parsers.Link.Test do
   \t\t333,\s
   \t\t<a href=\"https://example.com\">normal link</a>
   \t\t.
-  
   \t</p>
   </article>
   """

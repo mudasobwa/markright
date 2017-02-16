@@ -33,13 +33,12 @@ defmodule Markright.Helpers.Magnet do
 
       ##############################################################################
 
-      def to_ast(input, fun \\ nil, opts \\ %{}) \
+      def to_ast(input, fun \\ nil, opts \\ %{})
         when is_binary(input) and (is_nil(fun) or is_function(fun)) and is_map(opts) do
 
         link = astify(input)
         value = case @value do
                   :text  -> link
-                  # :empty -> %Markright.Continuation{tail: link.ast <> " " <> link.tail}
                   :empty -> nil
                 end
         attrs = case @attr do
@@ -51,7 +50,7 @@ defmodule Markright.Helpers.Magnet do
       end
 
       @dialyzer {:nowarn_function, to_ast: 3}
-      defoverridable [to_ast: 3]
+      defoverridable [to_ast: 1, to_ast: 2, to_ast: 3]
 
       ##############################################################################
 
