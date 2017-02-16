@@ -26,7 +26,8 @@ defmodule Markright.Syntax do
       maillink: "mailto:",
       httplink: "http://",
       httpslink: "https://",
-      lj: "✎"
+      lj: "✎",
+      tag: "#"
     ],
     grip: [
       span: "⇓",

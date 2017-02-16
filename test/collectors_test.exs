@@ -71,7 +71,26 @@ defmodule Markright.Collectors.Test do
     purge Sample
   end
 
-  @badge_url "http://mel.fm/2016/05/22/plural"
+  @input "Hi, #mudasobwa is a tag."
+  @output {:article, %{},
+              [{:p, %{}, [
+                  "Hi, ",
+                  {:a, %{class: "tag", href: "/tags/mudasobwa"}, "mudasobwa"},
+                  " is a tag."]}]}
 
+  @accumulated [{Sample, []},
+                {Markright.Collectors.Tag, {:ul, %{class: "tags"}, [{:li, %{class: "tag"}, "mudasobwa"}]}}]
+
+  test "builds the tags" do
+    Code.eval_string """
+    defmodule Sample do
+      use Markright.Collector, collectors: Markright.Collectors.Tag
+    end
+    """
+    {ast, acc} = Markright.to_ast(@input, Sample)
+    assert {ast, acc} == {@output, @accumulated}
+  after
+    purge Sample
+  end
 
 end

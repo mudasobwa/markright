@@ -5,7 +5,11 @@ defmodule Markright.Collectors.OgpTwitter do
   Typical usage:
 
   ```elixir
-  defmodule
+  defmodule Sample do
+    use Markright.Collector, collectors: Markright.Collectors.OgpTwitter
+
+    def on_ast(%Markright.Continuation{ast: {tag, _, _}} = cont), do: tag
+  end
   ```
 
   ## Examples
