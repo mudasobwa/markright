@@ -20,6 +20,7 @@ defmodule Markright.Syntax do
     ],
     lead: [
       li: {"-", [parser: Markright.Parsers.Li]},
+      li: {"•", [parser: Markright.Parsers.Li]},
       dt: {"▷", [parser: Markright.Parsers.Dt]}
     ],
     magnet: [

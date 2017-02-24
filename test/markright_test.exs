@@ -157,11 +157,11 @@ defmodule Markright.Test do
     {:p, %{}, [
       "Robin Hood",
       {:br, %{}, nil},
-      " a skilled archer.",
+      "was a skilled archer.",
       {:br, %{}, nil},
-      " is good",
+      "This is good",
       {:br, %{}, nil},
-      " needs her marcher.",
+      "Rye needs her marcher.",
       {:hr, %{}, nil},
       "\nAdiós!\n"]}]}
 
