@@ -20,7 +20,7 @@ defmodule Markright.Parsers.Block do
 
   def to_ast(input, fun \\ nil, opts \\ %{})
     when is_binary(input) and (is_nil(fun) or is_function(fun)) and is_map(opts),
-    do: astify(input, fun, opts)
+    do: astify(String.trim_leading(input), fun, opts)
 
   ##############################################################################
 
@@ -39,9 +39,11 @@ defmodule Markright.Parsers.Block do
                   >>, fun, opts, _acc) when not(rest == "") do
 
         with mod <- Markright.Utils.to_parser_module(unquote(tag)), # TODO: extract this with into Utils fun
-             %C{} = ast <- apply(mod, :to_ast, [rest, fun, opts]) do
+             %C{} = ast <- apply(mod, :to_ast, [rest, fun, opts]),
+             %C{} = ast <- Markright.Utils.delimit(ast) do
+
           if mod == Markright.Parsers.Generic,
-            do: Markright.Utils.continuation(ast, {unquote(tag), opts, ast}),
+            do: Markright.Utils.continuation(ast, {unquote(tag), opts, fun}),
             else: ast
         end
       end
@@ -52,7 +54,7 @@ defmodule Markright.Parsers.Block do
         {mine, rest} = Markright.Utils.split_ast(cont.ast)
 
         %C{ast: [Markright.Utils.continuation(:ast, %C{ast: mine}, {:p, opts, fun}), rest],
-           tail: (if Markright.Utils.empty?(cont.tail), do: "", else: @splitter <> cont.tail)}
+           tail: Markright.Utils.delimit(cont.tail)}
       end
     end
   end)

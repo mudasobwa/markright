@@ -30,6 +30,44 @@ defmodule Markright.Syntax.Test do
     assert Markright.to_ast(input) == {:article, %{}, [{:p, %{}, ["Line one.", {:br, %{}, nil}, "Line two.\n"]}]}
   end
 
+  test "treats <ul> normally" do
+    input = """
+    **Часть 1. Пришествие рядового Разнобердыева**
+
+    - Первый звонок
+    - Шестое кольцо
+    - Второй завтрак
+    """
+    output = {:article, %{}, [
+                {:p, %{}, [
+                  {:b, %{}, "Часть 1. Пришествие рядового Разнобердыева"},
+                  {:ul, %{}, [
+                    {:li, %{}, "Первый звонок"},
+                    {:li, %{}, "Шестое кольцо"},
+                    {:li, %{}, "Второй завтрак"}]}]}]}
+    assert Markright.to_ast(input) == output
+  end
+
+  test "treats <h4> normally" do
+    input = """
+    ### Часть 1. Section
+
+    #### Часть 1.1. Subsection
+
+    - Первый звонок
+    - Шестое кольцо
+    - Второй завтрак
+    """
+    output = {:article, %{}, [
+                {:h3, %{}, "Часть 1. Section"},
+                {:h4, %{}, "Часть 1.1. Subsection"},
+                {:ul, %{}, [
+                  {:li, %{}, "Первый звонок"},
+                  {:li, %{}, "Шестое кольцо"},
+                  {:li, %{}, "Второй завтрак"}]}]}
+    assert Markright.to_ast(input) == output
+  end
+
   @tag :skip
   test "converts text" do
     input = "test/fixtures/rr.md"

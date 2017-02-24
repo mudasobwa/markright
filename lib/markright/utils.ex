@@ -12,14 +12,16 @@ defmodule Markright.Utils do
   def empty?([]), do: true
   def empty?({}), do: true
   def empty?(%{}), do: true
-  def empty?({_, _, ""}), do: true
-  def empty?({_, _, []}), do: true
+
+  def empty?(s) when is_binary(s), do: String.trim(s) == ""
+  def empty?({_, _, s}) when is_binary(s) or is_list(s) or is_map(s) or is_tuple(s), do: empty?(s)
 
   def empty?(list) when is_list(list), do: Enum.all?(list, &empty?/1)
   def empty?(map) when is_map(map), do: Enum.all?(map, fn
     {_, v} -> empty?(v)
     v -> empty?(v)
   end)
+
   def empty?(_), do: false
   def empty?(arg1, arg2), do: empty?(arg1) and empty?(arg2)
   def empty?(arg1, arg2, arg3), do: empty?(arg1, arg2) and empty?(arg3)
@@ -101,6 +103,14 @@ defmodule Markright.Utils do
   @spec continuation(Markright.Continuation.t, {Atom.t, Map.t, Function.t}) :: Markright.Continuation.t
   def continuation(cont, {tag, opts, fun}) do
     continuation(:continuation, cont, {tag, opts, fun})
+  end
+
+  @spec delimit(String.t | Markright.Continuation.t) :: Markright.Continuation.t
+  def delimit(tail) when is_binary(tail) do
+    if empty?(tail), do: "", else: @splitter <> String.trim_leading(tail, @unix_newline)
+  end
+  def delimit(%Markright.Continuation{tail: tail} = ast) do
+    %Markright.Continuation{ast | tail: delimit(tail)}
   end
 
   ##############################################################################
