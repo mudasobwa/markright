@@ -20,5 +20,5 @@ defmodule Markright.Parsers.Li do
   """
 
   use Markright.Helpers.Lead
-  
+
 end

@@ -43,7 +43,7 @@ defmodule Markright.Parsers.Pre do
 
   ##############################################################################
 
-  @max_indent Markright.Syntax.indent
+  @max_indent Markright.Syntax.indent()
 
   ##############################################################################
 
@@ -76,10 +76,11 @@ defmodule Markright.Parsers.Pre do
 
   Enum.each(0..@max_indent-1, fn i ->
     indent = String.duplicate(" ", i)
+    {tag, handler} = Markright.Syntax.get(:block, :pre)
     defp astify(<<
                   @unix_newline :: binary,
                   unquote(indent) :: binary,
-                  unquote(Markright.Syntax.get(:block, :pre)) :: binary,
+                  unquote(tag) :: binary,
                   rest :: binary
                 >>, _fun, acc) do
       %C{ast: acc.buffer, tail: rest}

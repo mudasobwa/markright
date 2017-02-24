@@ -39,7 +39,7 @@ defmodule Markright.Parsers.Generic do
     end
   end
 
-  defp astify!(:customs, tag, {plain, rest, fun, opts, acc}) do
+  defp astify!(:custom, tag, {plain, rest, fun, opts, acc}) do
     with mod <- Markright.Utils.to_parser_module(tag),
         %C{ast: pre_ast, tail: ""} <- astify(plain, fun, opts, acc),
         %C{ast: ast, tail: more} <- apply(mod, :to_ast, [rest, fun, opts]),
@@ -110,7 +110,7 @@ defmodule Markright.Parsers.Generic do
         astify!(:join, :block, {plain, rest, fun, opts, acc})
     end
 
-    Enum.each(Markright.Syntax.magnet(), fn {tag, delimiter} ->
+    Enum.each(Markright.Syntax.magnet(), fn {tag, {delimiter, opts}} ->
       defp astify(<<
                     plain :: binary-size(unquote(i)),
                     unquote(delimiter) :: binary,
@@ -120,7 +120,7 @@ defmodule Markright.Parsers.Generic do
       end
     end)
 
-    Enum.each(Markright.Syntax.flush(), fn {tag, delimiter} ->
+    Enum.each(Markright.Syntax.flush(), fn {tag, {delimiter, opts}} ->
       defp astify(<<
                     plain :: binary-size(unquote(i)),
                     unquote(delimiter) :: binary,
@@ -143,7 +143,7 @@ defmodule Markright.Parsers.Generic do
 
     Enum.each(0..@max_indent, fn indent ->
       indent = String.duplicate(" ", indent)
-      Enum.each(Markright.Syntax.lead(), fn {tag, delimiter} ->
+      Enum.each(Markright.Syntax.lead(), fn {tag, {delimiter, opts}} ->
         defp astify(<<
                       plain :: binary-size(unquote(i)),
                       @unix_newline :: binary,
@@ -156,17 +156,17 @@ defmodule Markright.Parsers.Generic do
       end)
     end)
 
-    Enum.each(Markright.Syntax.customs(), fn {tag, delimiter} ->
+    Enum.each(Markright.Syntax.custom(), fn {tag, {delimiter, opts}} ->
       defp astify(<<
                       plain :: binary-size(unquote(i)),
                       unquote(delimiter) :: binary,
                       rest :: binary
                   >>, fun, opts, acc) do
-          astify!(:customs, unquote(tag), {plain, rest, fun, opts, acc})
+          astify!(:custom, unquote(tag), {plain, rest, fun, opts, acc})
       end
     end)
 
-    Enum.each(Markright.Syntax.grip(), fn {tag, delimiter} ->
+    Enum.each(Markright.Syntax.grip(), fn {tag, {delimiter, opts}} ->
       defp astify(<<
                       plain :: binary-size(unquote(i)),
                       unquote(delimiter) :: binary,

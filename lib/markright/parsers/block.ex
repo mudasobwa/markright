@@ -31,7 +31,7 @@ defmodule Markright.Parsers.Block do
 
   Enum.each(0..@max_indent, fn i ->
     indent = String.duplicate(" ", i)
-    Enum.each(Markright.Syntax.block(), fn {tag, delimiter} ->
+    Enum.each(Markright.Syntax.block(), fn {tag, {delimiter, opts}} ->
       defp astify(<<
                     unquote(indent) :: binary,
                     unquote(delimiter) :: binary,

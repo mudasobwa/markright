@@ -13,7 +13,12 @@ defmodule Markright.Helpers.Lead do
       @behaviour Markright.Parser
 
       @tag opts[:tag] || Markright.Utils.atomic_module_name(__MODULE__)
-      @lead opts[:lead] || Markright.Syntax.get(Markright.Utils.atomic_module_name(module), Markright.Utils.atomic_module_name(__MODULE__))
+      case opts[:lead_and_handler] || Markright.Syntax.get(Markright.Utils.atomic_module_name(module), opts[:lead] || @tag) do
+        {lead, handler} ->
+          @lead lead
+          @handler handler
+        other -> raise Markright.Errors.UnexpectedFeature, value: other, expected: "{lead, handler} tuple"
+      end
 
       use Markright.Buffer
       use Markright.Continuation
