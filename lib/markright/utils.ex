@@ -143,9 +143,11 @@ defmodule Markright.Utils do
     end)
     {middle, tail} = Enum.split_while(middle_and_tail, fn
       {^tag, _, _} -> true
-      {t, _, _} ->
-        tag == :dt && t == :dd # FIXME!!!!
+      {t, _, _}    -> tag == :dt && t == :dd # FIXME!!!!
+      _            -> false
     end)
+    # FIXME Maybe more accurate decision on surrounding
+    # IO.puts "★★★ #{inspect {head, middle, tail}}"
     (if Enum.empty?(head), do: middle, else: head ++ [[{surrounding, %{}, middle}]]) ++ tail
   end
   def surround(ast, _tag, _surrounding), do: ast

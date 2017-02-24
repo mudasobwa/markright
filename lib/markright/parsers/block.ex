@@ -29,6 +29,9 @@ defmodule Markright.Parsers.Block do
 
   ##############################################################################
 
+  defp astify(<<unquote(@splitter) :: binary, rest :: binary>>, _fun, _opts, acc),
+    do: %C{ast: acc.buffer, tail: rest}
+
   Enum.each(0..@max_indent, fn i ->
     indent = String.duplicate(" ", i)
     Enum.each(Markright.Syntax.block(), fn {tag, {delimiter, opts}} ->
@@ -50,12 +53,16 @@ defmodule Markright.Parsers.Block do
     end)
     defp astify("", _fun, _opts, _acc), do: %C{}
     defp astify(rest, fun, opts, _acc) when is_binary(rest) do
-      with cont <- Markright.Parsers.Generic.to_ast(rest, fun, opts) do
+      with cont <- Markright.Parsers.Generic.to_ast(@unix_newline <> rest, fun, opts) do
         {mine, rest} = Markright.Utils.split_ast(cont.ast)
 
-        %C{ast: [Markright.Utils.continuation(:ast, %C{ast: mine}, {:p, opts, fun}), rest],
+        %C{ast: [Markright.Utils.continuation(:ast, %C{ast: trim_leading(mine)}, {:p, opts, fun}), rest],
            tail: Markright.Utils.delimit(cont.tail)}
       end
     end
   end)
+
+  defp trim_leading(input) when is_binary(input), do: String.trim_leading(input)
+  defp trim_leading([h | t]) when is_binary(h), do: [trim_leading(h) | t]
+  defp trim_leading(other), do: other
 end

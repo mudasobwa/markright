@@ -61,6 +61,9 @@ defmodule Markright.Parsers.H do
 
   ##############################################################################
 
+  defp astify(<<unquote(@splitter) :: binary, rest :: binary>>, acc),
+    do: %C{ast: acc.buffer, tail: rest}
+
   defp astify(<<unquote(@unix_newline) :: binary, rest :: binary>>, acc),
     do: %C{ast: acc.buffer, tail: rest}
 

@@ -18,8 +18,8 @@ defmodule Markright.Parsers.Dt.Test do
           {:dl, %{}, [
             {:dt, %{}, "item 1"}, {:dd, %{}, " definition 1"},
             {:dt, %{}, "item 2"}, {:dd, %{}, " definition 2"},
-            {:dt, %{}, "item 3"}, {:dd, %{}, " definition 3"}]}]},
-       {:p, %{}, "Afterparty."}]}
+            {:dt, %{}, " item 3"}, {:dd, %{}, " definition 3"}]},
+          "Afterparty.\n"]}]}
 
   test "parses [different types of] data terms" do
     assert (@input
