@@ -102,6 +102,7 @@ defmodule Markright.Parsers.Generic do
   ##############################################################################
 
   Enum.each(0..@max_lookahead, fn i ->
+
     defp astify(<<
                   plain :: binary-size(unquote(i)),
                   @splitter :: binary,

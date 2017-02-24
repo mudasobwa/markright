@@ -4,21 +4,17 @@ defmodule Markright.Parsers.H do
 
   ## Examples
 
-      iex> input = "## Hello _world_!
-      ...> Other text.
-      ...> "
+      iex> input = "## Hello _world_!\nOther text."
       iex> Markright.Parsers.H.to_ast(input)
       %Markright.Continuation{
         ast: {:h3, %{}, ["Hello ", {:em, %{}, "world"}, "!"]},
-        tail: " Other text."}
+        tail: "Other text."}
 
-      iex> input = "## Hello _world_!
-      ...> Other text.
-      ...> "
+      iex> input = "## Hello _world_!\nOther text."
       iex> Markright.to_ast(input)
       {:article, %{}, [
         {:h2, %{}, ["Hello ", {:em, %{}, "world"}, "!"]},
-        {:p, %{}, " Other text."}]}
+        {:p, %{}, "Other text."}]}
   """
 
   ##############################################################################

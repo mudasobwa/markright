@@ -13,7 +13,8 @@ defmodule Markright.Utils do
   def empty?({}), do: true
   def empty?(%{}), do: true
 
-  def empty?(s) when is_binary(s), do: String.trim(s) == ""
+  # If you want to uncomment the next line, PLEASE DON’T DO THAT
+  # def empty?(s) when is_binary(s), do: String.trim(s) == ""
   def empty?({_, _, s}) when is_binary(s) or is_list(s) or is_map(s) or is_tuple(s), do: empty?(s)
 
   def empty?(list) when is_list(list), do: Enum.all?(list, &empty?/1)

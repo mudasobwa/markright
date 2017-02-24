@@ -29,7 +29,7 @@ defmodule Markright.Collectors.Test do
 
   @output {:article, %{},
             [{:h1, %{}, "Welcome to the real world!"},
-             {:p, %{}, ["\n> Я вам посылку принёс. Только я вам её ",
+             {:blockquote, %{}, [" Я вам посылку принёс. Только я вам её ",
                         {:a, %{href: "http://fbi.org"}, "не отдам"},
                         ", потому что у вас документов нету.\n—",
                         {:span, %{}, "Почтальон Печкин"}]},
@@ -38,7 +38,7 @@ defmodule Markright.Collectors.Test do
              {:pre, %{}, [{:code, %{lang: "elixir"}, "defmodule Xml.Namespaces do\n  @var 42\n\n  def method(param \\ 3.14) do\n    if is_nil(param), do: @var, else: @var * param\n  end"}]},
              {:p, %{}, "Сейчас на подходе обновлённая версия, которая умеет играть\nне только отдельные треки, но и целые плейлисты."}]}
 
-  @accumulated [{Sample, [:h1, :a, :img, :pre, :p, :p, :p, :p, :article]},
+  @accumulated [{Sample, [:h1, :blockquote, :img, :pre, :p, :p, :p, :article]},
                 {Markright.Collectors.OgpTwitter, [
                   {:meta, %{content: "summary", name: "twitter:card"}, nil},
                   {:meta, %{content: "object", property: "og:type"}, nil},

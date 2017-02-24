@@ -32,8 +32,6 @@ defmodule Markright.Test do
   <article>
   \t<h1>Опыт использования пространств имён в клиентском XHTML</h1>
   \t<p>
-  \t\t
-
   \t\t<em>Текст Ростислава Чебыкина.</em>
   \t</p>
   \t<blockquote>
@@ -105,7 +103,7 @@ defmodule Markright.Test do
         {:pre, %{}, [
           {:code, %{lang: "elixir"},
             "def deps do\n  [{:markright, \"~> 0.1.0\"}]\nend"}]},
-        {:p, %{}, [{:h2, %{}, "Basic Usage"}]}]}
+        {:h2, %{}, "Basic Usage"}]}
     )
   end
 
