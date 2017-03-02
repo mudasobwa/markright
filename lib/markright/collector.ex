@@ -10,7 +10,7 @@ defmodule Markright.Collector do
   """
 
   @callback on_ast(Markright.Continuation.t, any) :: any
-  @callback afterwards(Keyword.t) :: any
+  @callback afterwards(any, Keyword.t) :: any
 
   defmacro __using__(opts) do
     quote bind_quoted: [collectors: opts[:collectors] || [], module: __MODULE__] do

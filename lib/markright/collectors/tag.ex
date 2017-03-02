@@ -12,7 +12,7 @@ defmodule Markright.Collectors.Tag do
     end
   end
 
-  def afterwards(acc, opts) do
+  def afterwards(acc, _opts) do
     {:ul, %{class: "tags"}, Enum.map(acc, fn tag -> {:li, %{class: "tag"}, tag} end)}
   end
 end

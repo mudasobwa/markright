@@ -93,4 +93,31 @@ defmodule Markright.Collectors.Test do
     purge Sample
   end
 
+
+  @input String.trim """
+  Section 1.
+
+  Lorem ipsum and the seven little kids.
+  """
+
+  @output {:article, %{},
+            [{:p, %{}, "Section 1."},
+             {:p, %{}, "Lorem ipsum and the seven little kids."}]}
+
+  @accumulated [{Sample, []},
+                {Markright.Collectors.Fuerer, {:h2, %{}, "Section 1."}}]
+
+  test "substitutes the topmost para with a header tag" do
+    Code.eval_string """
+    defmodule Sample do
+      use Markright.Collector, collectors: Markright.Collectors.Fuerer
+    end
+    """
+    {ast, acc} = Markright.to_ast(@input, Sample)
+    assert {ast, acc} == {@output, @accumulated}
+  after
+    purge Sample
+  end
+
+
 end
