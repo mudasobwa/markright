@@ -35,12 +35,12 @@ defmodule Markright.Syntax do
       em: "_",
       strong: "*",
       b: "**",
-      code: "`",
       strike: "~",
     ],
     custom: [
       link: "[",
       img: "![",
+      code: "`",
     ],
     surrounding: [
       li: :ul,

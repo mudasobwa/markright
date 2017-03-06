@@ -167,6 +167,24 @@ defmodule Markright.Test do
     assert Markright.to_ast(@input_flush) == @output_flush
   end
 
+  @input_code_inplace ~s"""
+  The *_quick ~brown~_ fox* `*_jumps ~over~_ the lazy* dog`.
+  """
+  @output_code_inplace {:article, %{}, [
+    {:p, %{}, ["The ",
+                {:strong, %{}, [
+                  {:em, %{}, [
+                    "quick ",
+                    {:strike, %{}, "brown"}]},
+                  " fox"]},
+                " ",
+                {:code, %{}, "*_jumps ~over~_ the lazy* dog"}, ".\n"]}]}
+
+  test "gracefully ignores syntax inside backticks" do
+    ast = Markright.to_ast(@input_code_inplace)
+    assert ast == @output_code_inplace
+  end
+
   @badge_url "http://mel.fm/2016/05/22/plural"
 
 
