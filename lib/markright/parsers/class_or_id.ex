@@ -24,41 +24,40 @@ defmodule Markright.Parsers.ClassOrId do
 
   ##############################################################################
 
-  use Markright.Buffer
   use Markright.Continuation
 
   ##############################################################################
 
-  def to_ast(input, fun \\ nil, opts \\ %{}) \
-    when is_binary(input) and (is_nil(fun) or is_function(fun)) and is_map(opts) do
-
+  def to_ast(input, %Plume{} = plume \\ %Plume{}) when is_binary(input) do
     case input do
-      "" -> %C{ast: {:nil, opts, ""}}
+      "" -> %Plume{plume | ast: {:nil, %{}, ""}} # FIXME
       <<leading :: binary-size(1), rest :: binary>> ->
         case @leadings[leading] do
-          nil  -> %C{ast: {:nil, opts, input}}
-          type -> astify(rest, opts, Buf.put(Buf.empty(), {:type, type}))
+          nil  -> %Plume{plume | ast: {:nil, %{}, input}}
+          type -> astify(rest, Plume.bag!(plume, {:type, type}))
         end
     end
   end
 
   ##############################################################################
 
-  @spec astify(String.t, Map.t, Buf.t) :: Markright.Continuation.t
-  defp astify(part, opts, acc)
+  @spec astify(String.t, Markright.Continuation.t) :: Markright.Continuation.t
+  defp astify(part, plume)
 
   ##############################################################################
 
   Enum.each(~w|] ) }|, fn delimiter ->
-    defp astify(<<unquote(delimiter) :: binary, rest :: binary>>, opts, acc),
-      do: %C{ast: {:nil, Map.put(opts, Buf.get(acc, :type), acc.buffer), rest}}
+    defp astify(<<unquote(delimiter) :: binary, rest :: binary>>, %Plume{} = plume) do
+      with {type, plume} <- Plume.debag!(plume, :type) do
+        %Plume{plume | tail: "", ast: {:nil, %{type => plume.tail}, rest}} # FIXME REMOVE type
+      end
+    end
   end)
 
-  defp astify(<<letter :: binary-size(1), rest :: binary>>, opts, acc),
-    do: astify(rest, opts, Buf.append(acc, letter))
+  defp astify(<<letter :: binary-size(1), rest :: binary>>, %Plume{} = plume),
+    do: astify(rest, Plume.tail!(plume, letter))
 
-  defp astify("", opts, acc),
-    do: astify("]", opts, acc)
+  defp astify("", %Plume{} = plume), do: astify("]", plume)
 
   ##############################################################################
 end

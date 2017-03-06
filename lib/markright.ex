@@ -5,6 +5,8 @@ defmodule Markright do
 
   @behaviour Markright.Parser
 
+  alias Markright.Continuation, as: Plume
+
   @doc """
   Main application helper: call
   `Markright.to_ast(input, fn {ast, tail} -> IO.inspect(ast) end)`
@@ -51,14 +53,14 @@ defmodule Markright do
       iex> Markright.to_ast(input)
       {:article, %{}, [{:p, %{}, "Escaped *asterisk 2"}]}
 
-
   """
   def to_ast(input, fun_or_collector \\ nil, opts \\ %{})
 
   def to_ast(input, fun, opts)
     when is_binary(input) and (is_nil(fun) or is_function(fun)) and is_map(opts) do
 
-    with %Markright.Continuation{ast: ast} <- Markright.Parsers.Article.to_ast(input, fun, opts),
+    with plume <- %Plume{fun: fun},
+        %Plume{ast: ast} <- Markright.Parsers.Article.to_ast(input, plume),
       do: ast
   end
 

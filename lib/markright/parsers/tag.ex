@@ -9,14 +9,13 @@ defmodule Markright.Parsers.Tag do
       %Markright.Continuation{ast: {:a, %{class: "tag", href: "/tags/item1"}, "item1"}, tail: " something"}
   """
 
+  use Markright.Continuation
   use Markright.Helpers.Magnet
 
-  def to_ast(input, fun \\ nil, opts \\ %{})
-    when is_binary(input) and (is_nil(fun) or is_function(fun)) and is_map(opts) do
-
-    %Markright.Continuation{ast: <<@magnet :: binary, tag :: binary>>} = cont = astify(input)
+  def to_ast(input, %Plume{} = plume \\ %Plume{}) when is_binary(input) do
+    %Plume{ast: <<@magnet :: binary, tag :: binary>>} = cont = astify(input, plume)
     Markright.Utils.continuation(:continuation,
-                                  %Markright.Continuation{cont | ast: tag},
-                                  {:a, %{class: "tag", href: "/tags/#{tag}"}, fun})
+                                  %Plume{cont | ast: tag},
+                                  {:a, %{class: "tag", href: "/tags/#{tag}"}})
   end
 end

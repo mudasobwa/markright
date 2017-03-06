@@ -27,17 +27,14 @@ defmodule Markright.Parsers.H do
 
   ##############################################################################
 
-  use Markright.Buffer
   use Markright.Continuation
 
   ##############################################################################
 
-  def to_ast(input, fun \\ nil, opts \\ %{})
-    when is_binary(input) and (is_nil(fun) or is_function(fun)) and is_map(opts) do
-
-    with %C{ast: first, tail: rest} <- Markright.Parsers.Word.to_ast(input, nil, %{trim: true}),
-         %C{ast: ast, tail: tail} <- astify(rest),
-         %C{ast: block, tail: ""} <- Markright.Parsers.Generic.to_ast(ast) do
+  def to_ast(input, %Plume{} = plume \\ %Plume{}) when is_binary(input) do
+    with %Plume{ast: first, tail: rest} <- Markright.Parsers.Word.to_ast(input, plume), # FIXME PUT TRIM PARAM
+         %Plume{ast: ast, tail: tail} <- astify(rest, plume),
+         %Plume{ast: block, tail: ""} <- Markright.Parsers.Generic.to_ast(ast, plume) do
 
       tag = case first do
               ""  -> :h1
@@ -50,28 +47,28 @@ defmodule Markright.Parsers.H do
               _   -> String.to_atom("h#{String.length(first) + 1}")
             end
 
-      Markright.Utils.continuation(%C{ast: block, tail: tail}, {tag, opts, fun})
+      Markright.Utils.continuation(%Plume{plume | ast: block, tail: tail}, {tag, %{}})
     end
   end
 
   ##############################################################################
 
-  @spec astify(String.t, Buf.t) :: Markright.Continuation.t
-  defp astify(part, acc \\ Buf.empty())
+  @spec astify(String.t, Markright.Continuation.t) :: Markright.Continuation.t
+  defp astify(part, plume)
 
   ##############################################################################
 
-  defp astify(<<unquote(@splitter) :: binary, rest :: binary>>, acc),
-    do: %C{ast: acc.buffer, tail: rest}
+  defp astify(<<unquote(@splitter) :: binary, rest :: binary>>, %Plume{} = plume),
+    do: Plume.astail!(plume, rest)
 
-  defp astify(<<unquote(@unix_newline) :: binary, rest :: binary>>, acc),
-    do: %C{ast: acc.buffer, tail: rest}
+  defp astify(<<unquote(@unix_newline) :: binary, rest :: binary>>, %Plume{} = plume),
+    do: Plume.astail!(plume, rest)
 
-  defp astify(<<letter :: binary-size(1), rest :: binary>>, acc),
-    do: astify(rest, Buf.append(acc, letter))
+  defp astify(<<letter :: binary-size(1), rest :: binary>>, %Plume{} = plume),
+    do: astify(rest, Plume.tail!(plume, letter))
 
-  defp astify("", acc),
-    do: %C{ast: acc.buffer, tail: ""}
+  defp astify("", %Plume{} = plume),
+    do: Plume.astail!(plume, "")
 
   ##############################################################################
 end

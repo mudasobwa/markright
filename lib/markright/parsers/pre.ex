@@ -51,26 +51,23 @@ defmodule Markright.Parsers.Pre do
 
   ##############################################################################
 
-  use Markright.Buffer
   use Markright.Continuation
 
   ##############################################################################
 
-  def to_ast(input, fun \\ nil, opts \\ %{})
-    when is_binary(input) and (is_nil(fun) or is_function(fun)) and is_map(opts) do
-
-    with %C{ast: lang, tail: tail} <- Markright.Parsers.Word.to_ast(input),
-         %C{ast: code, tail: rest} <- astify(tail, fun) do
+  def to_ast(input, %Plume{} = plume \\ %Plume{}) when is_binary(input) do
+    with %Plume{ast: lang, tail: tail} <- Markright.Parsers.Word.to_ast(input, plume),
+         %Plume{ast: code, tail: rest} <- astify(tail, plume) do
       code_opts = if Markright.Utils.empty?(lang), do: %{}, else: %{lang: lang}
       # TODO: Should we fire another continuation event on `code` explicitly?
-      Markright.Utils.continuation(%C{ast: [{:code, code_opts, code}], tail: rest}, {:pre, opts, fun})
+      Markright.Utils.continuation(%Plume{plume | ast: [{:code, code_opts, code}], tail: rest}, {:pre, %{}})
     end
   end
 
   ##############################################################################
 
-  @spec astify(String.t, Function.t, Buf.t) :: Markright.Continuation.t
-  defp astify(part, fun, acc \\ Buf.empty())
+  @spec astify(String.t, Markright.Continuation.t) :: Markright.Continuation.t
+  defp astify(part, plume)
 
   ##############################################################################
 
@@ -82,16 +79,15 @@ defmodule Markright.Parsers.Pre do
                   unquote(indent) :: binary,
                   unquote(tag) :: binary,
                   rest :: binary
-                >>, _fun, acc) do
-      %C{ast: acc.buffer, tail: rest}
+                >>, %Plume{} = plume) do
+      Plume.astail!(plume, rest)
     end
   end)
 
-  defp astify(<<letter :: binary-size(1), rest :: binary>>, fun, acc),
-    do: astify(rest, fun, Buf.append(acc, letter))
+  defp astify(<<letter :: binary-size(1), rest :: binary>>, %Plume{} = plume),
+    do: astify(rest, Plume.tail!(plume, letter))
 
-  defp astify("", _fun, acc),
-    do: %C{ast: acc.buffer, tail: ""}
+  defp astify("", %Plume{} = plume), do: Plume.astail!(plume)
 
   ##############################################################################
 end

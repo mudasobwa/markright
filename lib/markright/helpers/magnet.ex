@@ -37,17 +37,14 @@ defmodule Markright.Helpers.Magnet do
 
       @terminators [" ", "\n", "\t", "\r", "]", "|"]
 
-      use Markright.Buffer
-      use Markright.Continuation
+      alias Markright.Continuation, as: Plume
 
       ##############################################################################
 
-      def to_ast(input, fun \\ nil, opts \\ %{})
-        when is_binary(input) and (is_nil(fun) or is_function(fun)) and is_map(opts) do
-
-        cont = astify(input)
+      def to_ast(input, %Plume{} = plume) when is_binary(input) do
+        cont = astify(input, plume)
         value = case @value do
-                  :empty -> %Markright.Continuation{ast: "", tail: input}
+                  :empty -> %Plume{plume | ast: "", tail: input}
                   :text  -> cont
                 end
         attrs = case @attr do
@@ -55,31 +52,30 @@ defmodule Markright.Helpers.Magnet do
                   some -> %{some => cont.ast}
                 end
 
-        Markright.Utils.continuation(@continuation, value, {@tag, attrs, fun})
+        Markright.Utils.continuation(@continuation, value, {@tag, attrs})
       end
 
       @dialyzer {:nowarn_function, to_ast: 3}
-      defoverridable [to_ast: 1, to_ast: 2, to_ast: 3]
+      defoverridable [to_ast: 2]
 
       ##############################################################################
 
-      @spec astify(String.t, Markright.Buffer.t) :: Markright.Continuation.t
-      defp astify(part, acc \\ Markright.Buffer.empty())
+      @spec astify(String.t, Markright.Continuation.t) :: Markright.Continuation.t
+      defp astify(part, plume)
 
       ##############################################################################
 
       Enum.each(@terminators, fn delimiter ->
         @delimiter delimiter
-        defp astify(<<@delimiter :: binary, _rest :: binary>> = rest, acc),
-          do: %Markright.Continuation{ast: acc.buffer, tail: rest}
+        defp astify(<<@delimiter :: binary, _rest :: binary>> = rest, %Plume{} = plume),
+          do: Plume.astail!(plume, rest)
       end)
       Module.delete_attribute(__MODULE__, :delimiter)
 
-      defp astify(<<letter :: binary-size(1), rest :: binary>>, acc),
-        do: astify(rest, Markright.Buffer.append(acc, letter))
+      defp astify(<<letter :: binary-size(1), rest :: binary>>, %Plume{} = plume),
+        do: astify(rest, Plume.tail!(plume, letter))
 
-      defp astify("", acc),
-        do: %Markright.Continuation{ast: acc.buffer}
+      defp astify("", %Plume{} = plume), do: %Plume{plume | ast: String.trim(plume.tail), tail: ""}
     end
   end
 end

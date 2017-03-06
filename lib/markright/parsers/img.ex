@@ -14,20 +14,19 @@ defmodule Markright.Parsers.Img do
 
   @behaviour Markright.Parser
 
+  use Markright.Continuation
+
   ##############################################################################
 
-  def to_ast(input, fun \\ nil, opts \\ %{})
-    when is_binary(input) and (is_nil(fun) or is_function(fun)) and is_map(opts) do
-
-    with %Markright.Continuation{ast: first, tail: rest} <- Markright.Parsers.Word.to_ast(input),
-         %Markright.Continuation{ast: ast, tail: tail} <- astify(rest, fun) do
-      attrs = Map.merge(
-        opts, case ast do
+  def to_ast(input, %Plume{} = plume \\ %Plume{}) when is_binary(input) do
+    with %Plume{ast: first, tail: rest} <- Markright.Parsers.Word.to_ast(input, plume),
+         %Plume{ast: ast, tail: tail} <- astify(rest, plume) do
+      attrs = case ast do
                 ["", link] -> %{src: link, alt: first}
                 [text, link] -> %{src: link, alt: first <> " " <> text}
                 text when is_binary(text) -> %{src: first, alt: String.trim(text)}
-              end)
-      Markright.Utils.continuation(:empty, %Markright.Continuation{tail: tail}, {:img, attrs, fun})
+              end
+      Markright.Utils.continuation(:empty, %Plume{plume | tail: tail}, {:img, attrs})
     end
   end
 

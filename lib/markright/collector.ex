@@ -16,6 +16,8 @@ defmodule Markright.Collector do
     quote bind_quoted: [collectors: opts[:collectors] || [], module: __MODULE__] do
       @behaviour Markright.Collector
 
+      alias Markright.Continuation, as: Plume
+
       @collectors if is_list(collectors), do: collectors, else: [collectors]
 
       ##########################################################################
@@ -40,11 +42,11 @@ defmodule Markright.Collector do
 
       ##########################################################################
 
-      def on_ast(%Markright.Continuation{} = cont, default_accumulator) do
+      def on_ast(%Plume{} = plume, default_accumulator) do
         Enum.each(@collectors, fn collector when is_atom(collector) ->
-          ast_collect!(collector, apply(collector, :on_ast, [cont, ast_collected(collector, default_accumulator)]))
+          ast_collect!(collector, apply(collector, :on_ast, [plume, ast_collected(collector, default_accumulator)]))
         end)
-        unless is_nil(internal = on_ast(cont)), do: ast_collect!(__MODULE__, ast_collected(__MODULE__) ++ [internal])
+        unless is_nil(internal = on_ast(plume)), do: ast_collect!(__MODULE__, ast_collected(__MODULE__) ++ [internal])
       end
 
       def afterwards(opts) do
@@ -55,11 +57,11 @@ defmodule Markright.Collector do
         ast_collected()
       end
 
-      def on_ast_callback, do: fn(%Markright.Continuation{} = cont) -> on_ast(cont, []) end
+      def on_ast_callback, do: fn(%Plume{} = plume) -> on_ast(plume, []) end
 
       ##########################################################################
 
-      def on_ast(%Markright.Continuation{} = _cont), do: nil
+      def on_ast(%Plume{} = _plume), do: nil
       def afterwards(accumulator, opts), do: accumulator
 
       defoverridable [on_ast: 1, afterwards: 2]

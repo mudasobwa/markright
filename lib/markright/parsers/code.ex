@@ -13,34 +13,31 @@ defmodule Markright.Parsers.Code do
 
   ##############################################################################
 
-  use Markright.Buffer
   use Markright.Continuation
 
   ##############################################################################
 
-  def to_ast(input, fun \\ nil, opts \\ %{})
-    when is_binary(input) and (is_nil(fun) or is_function(fun)) and is_map(opts) do
-
-    with %C{ast: code, tail: rest} <- astify(input, fun) do
-      Markright.Utils.continuation(%C{ast: code, tail: rest}, {:code, opts, fun})
+  def to_ast(input, %Plume{} = plume) when is_binary(input) do
+    with %Plume{} = cont <- astify(input, plume) do
+      Markright.Utils.continuation(cont, {:code, %{}})
     end
   end
 
   ##############################################################################
 
-  @spec astify(String.t, Function.t, Buf.t) :: Markright.Continuation.t
-  defp astify(part, fun, acc \\ Buf.empty())
+  @spec astify(String.t, Markright.Continuation.t) :: Markright.Continuation.t
+  defp astify(part, plume)
 
   ##############################################################################
 
-  defp astify(<<"`" :: binary, rest :: binary>>, _fun, acc),
-    do: %C{ast: acc.buffer, tail: rest}
+  defp astify(<<"`" :: binary, rest :: binary>>, %Plume{} = plume),
+    do: Plume.astail!(plume, rest)
 
-  defp astify(<<letter :: binary-size(1), rest :: binary>>, fun, acc),
-    do: astify(rest, fun, Buf.append(acc, letter))
+  defp astify(<<letter :: binary-size(1), rest :: binary>>, %Plume{} = plume),
+    do: astify(rest, Plume.tail!(plume, letter))
 
-  defp astify("", _fun, acc),
-    do: %C{ast: acc.buffer, tail: ""}
+  defp astify("", %Plume{} = plume),
+    do: Plume.astail!(plume)
 
   ##############################################################################
 end

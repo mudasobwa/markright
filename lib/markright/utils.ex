@@ -78,40 +78,38 @@ defmodule Markright.Utils do
 
   ##############################################################################
 
-  @spec continuation(Atom.t, Markright.Continuation.t, {Atom.t, Map.t, Function.t}) :: Markright.Continuation.t
-  def continuation(:continuation, cont, {tag, opts, fun}) do
-    case C.callback(C.continue(cont, {tag, opts}), fun) do
-      %C{} = c -> apply(to_finalizer_module(tag), :finalize, [c])
+  @spec continuation(Atom.t, Markright.Continuation.t, {Atom.t, Map.t}) :: Markright.Continuation.t
+  def continuation(:continuation, %Plume{} = plume, {tag, %{} = attrs}) do
+    case Plume.callback(Plume.continue(plume, {tag, attrs}), plume.fun) do
+      %Plume{} = plume -> apply(to_finalizer_module(tag), :finalize, [plume])
       other    -> raise Markright.Errors.UnexpectedContinuation, value: other
     end
   end
 
-  def continuation(:ast, cont, {tag, opts, fun}) do
-    continuation(:continuation, cont, {tag, opts, fun}).ast
+  def continuation(:ast, %Plume{} = plume, {tag, %{} = attrs}) do
+    continuation(:continuation, plume, {tag, attrs}).ast
   end
 
-  def continuation(:tail, cont, {tag, opts, fun}) do
-    continuation(:continuation, cont, {tag, opts, fun}).tail
+  def continuation(:tail, %Plume{} = plume, {tag, %{} = attrs}) do
+    continuation(:continuation, plume, {tag, attrs}).tail
   end
 
-  def continuation(:empty, cont, {tag, opts, fun}) do
-    case C.callback(C.continue({tag, opts, nil}, cont.tail), fun) do
-      %C{} = c -> apply(to_finalizer_module(tag), :finalize, [c])
+  def continuation(:empty, %Plume{} = plume, {tag, %{} = attrs}) do
+    case Plume.callback(Plume.continue(plume, {tag, attrs, nil}), plume.fun) do
+      %Plume{} = plume -> apply(to_finalizer_module(tag), :finalize, [plume])
       other    -> raise Markright.Errors.UnexpectedContinuation, value: other
     end
   end
 
-  @spec continuation(Markright.Continuation.t, {Atom.t, Map.t, Function.t}) :: Markright.Continuation.t
-  def continuation(cont, {tag, opts, fun}) do
-    continuation(:continuation, cont, {tag, opts, fun})
+  @spec continuation(Markright.Continuation.t, {Atom.t, Map.t}) :: Markright.Continuation.t
+  def continuation(%Plume{} = plume, {tag, %{} = attrs}) do
+    continuation(:continuation, plume, {tag, attrs})
   end
 
-  @spec delimit(String.t | Markright.Continuation.t) :: Markright.Continuation.t
-  def delimit(tail) when is_binary(tail) do
-    if empty?(tail), do: "", else: @splitter <> String.trim_leading(tail, @unix_newline)
-  end
-  def delimit(%Markright.Continuation{tail: tail} = ast) do
-    %Markright.Continuation{ast | tail: delimit(tail)}
+  @spec delimit(Markright.Continuation.t) :: Markright.Continuation.t
+  def delimit(%Plume{tail: tail} = plume) do
+    delimit = if empty?(tail), do: "", else: @splitter <> String.trim_leading(tail, @unix_newline)
+    %Plume{plume | tail: delimit}
   end
 
   ##############################################################################
@@ -133,10 +131,8 @@ defmodule Markright.Utils do
 
   ##############################################################################
 
-  @spec surround(Markright.Continuation.t | List.t | String.t, Atom.t, Atom.t) :: Markright.Continuation.t | List.t | String.t
-  def surround(%C{} = cont, tag, surrounding),
-    do: %C{cont | ast: surround(cont.ast, tag, surrounding)}
-  def surround(ast, tag, surrounding) when is_list(ast) do
+  @spec surround(Markright.Continuation.t, Atom.t, Atom.t) :: Markright.Continuation.t
+  def surround(%Plume{ast: ast} = plume, tag, surrounding) when is_list(ast) do
     {head, middle_and_tail} = Enum.split_while(ast, fn
       {^tag, _, _} -> false
       _ -> true
@@ -147,10 +143,9 @@ defmodule Markright.Utils do
       _            -> false
     end)
     # FIXME Maybe more accurate decision on surrounding
-    # IO.puts "★★★ #{inspect {head, middle, tail}}"
-    (if Enum.empty?(head), do: middle, else: head ++ [[{surrounding, %{}, middle}]]) ++ tail
+    ast = (if Enum.empty?(head), do: middle, else: head ++ [[{surrounding, %{}, middle}]]) ++ tail
+    %Plume{plume | ast: ast}
   end
-  def surround(ast, _tag, _surrounding), do: ast
 
   ##############################################################################
 
