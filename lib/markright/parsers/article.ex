@@ -20,24 +20,22 @@ defmodule Markright.Parsers.Article do
 
   ##############################################################################
 
-  use Markright.Continuation
+  use Markright.Continuation, as: Plume
 
   ##############################################################################
 
-  def to_ast(input, fun \\ nil, opts \\ %{})
-    when is_binary(input) and (is_nil(fun) or is_function(fun)) and is_map(opts) do
-
-    Markright.Utils.continuation(astify(input, fun), {:article, opts, fun})
+  def to_ast(input, %Plume{} = plume \\ %Plume{}) when is_binary(input) do
+    Markright.Utils.continuation(astify(input, plume), {:article, %{}})
   end
 
   ##############################################################################
 
-  defp astify(input, fun, acc \\ []) do
-    case Markright.Parsers.Generic.to_ast(@splitter <> input, fun) do
-      %C{ast: "", tail: ""} -> %C{ast: acc}
-      %C{ast: ast, tail: ""} -> %C{ast: acc ++ [ast]}
-      %C{ast: "", tail: tail} -> astify(tail, fun, acc)
-      %C{ast: ast, tail: tail} -> astify(tail, fun, acc ++ [ast])
+  defp astify(input, %Plume{} = plume) do
+    case Markright.Parsers.Generic.to_ast(@splitter <> input, plume) do
+      %Plume{ast: "", tail: ""} -> plume
+      %Plume{ast: ast, tail: ""} -> %Plume{plume | ast: plume.ast ++ [ast]}
+      %Plume{ast: "", tail: tail} -> astify(tail, plume)
+      %Plume{ast: ast, tail: tail} -> astify(tail, %Plume{plume | ast: plume.ast ++ [ast]})
     end
   end
 

@@ -17,46 +17,49 @@ defmodule Markright.Parsers.Generic do
 
   ##############################################################################
 
-  use Markright.Buffer
   use Markright.Continuation
 
   ##############################################################################
 
-  def to_ast(input, fun \\ nil, opts \\ %{})
-    when is_binary(input) and (is_nil(fun) or is_function(fun)) and is_map(opts) do
+  def to_ast(input, %Plume{} = plume) when is_binary(input),
+    do: astify(input, plume)
 
-    astify(input, fun, opts)
-  end
+  @spec astify!(Atom.t, Atom.t, {String.t, String.t, Markright.Continuation.t}) :: Markright.Continuation.t
+  defp astify!(:split, tag, {plain, rest, %Plume{} = plume}) do
+    with %Plume{ast: pre_ast, tail: ""} = plume <- astify(plain, plume),
+         plume <- plume |> Plume.untail!,
+         %Plume{ast: {:nil, attrs, rest}} = plume <- Markright.Parsers.ClassOrId.to_ast(rest, plume),
+         plume <- plume |> Plume.untail!,
+         %Plume{ast: ast, tail: more} = plume <- astify(rest, plume),
+         plume <- plume |> Plume.untail!,
+         %Plume{ast: post_ast, tail: tail} = plume <- astify(more, plume) do
 
-  @spec astify!(Atom.t, Atom.t, {String.t, String.t, Function.t, List.t, Markright.Buffer.t}) :: Markright.Continuation.t
-  defp astify!(:split, tag, {plain, rest, fun, opts, acc}) do
-    with %C{ast: pre_ast, tail: ""} <- astify(plain, fun, opts, acc),
-         %C{ast: {:nil, attrs, rest}} <- Markright.Parsers.ClassOrId.to_ast(rest, fun, opts),
-         %C{ast: ast, tail: more} <- astify(rest, fun, opts, Buf.unshift_and_cleanup(acc, {tag, opts})),
-         %C{ast: post_ast, tail: tail} <- astify(more, fun, opts, Buf.cleanup(acc)) do
-
-      C.continue(Markright.Utils.join!([pre_ast, {tag, attrs, ast}, post_ast]), tail)
+      Plume.continue(Plume.untail!(plume), Markright.Utils.join!([pre_ast, {tag, attrs, ast}, post_ast]), tail)
     end
   end
 
-  defp astify!(:custom, tag, {plain, rest, fun, opts, acc}) do
+  defp astify!(:custom, tag, {plain, rest, %Plume{} = plume}) do
     with mod <- Markright.Utils.to_parser_module(tag),
-        %C{ast: pre_ast, tail: ""} <- astify(plain, fun, opts, acc),
-        %C{ast: ast, tail: more} <- apply(mod, :to_ast, [rest, fun, opts]),
-        %C{ast: post_ast, tail: tail} <- Markright.Parsers.Generic.to_ast(more, fun, opts) do
+        %Plume{ast: pre_ast, tail: ""} = plume <- astify(plain, plume),
+         plume <- plume |> Plume.untail!,
+        %Plume{ast: ast, tail: more} = plume <- apply(mod, :to_ast, [rest, plume]),
+         plume <- plume |> Plume.untail!,
+        %Plume{ast: post_ast, tail: tail} = plume <- Markright.Parsers.Generic.to_ast(more, plume) do
 
-      post_ast = if mod == Markright.Parsers.Generic, do: {tag, opts, post_ast}, else: post_ast
-      C.continue(Markright.Utils.join!([pre_ast, ast, post_ast]), tail)
+      post_ast = if mod == Markright.Parsers.Generic, do: {tag, plume.attrs, post_ast}, else: post_ast
+      Plume.continue(Plume.untail!(plume), Markright.Utils.join!([pre_ast, ast, post_ast]), tail)
     end
   end
 
-  defp astify!(:fork, tag, {plain, rest, fun, opts, acc}) do
+  defp astify!(:fork, tag, {plain, rest, %Plume{} = plume}) do
     with mod <- Markright.Utils.to_parser_module(tag),
-        %C{ast: pre_ast, tail: ""} <- astify(plain, fun, opts, acc),
-        %C{ast: ast, tail: more} <- apply(mod, :to_ast, [rest, fun, opts]),
-        %C{ast: post_ast, tail: tail} <- Markright.Parsers.Generic.to_ast(more, fun, opts) do
+         %Plume{ast: pre_ast, tail: ""} = plume <- astify(plain, plume),
+         plume <- plume |> Plume.untail!,
+         %Plume{ast: ast, tail: more} = plume <- apply(mod, :to_ast, [rest, plume]),
+         plume <- plume |> Plume.untail!,
+         %Plume{ast: post_ast, tail: tail} = plume <- Markright.Parsers.Generic.to_ast(more, plume) do
 
-      {mine, rest} = case (if mod == Markright.Parsers.Generic, do: {tag, opts, ast}, else: ast) do
+      {mine, rest} = case (if mod == Markright.Parsers.Generic, do: {tag, plume.attrs, ast}, else: ast) do
         {tag, opts, ast} ->
           {m, r} = Markright.Utils.split_ast(ast)
           {{tag, opts, m}, r}
@@ -69,35 +72,39 @@ defmodule Markright.Parsers.Generic do
           end
       end
 
-      [Markright.Utils.join!([pre_ast, mine, post_ast]), rest]
-      |> C.continue(tail)
+      plume
+      |> Plume.untail!
+      |> Plume.continue([Markright.Utils.join!([pre_ast, mine, post_ast]), rest], tail)
       |> Markright.Utils.surround(tag, Markright.Syntax.surrounding(tag))
     end
   end
 
-  defp astify!(:join, _tag, {plain, rest, fun, opts, acc}) do
-    with %C{ast: pre_ast, tail: more} <- astify(plain, fun, opts, acc),
-         %C{ast: post_ast, tail: tail} <- Markright.Parsers.Block.to_ast(more <> rest, fun, opts) do
+  defp astify!(:join, _tag, {plain, rest, %Plume{} = plume}) do
+    with %Plume{ast: pre_ast, tail: more} <- astify(plain, plume),
+         plume <- plume |> Plume.untail!,
+         %Plume{ast: post_ast, tail: tail} <- Markright.Parsers.Block.to_ast(more <> rest, plume) do
 
-      C.continue(Markright.Utils.join!([pre_ast, post_ast]), tail)
+      Plume.continue(plume, Markright.Utils.join!([pre_ast, post_ast]), tail)
     end
   end
 
   # :magnet, :flush
-  defp astify!(type, tag, {plain, rest, fun, opts, acc}) do
+  defp astify!(type, tag, {plain, rest, %Plume{} = plume}) do
     with mod <- Markright.Utils.to_parser_module(tag, [fallback: Markright.Utils.to_parser_module(type)]),
-        %C{ast: pre_ast, tail: ""} <- astify(plain, fun, opts, acc),
-        %C{ast: ast, tail: more} <- apply(mod, :to_ast, [rest, fun, opts]),
-        %C{ast: post_ast, tail: tail} <- Markright.Parsers.Generic.to_ast(more, fun, opts) do
+         %Plume{ast: pre_ast, tail: ""} <- astify(plain, plume),
+         plume <- plume |> Plume.untail!,
+         %Plume{ast: ast, tail: more} <- apply(mod, :to_ast, [rest, plume]),
+         plume <- plume |> Plume.untail!,
+         %Plume{ast: post_ast, tail: tail} <- Markright.Parsers.Generic.to_ast(more, plume) do
 
-      C.continue(Markright.Utils.join!([pre_ast, ast, post_ast]), tail)
+      Plume.continue(plume, Markright.Utils.join!([pre_ast, ast, post_ast]), tail)
     end
   end
 
   ##############################################################################
 
-  @spec astify(String.t, Function.t, List.t, Buf.t) :: Markright.Continuation.t
-  defp astify(part, fun, opts, acc \\ Buf.empty())
+  @spec astify(String.t, Markright.Continuation.t) :: Markright.Continuation.t
+  defp astify(part, plume)
 
   ##############################################################################
 
@@ -107,8 +114,8 @@ defmodule Markright.Parsers.Generic do
                   plain :: binary-size(unquote(i)),
                   @splitter :: binary,
                   rest :: binary
-                >>, fun, opts, acc) when (rest != "")  do
-        astify!(:join, :block, {plain, rest, fun, opts, acc})
+                >>, %Plume{} = plume) when (rest != "")  do
+        astify!(:join, :block, {plain, rest, plume})
     end
 
     Enum.each(Markright.Syntax.magnet(), fn {tag, {delimiter, opts}} ->
@@ -116,8 +123,8 @@ defmodule Markright.Parsers.Generic do
                     plain :: binary-size(unquote(i)),
                     unquote(delimiter) :: binary,
                     rest :: binary
-                  >>, fun, opts, acc) do
-          astify!(:magnet, unquote(tag), {plain, unquote(delimiter) <> rest, fun, opts, acc})
+                  >>, %Plume{} = plume) do
+          astify!(:magnet, unquote(tag), {plain, unquote(delimiter) <> rest, plume})
       end
     end)
 
@@ -126,8 +133,8 @@ defmodule Markright.Parsers.Generic do
                     plain :: binary-size(unquote(i)),
                     unquote(delimiter) :: binary,
                     rest :: binary
-                  >>, fun, opts, acc) do
-          astify!(:flush, unquote(tag), {plain, rest, fun, opts, acc})
+                  >>, %Plume{} = plume) do
+          astify!(:flush, unquote(tag), {plain, rest, plume})
       end
     end)
 
@@ -137,8 +144,8 @@ defmodule Markright.Parsers.Generic do
                     unquote(shield) :: binary,
                     next :: binary-size(1),
                     rest :: binary
-                  >>, fun, opts, acc) do
-        astify(rest, fun, opts, Buf.append(acc, plain <> next))
+                  >>, %Plume{} = plume) do
+        astify(rest, Plume.tail!(plume, plain <> next))
       end
     end)
 
@@ -151,8 +158,8 @@ defmodule Markright.Parsers.Generic do
                       unquote(indent) :: binary,
                       unquote(delimiter) :: binary,
                       rest :: binary
-                    >>, fun, opts, acc) do
-          astify!(:fork, unquote(tag), {plain, rest, fun, opts, acc})
+                    >>, %Plume{} = plume) do
+          astify!(:fork, unquote(tag), {plain, rest, plume})
         end
       end)
     end)
@@ -162,8 +169,8 @@ defmodule Markright.Parsers.Generic do
                       plain :: binary-size(unquote(i)),
                       unquote(delimiter) :: binary,
                       rest :: binary
-                  >>, fun, opts, acc) do
-          astify!(:custom, unquote(tag), {plain, rest, fun, opts, acc})
+                  >>, %Plume{} = plume) do
+          astify!(:custom, unquote(tag), {plain, rest, plume})
       end
     end)
 
@@ -172,27 +179,31 @@ defmodule Markright.Parsers.Generic do
                       plain :: binary-size(unquote(i)),
                       unquote(delimiter) :: binary,
                       rest :: binary
-                  >>, fun, opts, acc) do
-        case Buf.shift(acc) do
-          {{unquote(tag), opts}, tail} ->
-            %C{astify(plain, fun, opts, tail) | tail: rest} # TODO: Buf.cleanup(tail)
+                  >>, %Plume{} = plume) do
+        case Plume.detag!(plume) do
+          {{unquote(tag), _opts}, cont} ->
+            %Plume{astify(plain, cont) | tail: rest}
           _ ->
-            astify!(:split, unquote(tag), {plain, rest, fun, opts, acc})
+            cont = Plume.tag!(plume, {unquote(tag), %{}})
+            astify!(:split, unquote(tag), {plain, rest, cont})
         end
       end
     end)
   end)
 
-  defp astify(<<plain :: binary-size(@max_lookahead), rest :: binary>>, fun, opts, acc) do
-    astify(rest, fun, opts, Buf.append(acc, plain))
+  defp astify(<<plain :: binary-size(@max_lookahead), rest :: binary>>, %Plume{} = plume) do
+    astify(rest, Plume.tail!(plume, plain))
   end
 
   ##############################################################################
   ### MUST BE LAST
   ##############################################################################
 
-  defp astify(unmatched, _fun, _opts, acc) when is_binary(unmatched) do
-    %C{ast: Buf.append(acc, unmatched).buffer, tail: ""}
+  defp astify(unmatched, %Plume{} = plume) when is_binary(unmatched) do
+    {tail, cont} = plume
+                   |> Plume.tail!(unmatched)
+                   |> Plume.detail!
+    %Plume{cont | ast: tail, tail: ""}
   end
 
 end

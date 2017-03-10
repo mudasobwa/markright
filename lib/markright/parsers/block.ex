@@ -5,7 +5,7 @@ defmodule Markright.Parsers.Block do
 
   @behaviour Markright.Parser
 
-  @max_indent    Markright.Syntax.indent
+  @max_indent Markright.Syntax.indent
 
   ##############################################################################
 
@@ -13,24 +13,22 @@ defmodule Markright.Parsers.Block do
 
   ##############################################################################
 
-  use Markright.Buffer
   use Markright.Continuation
 
   ##############################################################################
 
-  def to_ast(input, fun \\ nil, opts \\ %{})
-    when is_binary(input) and (is_nil(fun) or is_function(fun)) and is_map(opts),
-    do: astify(String.trim_leading(input), fun, opts)
+  def to_ast(input, %Plume{} = plume) when is_binary(input),
+    do: astify(String.trim_leading(input), plume)
 
   ##############################################################################
 
-  @spec astify(String.t, Function.t, Map.t, Buf.t) :: Markright.Continuation.t
-  defp astify(part, fun, opts, acc \\ Buf.empty())
+  @spec astify(String.t, Markright.Continuation.t) :: Markright.Continuation.t
+  defp astify(input, plume)
 
   ##############################################################################
 
-  defp astify(<<unquote(@splitter) :: binary, rest :: binary>>, _fun, _opts, acc),
-    do: %C{ast: acc.buffer, tail: rest}
+  defp astify(<<unquote(@splitter) :: binary, rest :: binary>>, %Plume{} = plume),
+    do: Plume.tail!(plume, rest)
 
   Enum.each(0..@max_indent, fn i ->
     indent = String.duplicate(" ", i)
@@ -39,25 +37,26 @@ defmodule Markright.Parsers.Block do
                     unquote(indent) :: binary,
                     unquote(delimiter) :: binary,
                     rest :: binary
-                  >>, fun, opts, _acc) when not(rest == "") do
+                  >>, %Plume{} = plume) when not(rest == "") do
 
         with mod <- Markright.Utils.to_parser_module(unquote(tag)), # TODO: extract this with into Utils fun
-             %C{} = ast <- apply(mod, :to_ast, [rest, fun, opts]),
-             %C{} = ast <- Markright.Utils.delimit(ast) do
+             %Plume{} = ast <- apply(mod, :to_ast, [rest, plume]),
+             %Plume{} = ast <- Markright.Utils.delimit(ast) do
 
           if mod == Markright.Parsers.Generic,
-            do: Markright.Utils.continuation(ast, {unquote(tag), opts, fun}),
+            do: Markright.Utils.continuation(ast, {unquote(tag), %{}}),
             else: ast
         end
       end
     end)
-    defp astify("", _fun, _opts, _acc), do: %C{}
-    defp astify(rest, fun, opts, _acc) when is_binary(rest) do
-      with cont <- Markright.Parsers.Generic.to_ast(@unix_newline <> rest, fun, opts) do
+    defp astify("", plume), do: plume
+    defp astify(rest, %Plume{} = plume) when is_binary(rest) do
+      with %Plume{} = cont <- Markright.Parsers.Generic.to_ast(@unix_newline <> rest, plume) do
         {mine, rest} = Markright.Utils.split_ast(cont.ast)
 
-        %C{ast: [Markright.Utils.continuation(:ast, %C{ast: trim_leading(mine)}, {:p, opts, fun}), rest],
-           tail: Markright.Utils.delimit(cont.tail)}
+        %Plume{cont |
+          ast: [Markright.Utils.continuation(:ast, %Plume{cont | ast: trim_leading(mine)}, {:p, %{}}), rest],
+          tail: Markright.Utils.delimit(cont).tail}
       end
     end
   end)

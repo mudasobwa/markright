@@ -21,11 +21,9 @@ defmodule Markright.Parsers.Lj do
 
   use Markright.Helpers.Magnet
 
-  def to_ast(input, fun \\ nil, opts \\ %{})
-    when is_binary(input) and (is_nil(fun) or is_function(fun)) and is_map(opts) do
-
-    %Markright.Continuation{ast: <<@magnet :: binary, username :: binary>>} = cont = astify(input)
-    cont = %Markright.Continuation{cont | ast:
+  def to_ast(input, %Plume{} = plume \\ %Plume{}) when is_binary(input) do
+    %Plume{ast: <<@magnet :: binary, username :: binary>>} = cont = astify(input, plume)
+    cont = %Plume{cont | ast:
       [
         {:a, %{href: "http://#{username}.livejournal.com/profile",
                target: "_self",
@@ -36,6 +34,6 @@ defmodule Markright.Parsers.Lj do
                href: "http://#{username}.livejournal.com/",
                target: "_self"}, [{:strong, %{}, username}]}
       ]}
-    Markright.Utils.continuation(:continuation, cont, {:span, %{class: "ljuser i-ljuser i-ljuser-type-P"}, fun})
+    Markright.Utils.continuation(:continuation, cont, {:span, %{class: "ljuser i-ljuser i-ljuser-type-P"}})
   end
 end

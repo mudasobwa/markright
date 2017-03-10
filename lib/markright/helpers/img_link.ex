@@ -5,33 +5,32 @@ defmodule Markright.Helpers.ImgLink do
 
   defmacro __using__(_opts) do
     quote do
+      alias Markright.Continuation, as: Plume
       ##############################################################################
 
-      @spec astify(String.t, Function.t, Markright.Buffer.t) :: Markright.Continuation.t
-      defp astify(part, fun, acc \\ Markright.Buffer.empty())
+      @spec astify(String.t, Markright.Continuation.t) :: Markright.Continuation.t
+      defp astify(part, plume)
 
       ##############################################################################
 
       Enum.each(~w/]( |/, fn delimiter ->
         @delimiter delimiter
-        defp astify(<<@delimiter :: binary, rest :: binary>>, fun, acc),
-          do: with %Markright.Continuation{ast: ast, tail: tail} <- astify(rest, fun),
-                do: %Markright.Continuation{ast: [acc.buffer, ast], tail: tail}
+        defp astify(<<@delimiter :: binary, rest :: binary>>, %Plume{} = plume) do
+          with {tail, plume} <- Plume.detail!(plume),
+               %Plume{} = plume <- astify(rest, plume),
+            do: %Plume{plume | ast: [tail, plume.ast], tail: plume.tail}
+        end
       end)
 
       Enum.each(~w/] )/, fn delimiter ->
         @delimiter delimiter
-        defp astify(<<@delimiter :: binary, rest :: binary>>, _fun, acc),
-          do: %Markright.Continuation{ast: acc.buffer, tail: rest}
+        defp astify(<<@delimiter :: binary, rest :: binary>>, %Plume{} = plume),
+          do: Plume.astail!(plume, rest)
       end)
       Module.delete_attribute(__MODULE__, :delimiter)
 
-      defp astify(<<letter :: binary-size(1), rest :: binary>>, fun, acc),
-        do: astify(rest, fun, Markright.Buffer.append(acc, letter))
-
-      ##############################################################################
-
-      @delimiter nil
+      defp astify(<<letter :: binary-size(1), rest :: binary>>, %Plume{} = plume),
+        do: astify(rest, Plume.tail!(plume, letter))
     end
   end
 end

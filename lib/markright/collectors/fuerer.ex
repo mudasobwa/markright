@@ -18,7 +18,7 @@ defmodule Markright.Collectors.Fuerer do
   end
 
   def afterwards(acc, opts) do
-    Keyword.put_new(acc, :header, @empty_header)
+    acc = Keyword.put_new(acc, :header, @empty_header)
     {:h2, opts[:attrs] || %{}, acc[:header]}
   end
 end

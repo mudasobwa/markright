@@ -5,7 +5,7 @@
     ## Examples
 
         iex> input = "mailto:am@mudasobwa.ru "
-        iex> Markright.Parsers.Maillink.to_ast(input)
+        iex> Markright.Parsers.Maillink.to_ast(input, %Markright.Continuation{})
         %Markright.Continuation{ast: {:a, %{href: "mailto:am@mudasobwa.ru"}, "mailto:am@mudasobwa.ru"}, tail: " "}
 
         iex> input = "Hello mailto:am@mudasobwa.ru !"

@@ -13,22 +13,22 @@ defmodule Markright.Parsers.Link do
 
   @behaviour Markright.Parser
 
+  use Markright.Continuation
+
   ##############################################################################
 
-  def to_ast(input, fun \\ nil, opts \\ %{})
-    when is_binary(input) and (is_nil(fun) or is_function(fun)) and is_map(opts) do
-
-    with %Markright.Continuation{ast: first, tail: rest} <- Markright.Parsers.Word.to_ast(input),
-         %Markright.Continuation{ast: ast, tail: tail} <- astify(rest, fun) do
+  def to_ast(input, %Plume{} = plume \\ %Plume{}) when is_binary(input) do
+    with %Plume{ast: first, tail: rest} <- Markright.Parsers.Word.to_ast(input, plume),
+         plume <- plume |> Plume.untail!,
+         %Plume{ast: ast, tail: tail} <- astify(rest, plume) do
       {subinput, href} = case ast do
                            ["", link] -> {first, link}
                            [text, link] -> {first <> " " <> text, link}
                            text when is_binary(text) -> {String.trim(text), first}
                          end
 
-      %Markright.Continuation{ast: label, tail: ""} = Markright.Parsers.Generic.to_ast(subinput)
-      Markright.Utils.continuation(
-        %Markright.Continuation{ast: label, tail: tail}, {:a, Map.merge(opts, %{href: href}), fun})
+      %Plume{ast: label, tail: ""} = Markright.Parsers.Generic.to_ast(subinput, plume)
+      Plume.continue(%Plume{plume | ast: label, tail: tail}, {:a, %{href: href}})
     end
   end
 
