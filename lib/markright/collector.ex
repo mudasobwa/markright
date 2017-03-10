@@ -46,7 +46,10 @@ defmodule Markright.Collector do
         Enum.each(@collectors, fn collector when is_atom(collector) ->
           ast_collect!(collector, apply(collector, :on_ast, [plume, ast_collected(collector, default_accumulator)]))
         end)
-        unless is_nil(internal = on_ast(plume)), do: ast_collect!(__MODULE__, ast_collected(__MODULE__) ++ [internal])
+        case on_ast(plume) do
+          nil -> plume
+          internal -> ast_collect!(__MODULE__, ast_collected(__MODULE__) ++ [internal])
+        end
       end
 
       def afterwards(opts) do
