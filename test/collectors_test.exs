@@ -120,4 +120,94 @@ defmodule Markright.Collectors.Test do
   end
 
 
+  @input String.trim """
+  Section 1.
+  """
+
+  @output {:article, %{},
+            [{:p, %{}, "Section 1."}]}
+
+  @accumulated [{Sample, []},
+                {Markright.Collectors.Type, %Markright.Collectors.Type{decorated: false, tech: nil, type: :twit}}]
+
+  test "harvests info about twit" do
+    Code.eval_string """
+    defmodule Sample do
+      use Markright.Collector, collectors: Markright.Collectors.Type
+    end
+    """
+    {ast, acc} = Markright.to_ast(@input, Sample)
+    assert {ast, acc} == {@output, @accumulated}
+  after
+    purge Sample
+  end
+
+  @input String.trim """
+  Section 1.
+
+  ![http://example.com/i1.jpg](http://example.com/i1.jpg)
+  """
+
+  test "harvests info about single image" do
+    Code.eval_string """
+    defmodule Sample do
+      use Markright.Collector, collectors: Markright.Collectors.Type
+    end
+    """
+    {_, [{Sample, []}, {Markright.Collectors.Type, type}]} = Markright.to_ast(@input, Sample)
+    assert type == %Markright.Collectors.Type{decorated: true, tech: nil, type: :image}
+  after
+    purge Sample
+  end
+
+  @input String.trim """
+  Section 1.
+
+  ![http://example.com/i1.jpg](http://example.com/i1.jpg)
+  ![http://example.com/i2.jpg](http://example.com/i2.jpg)
+  ![http://example.com/i3.jpg](http://example.com/i3.jpg)
+  """
+
+  test "harvests info about an album" do
+    Code.eval_string """
+    defmodule Sample do
+      use Markright.Collector, collectors: Markright.Collectors.Type
+    end
+    """
+    {_, [{Sample, []}, {Markright.Collectors.Type, type}]} = Markright.to_ast(@input, Sample)
+    assert type == %Markright.Collectors.Type{decorated: true, tech: nil, type: :album}
+  after
+    purge Sample
+  end
+
+  @input String.trim """
+  Section 1.
+
+  ```elixir
+  defmodule A, do: def a, do: :ok
+  ```
+
+  other example:
+
+  ```ruby
+  class A; def a; :ok end; end
+  ```
+  """
+
+  @output {:article, %{},
+            [{:p, %{}, "Section 1."}]}
+
+  test "harvests info about tech" do
+    Code.eval_string """
+    defmodule Sample do
+      use Markright.Collector, collectors: Markright.Collectors.Type
+    end
+    """
+    {_, [{Sample, []}, {Markright.Collectors.Type, type}]} = Markright.to_ast(@input, Sample)
+    assert type == %Markright.Collectors.Type{decorated: false, tech: ~w|ruby elixir|, type: :default}
+  after
+    purge Sample
+  end
+
+
 end
