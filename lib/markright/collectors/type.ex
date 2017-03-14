@@ -17,7 +17,7 @@ defmodule Markright.Collectors.Type do
   @behaviour Markright.Collector
 
   @type t :: %__MODULE__{
-    type: :default | :twit | :mediatwit | :image | :album,
+    type: :default | :twit | :mediatwit | :image | :album | :reference,
     decorated: true | false,
     tech: List.t}
 
