@@ -183,6 +183,45 @@ defmodule Markright.Collectors.Test do
   @input String.trim """
   Section 1.
 
+  > Hello, world. I am a quote (reference).
+  > [Link](http://example.com/i1.html)
+  """
+
+  test "harvests info about a reference" do
+    Code.eval_string """
+    defmodule Sample do
+      use Markright.Collector, collectors: Markright.Collectors.Type
+    end
+    """
+    {html, [{Sample, []}, {Markright.Collectors.Type, type}]} = Markright.to_ast(@input, Sample)
+    assert type == %Markright.Collectors.Type{decorated: false, tech: nil, type: :reference}
+  after
+    purge Sample
+  end
+
+  @input String.trim """
+  Section 1.
+
+  > Hello, world. I am a quote (reference).
+
+  That was not a cite.
+  """
+
+  test "does not false-positively harvest info about a reference" do
+    Code.eval_string """
+    defmodule Sample do
+      use Markright.Collector, collectors: Markright.Collectors.Type
+    end
+    """
+    {html, [{Sample, []}, {Markright.Collectors.Type, type}]} = Markright.to_ast(@input, Sample)
+    assert type == %Markright.Collectors.Type{decorated: false, tech: nil, type: :default}
+  after
+    purge Sample
+  end
+
+  @input String.trim """
+  Section 1.
+
   ```elixir
   defmodule A, do: def a, do: :ok
   ```

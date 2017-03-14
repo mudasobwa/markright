@@ -32,19 +32,25 @@ defmodule Markright.Collectors.Type do
       {:pre, _, [{:code, %{lang: lang}, _}]} -> put_in_kwd(acc, :tech, lang)
       {:p, _, _} -> put_in_int(acc, :paras)
       {:img, _, _} -> put_in_int(acc, :images)
+      {:blockquote, %{}, ast} when is_list(ast) ->
+        case :lists.reverse(ast) do
+          [{:a, %{href: _}, _} | _] -> put_in_int(acc, :blockquotes)
+          _ -> put_in_kwd(acc, :rest, :blockquote)
+        end
       # {:figure, _, _} -> put_in(acc, :images, (acc[:images] || 0) + 1) # FIXME!!! support figures
-      # {:article, _, {}}
-      _ -> acc
+      {:article, _, _} -> acc
+      {other, _, _} -> put_in_kwd(acc, :rest, other)
     end
   end
 
   def afterwards(acc, _opts) do
     decorated = !is_nil(acc[:images])
     type = case acc[:images] do
-      nil -> if acc[:paras] == 1, do: :twit, else: :default
+      nil -> if acc[:paras] == 1 and is_nil(acc[:rest]), do: :twit, else: :default
       1   -> if acc[:paras] == 1, do: :mediatwit, else: :image
       _   -> :album
     end
+    type = if is_nil(acc[:blockquotes]), do: type, else: :reference
     tech = if acc[:tech], do: Enum.uniq(acc[:tech])
     %Markright.Collectors.Type{type: type, decorated: decorated, tech: tech}
   end
