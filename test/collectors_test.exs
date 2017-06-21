@@ -193,7 +193,7 @@ defmodule Markright.Collectors.Test do
       use Markright.Collector, collectors: Markright.Collectors.Type
     end
     """
-    {html, [{Sample, []}, {Markright.Collectors.Type, type}]} = Markright.to_ast(@input, Sample)
+    {_html, [{Sample, []}, {Markright.Collectors.Type, type}]} = Markright.to_ast(@input, Sample)
     assert type == %Markright.Collectors.Type{decorated: false, tech: nil, type: :reference}
   after
     purge Sample
@@ -213,7 +213,7 @@ defmodule Markright.Collectors.Test do
       use Markright.Collector, collectors: Markright.Collectors.Type
     end
     """
-    {html, [{Sample, []}, {Markright.Collectors.Type, type}]} = Markright.to_ast(@input, Sample)
+    {_html, [{Sample, []}, {Markright.Collectors.Type, type}]} = Markright.to_ast(@input, Sample)
     assert type == %Markright.Collectors.Type{decorated: false, tech: nil, type: :default}
   after
     purge Sample
@@ -232,9 +232,6 @@ defmodule Markright.Collectors.Test do
   class A; def a; :ok end; end
   ```
   """
-
-  @output {:article, %{},
-            [{:p, %{}, "Section 1."}]}
 
   test "harvests info about tech" do
     Code.eval_string """

@@ -185,7 +185,7 @@ defmodule Markright.Test do
     assert ast == @output_code_inplace
   end
 
-  @badge_url "http://mel.fm/2016/05/22/plural"
+  # @badge_url "http://mel.fm/2016/05/22/plural"
 
 
 end
