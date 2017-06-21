@@ -1,18 +1,20 @@
 defmodule Markright.Mixfile do
+  @moduledoc false
   use Mix.Project
 
   @app :markright
 
   def project do
-    [app: @app,
-     version: "0.3.3",
-     elixir: "~> 1.3",
-     build_embedded: Mix.env == :prod,
-     start_permanent: Mix.env == :prod,
-     escript: [main_module: Markright, path: "bin/#{@app}"],
-     description: description(),
-     package: package(),
-     deps: deps()]
+    [
+      app: @app,
+      version: "0.4.0",
+      elixir: "~> 1.3",
+      build_embedded: Mix.env == :prod,
+      start_permanent: Mix.env == :prod,
+      escript: [main_module: Markright, path: "bin/#{@app}"],
+      description: description(),
+      package: package(),
+      deps: deps()]
   end
 
   # Configuration for the OTP application
@@ -34,7 +36,7 @@ defmodule Markright.Mixfile do
   # Type "mix help deps" for more examples and options
   defp deps do
     [
-      {:xml_builder, "~> 0.0.9", only: ~w|dev test|a},
+      {:xml_builder, "~> 0.0.9"},
       {:credo, "~> 0.5", only: :dev},
       {:ex_doc, "~> 0.11", only: :dev}
     ]
@@ -53,11 +55,11 @@ defmodule Markright.Mixfile do
 
   defp package do
     [
-     name: :markright,
+     name: @app,
      files: ~w|bin lib mix.exs README.md|,
      maintainers: ["Aleksei Matiushkin"],
      licenses: ["MIT"],
-     links: %{"GitHub" => "https://github.com/mudasobwa/markright",
-              "Docs" => "https://hexdocs.pm/markright"}]
+     links: %{"GitHub" => "https://github.com/mudasobwa/#{@app}",
+              "Docs" => "https://hexdocs.pm/#{@app}"}]
   end
 end

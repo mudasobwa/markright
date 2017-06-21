@@ -1,4 +1,5 @@
 defmodule Markright.Tester do
+  @moduledoc false
   defmacro __using__(_opts) do
     quote do
       defp purge(list) when is_list(list) do

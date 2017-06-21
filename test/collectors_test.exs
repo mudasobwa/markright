@@ -1,4 +1,6 @@
 defmodule Markright.Collectors.Test do
+  @moduledoc false
+
   use ExUnit.Case
   use Markright.Tester
   doctest Markright.Collectors.OgpTwitter
