@@ -57,7 +57,7 @@ defmodule Markright.Parsers.Blockquote do
 
   Enum.each(0..@max_indent-1, fn i ->
     indent = String.duplicate(" ", i)
-    {tag, handler} = Markright.Syntax.block()[:blockquote] # FIXME!!!
+    {tag, _handler} = Markright.Syntax.block()[:blockquote] # FIXME!!!
     defp astify(<<
                   @unix_newline :: binary,
                   unquote(indent) :: binary,

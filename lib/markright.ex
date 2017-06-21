@@ -105,7 +105,7 @@ defmodule Markright do
                |> to_ast
                |> XmlBuilder.generate
       # result = if options[:squeeze], do: result |> String.split |> Enum.join(" "), else: result
-      if options[:silent], do: result, else: IO.inspect(result)
+      if options[:silent], do: result, else: IO.puts(result)
     else
       IO.puts "Unable to read file #{options[:file]}"
     end

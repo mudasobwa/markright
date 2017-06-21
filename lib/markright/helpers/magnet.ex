@@ -55,7 +55,6 @@ defmodule Markright.Helpers.Magnet do
         Markright.Utils.continuation(@continuation, value, {@tag, attrs})
       end
 
-      @dialyzer {:nowarn_function, to_ast: 3}
       defoverridable [to_ast: 2]
 
       ##############################################################################
