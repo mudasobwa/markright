@@ -28,7 +28,8 @@ defmodule Markright.Syntax do
       httplink: "http://",
       httpslink: "https://",
       lj: "✎",
-      tag: "#"
+      tag: "#",
+      youtube: "✇"
     ],
     grip: [
       span: "⇓",
