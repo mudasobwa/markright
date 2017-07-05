@@ -24,7 +24,7 @@ by adding `markright` to your list of dependencies in `mix.exs`:
 
 ```elixir
 def deps do
-  [{:markright, "~> 0.2.0"}]
+  [{:markright, "~> 0.4.0"}]
 end
 ```
 
