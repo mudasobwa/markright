@@ -7,7 +7,7 @@ defmodule Markright.Mixfile do
   def project do
     [
       app: @app,
-      version: "0.4.2",
+      version: "0.4.3",
       elixir: "~> 1.3",
       build_embedded: Mix.env == :prod,
       start_permanent: Mix.env == :prod,
@@ -36,8 +36,8 @@ defmodule Markright.Mixfile do
   # Type "mix help deps" for more examples and options
   defp deps do
     [
-      {:xml_builder, "~> 0.0.9"},
-      {:credo, "~> 0.5", only: :dev},
+      {:xml_builder, "~> 0.1"},
+      {:credo, "~> 0.8", only: :dev},
       {:ex_doc, "~> 0.11", only: :dev}
     ]
   end
