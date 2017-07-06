@@ -7,7 +7,10 @@ defmodule Markright.Parsers.Article do
       iex> cont = "![http://example.com Hello my] lovely world!" |> Markright.Parsers.Article.to_ast
       ...> cont.ast
       {:article, %{},
-        [{:p, %{}, [{:img, %{src: "http://example.com", alt: "Hello my"}, nil}, " lovely world!"]}]}
+        [{:p, %{}, [
+              {:figure, %{},
+                [{:img, %{alt: "Hello my", src: "http://example.com"}, nil},
+                 {:figcaption, %{}, "Hello my"}]}, " lovely world!"]}]}
   """
 
   ##############################################################################

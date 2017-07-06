@@ -10,6 +10,7 @@ defmodule Markright.Syntax do
 
     block: [
       h: "#",
+      h: "§",
       pre: "```",
       blockquote: ">"
     ],

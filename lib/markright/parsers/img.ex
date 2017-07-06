@@ -4,10 +4,16 @@ defmodule Markright.Parsers.Img do
 
   ## Examples
 
-      iex> "http://example.com Hello my] lovely world!" |> Markright.Parsers.Img.to_ast
+      iex> "http://example.com] lovely world!" |> Markright.Parsers.Img.to_ast
       %Markright.Continuation{ast: {:img,
-             %{alt: "Hello my", src: "http://example.com"}, nil},
-            tail: " lovely world!"}
+             %{alt: "http://example.com", src: "http://example.com"}, nil},
+            bag: [tags: []], fun: nil, tail: " lovely world!"}
+
+      iex> "http://example.com Hello my] lovely world!" |> Markright.Parsers.Img.to_ast
+      %Markright.Continuation{ast: {:figure, %{},
+            [{:img, %{alt: "Hello my", src: "http://example.com"}, nil},
+             {:figcaption, %{}, "Hello my"}]},
+            bag: [tags: []], fun: nil, tail: " lovely world!"}
   """
 
   ##############################################################################
@@ -20,13 +26,21 @@ defmodule Markright.Parsers.Img do
 
   def to_ast(input, %Plume{} = plume \\ %Plume{}) when is_binary(input) do
     with %Plume{ast: first, tail: rest} <- Markright.Parsers.Word.to_ast(input, plume),
-         %Plume{ast: ast, tail: tail} <- astify(rest, plume) do
+         %Plume{ast: ast, tail: tail} = cont <- astify(rest, plume) do
       attrs = case ast do
                 ["", link] -> %{src: link, alt: first}
                 [text, link] -> %{src: link, alt: first <> " " <> text}
                 text when is_binary(text) -> %{src: first, alt: String.trim(text)}
               end
-      Markright.Utils.continuation(:empty, %Plume{plume | tail: tail}, {:img, attrs})
+
+      case attrs do
+        %{src: src, alt: ""} ->
+          Markright.Utils.continuation(:empty, %Plume{plume | tail: tail}, {:img, %{attrs | alt: src}})
+        %{src: src, alt: alt} ->
+          cont = %Plume{cont | ast: [{:img, %{src: src, alt: alt}, nil},
+                                     {:figcaption, %{}, alt}]}
+          Markright.Utils.continuation(:continuation, cont, {:figure, %{}})
+      end
     end
   end
 

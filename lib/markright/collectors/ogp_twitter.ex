@@ -30,6 +30,7 @@ defmodule Markright.Collectors.OgpTwitter do
   def on_ast(%Markright.Continuation{ast: ast} = _cont, acc) do
     case ast do
       {:img, %{src: href}, _} -> Keyword.put_new(acc, :image, href)
+      {:figure, %{}, [{:img, %{src: href}, _} | _]} -> Keyword.put_new(acc, :image, href)
       {:p, _, text}   -> Keyword.put_new(acc, :description, text)
       {:h1, _, text}  -> Keyword.put_new(acc, :title, text)
       {:h2, _, text}  -> Keyword.put_new(acc, :title2, text)

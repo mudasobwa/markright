@@ -32,6 +32,7 @@ defmodule Markright.Collectors.Type do
       {:pre, _, [{:code, %{lang: lang}, _}]} -> put_in_kwd(acc, :tech, lang)
       {:p, _, _} -> put_in_int(acc, :paras)
       {:img, _, _} -> put_in_int(acc, :images)
+      {:figure, _, _} -> put_in_int(acc, :images)
       {:blockquote, %{}, ast} when is_list(ast) ->
         case :lists.reverse(ast) do
           [{:a, %{href: _}, _} | _] -> put_in_int(acc, :blockquotes)
