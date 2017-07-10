@@ -4,13 +4,76 @@ defmodule Markright.WithSyntax do
   """
 
   defmacro __using__(opts) do
-    quote bind_quoted: [module: __MODULE__, opts: opts] do
+    quote bind_quoted: [opts: opts] do
       @behaviour Markright.Parser
 
-      Module.put_attribute(__MODULE__, :syntax, opts[:syntax] || Markright.Syntax.syntax())
+      syntax = opts[:syntax] || Markright.Syntax.syntax()
+      Module.put_attribute(__MODULE__, :syntax, syntax)
       @generic_parser opts[:generic_parser] || __MODULE__
       @max_lookahead opts[:lookahead] || Markright.Syntax.lookahead
       @max_indent opts[:indent] || Markright.Syntax.indent
+
+      ##############################################################################
+
+      block_module_content =
+        quote do
+          @behaviour Markright.Parser
+          @max_indent Markright.Syntax.indent
+          Module.put_attribute(__MODULE__, :syntax, unquote(syntax) || Markright.Syntax.syntax())
+          use Markright.Continuation
+          alias Markright.Continuation, as: Plume
+
+          def to_ast(input, %Plume{} = plume) when is_binary(input),
+            do: astify(String.trim_leading(input), plume)
+
+          @spec astify(String.t, Markright.Continuation.t) :: Markright.Continuation.t
+          defp astify(input, plume)
+
+          defp astify(<<@splitter :: binary, rest :: binary>>, %Plume{} = plume),
+            do: Plume.tail!(plume, rest)
+
+          Enum.each(0..@max_indent, fn indent ->
+            Enum.each(Markright.Syntax.block(@syntax), fn {tag, {delimiter, _opts}} ->
+              Module.put_attribute(__MODULE__, :indent, String.duplicate(" ", indent))
+              Module.put_attribute(__MODULE__, :tag, tag)
+              Module.put_attribute(__MODULE__, :delimiter, delimiter)
+              defp astify(<<
+                            @indent :: binary,
+                            @delimiter :: binary,
+                            rest :: binary
+                          >>, %Plume{} = plume) when not(rest == "") do
+
+                with mod <- Markright.Utils.to_parser_module(@tag), # TODO: extract this with into Utils fun
+                     %Plume{} = ast <- apply(mod, :to_ast, [rest, plume]),
+                     %Plume{} = ast <- Markright.Utils.delimit(ast) do
+
+                  if mod == plume.bag[:parser], # FIXME
+                    do: Markright.Utils.continuation(ast, {@tag, %{}}),
+                    else: ast
+                end
+              end
+              Module.delete_attribute(__MODULE__, :delimiter)
+              Module.delete_attribute(__MODULE__, :tag)
+              Module.delete_attribute(__MODULE__, :indent)
+            end)
+            defp astify("", plume), do: plume
+            defp astify(rest, %Plume{} = plume) when is_binary(rest) do
+              with %Plume{} = cont <- apply(plume.bag[:parser], :to_ast, [@unix_newline <> rest, plume]) do
+                {mine, rest} = Markright.Utils.split_ast(cont.ast)
+
+                %Plume{cont |
+                  ast: [Markright.Utils.continuation(:ast, %Plume{cont | ast: trim_leading(mine)}, {:p, %{}}), rest],
+                  tail: Markright.Utils.delimit(cont).tail}
+              end
+            end
+          end)
+
+          defp trim_leading(input) when is_binary(input), do: String.trim_leading(input)
+          defp trim_leading([h | t]) when is_binary(h), do: [trim_leading(h) | t]
+          defp trim_leading(other), do: other
+        end
+      Module.put_attribute(__MODULE__, :block_module, Module.concat(__MODULE__, "Block"))
+      Module.create(@block_module, block_module_content, Macro.Env.location(__ENV__))
 
       ##############################################################################
 
@@ -81,7 +144,7 @@ defmodule Markright.WithSyntax do
       defp astify!(:join, _tag, {plain, rest, %Plume{} = plume}) do
         with %Plume{ast: pre_ast, tail: more} <- astify(plain, plume),
              plume <- plume |> Plume.untail!,
-             %Plume{ast: post_ast, tail: tail} <- Markright.Parsers.Block.to_ast(more <> rest, plume) do
+             %Plume{ast: post_ast, tail: tail} <- apply(@block_module, :to_ast, [more <> rest, plume]) do
 
           Plume.continue(plume, Markright.Utils.join!([pre_ast, post_ast]), tail)
         end
