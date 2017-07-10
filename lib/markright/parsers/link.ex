@@ -27,7 +27,7 @@ defmodule Markright.Parsers.Link do
                            text when is_binary(text) -> {String.trim(text), first}
                          end
 
-      %Plume{ast: label, tail: ""} = Markright.Parsers.Generic.to_ast(subinput, plume)
+      %Plume{ast: label, tail: ""} = apply(plume.bag[:parser], :to_ast, [subinput, plume])
       Plume.continue(%Plume{plume | ast: label, tail: tail}, {:a, %{href: href}})
     end
   end

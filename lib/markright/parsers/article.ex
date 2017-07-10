@@ -33,15 +33,18 @@ defmodule Markright.Parsers.Article do
 
   ##############################################################################
 
-  defp astify(input, %Plume{} = plume, syntax \\ nil) do
-    case apply(parser(syntax), :to_ast, [@splitter <> input, plume]) do
+  defp astify(input, %Plume{} = plume, syntax) do
+    parser_module = parser(syntax) || plume.bag[:parser]
+    plume = %Plume{plume | bag: [parser: parser_module, syntax: syntax]}
+
+    case apply(parser_module, :to_ast, [@splitter <> input, plume]) do
       %Plume{ast: "", tail: ""} -> plume
       %Plume{ast: ast, tail: ""} -> %Plume{plume | ast: plume.ast ++ [ast]}
-      %Plume{ast: "", tail: tail} -> astify(tail, plume)
-      %Plume{ast: ast, tail: tail} -> astify(tail, %Plume{plume | ast: plume.ast ++ [ast]})
+      %Plume{ast: "", tail: tail} -> astify(tail, plume, syntax) # %Plume{plume | ast: tail, tail: ""}
+      %Plume{ast: ast, tail: tail} -> astify(tail, %Plume{plume | ast: plume.ast ++ [ast]}, syntax)
     end
   end
 
-  defp parser(nil), do: Markright.Parsers.Generic
+  defp parser(nil), do: nil
   defp parser(syntax), do: Markright.Utils.parser!(A.B.C, syntax, __ENV__)
 end

@@ -74,7 +74,8 @@ defmodule Markright.Syntax do
 
   # These parameters do not have respected handlers
   Enum.each(~w|lookahead indent shield|a, fn e ->
-    def unquote(e)(syntax \\ syntax()), do: syntax[unquote(e)]
+    def unquote(e)(syntax \\ syntax()),
+      do: syntax[unquote(e)] || @syntax[unquote(e)]
   end)
 
   # Sorting by the length of the sample

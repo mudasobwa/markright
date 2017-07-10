@@ -9,7 +9,8 @@ defmodule Markright.Parsers.Youtube do
       %Markright.Continuation{ast: {:iframe,
              %{allowfullscreen: nil, frameborder: 0, height: 315,
                src: "http://www.youtube.com/embed/noQcPIeW6tE", width: 560},
-             "http://www.youtube.com/embed/noQcPIeW6tE"}, bag: [tags: []],
+             "http://www.youtube.com/embed/noQcPIeW6tE"},
+            bag: [tags: [], parser: Markright.Parsers.Generic],
             fun: nil, tail: ""}
 
       iex> "✇http://www.youtube.com/embed/noQcPIeW6tE"

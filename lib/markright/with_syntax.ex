@@ -4,13 +4,13 @@ defmodule Markright.WithSyntax do
   """
 
   defmacro __using__(opts) do
-    quote do
+    quote bind_quoted: [module: __MODULE__, opts: opts] do
       @behaviour Markright.Parser
 
-      @syntax unquote(opts[:syntax]) || Markright.Syntax.syntax()
-      @generic_parser unquote(opts[:generic_parser]) || __MODULE__
-      @max_lookahead unquote(opts[:lookahead]) || Markright.Syntax.lookahead
-      @max_indent unquote(opts[:indent]) || Markright.Syntax.indent
+      Module.put_attribute(__MODULE__, :syntax, opts[:syntax] || Markright.Syntax.syntax())
+      @generic_parser opts[:generic_parser] || __MODULE__
+      @max_lookahead opts[:lookahead] || Markright.Syntax.lookahead
+      @max_indent opts[:indent] || Markright.Syntax.indent
 
       ##############################################################################
 
