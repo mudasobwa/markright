@@ -18,7 +18,7 @@ defmodule Markright.Continuation do
 
   @unix_newline "\n"
 
-  @fields [ast: [], tail: "", bag: [tags: []], fun: nil]
+  @fields [ast: [], tail: "", bag: [tags: [], parser: Markright.Parsers.Generic], fun: nil]
 
   def fields, do: @fields
 

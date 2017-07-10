@@ -1,4 +1,5 @@
 defmodule Markright.Syntax.Test do
+  @moduledoc false
   use ExUnit.Case
   doctest Markright.Syntax
 
@@ -7,19 +8,41 @@ defmodule Markright.Syntax.Test do
 
   > my blockquote
 
-  Right after.
+  Right _after_.
   Normal *para* again.
   """
 
   @output {:article, %{}, [
     {:p, %{}, "Hello world."},
-     {:div, %{class: "blockquote"}, ["my blockquote"]},
+     {:blockquote, %{}, " my blockquote"},
      {:p, %{},
-      ["Right after.\nNormal ", {:strong, %{}, "para"}, " again."]}]}
+      ["Right ",
+        {:em, %{}, "after"},
+        ".\nNormal ",
+        {:strong, %{}, "para"}, " again.\n"]}]}
 
-  @tag :skip
   test "understands codeblock in the markright" do
     assert Markright.to_ast(@input) == @output
+  end
+
+  @empty_syntax []
+  @output_empty_syntax {:article, %{}, [
+    {:p, %{}, "Hello world."},
+    {:p, %{}, "> my blockquote"},
+    {:p, %{}, "Right _after_.\nNormal *para* again.\n"}]}
+
+  test "works with empty syntax" do
+    assert Markright.to_ast(@input, nil, syntax: @empty_syntax) == @output_empty_syntax
+  end
+
+  @simple_syntax [grip: [em: "_", strong: "*"]]
+  @output_simple_syntax {:article, %{}, [
+    {:p, %{}, "Hello world."},
+    {:p, %{}, "> my blockquote"},
+    {:p, %{}, ["Right ", {:em, %{}, "after"}, ".\nNormal ", {:strong, %{}, "para"}, " again.\n"]}]}
+
+  test "works with simple user-defined syntax" do
+    assert Markright.to_ast(@input, nil, syntax: @simple_syntax) == @output_simple_syntax
   end
 
   test "treats <br> normally" do
@@ -27,7 +50,8 @@ defmodule Markright.Syntax.Test do
     Line one.  
     Line two.
     """
-    assert Markright.to_ast(input) == {:article, %{}, [{:p, %{}, ["Line one.", {:br, %{}, nil}, "Line two.\n"]}]}
+    assert Markright.to_ast(input) == {:article, %{}, [
+      {:p, %{}, ["Line one.", {:br, %{}, nil}, "Line two.\n"]}]}
   end
 
   @tag :skip

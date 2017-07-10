@@ -43,7 +43,7 @@ defmodule Markright.Parsers.Block do
              %Plume{} = ast <- apply(mod, :to_ast, [rest, plume]),
              %Plume{} = ast <- Markright.Utils.delimit(ast) do
 
-          if mod == Markright.Parsers.Generic,
+          if mod == plume.bag[:parser], # FIXME
             do: Markright.Utils.continuation(ast, {unquote(tag), %{}}),
             else: ast
         end
@@ -51,7 +51,7 @@ defmodule Markright.Parsers.Block do
     end)
     defp astify("", plume), do: plume
     defp astify(rest, %Plume{} = plume) when is_binary(rest) do
-      with %Plume{} = cont <- Markright.Parsers.Generic.to_ast(@unix_newline <> rest, plume) do
+      with %Plume{} = cont <- apply(plume.bag[:parser], :to_ast, [@unix_newline <> rest, plume]) do
         {mine, rest} = Markright.Utils.split_ast(cont.ast)
 
         %Plume{cont |

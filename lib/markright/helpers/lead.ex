@@ -29,7 +29,7 @@ defmodule Markright.Helpers.Lead do
 
         with %Plume{ast: ast, tail: tail} <- astify(input, plume),
              plume <- plume |> Plume.untail!,
-             %Plume{ast: block, tail: ""} <- Markright.Parsers.Generic.to_ast(ast, plume) do
+             %Plume{ast: block, tail: ""} <- apply(plume.bag[:parser], :to_ast, [ast, plume]) do
 
           Markright.Utils.continuation(%Plume{plume | ast: block, tail: tail}, {@tag, %{}})
         end

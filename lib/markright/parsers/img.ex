@@ -7,13 +7,13 @@ defmodule Markright.Parsers.Img do
       iex> "http://example.com] lovely world!" |> Markright.Parsers.Img.to_ast
       %Markright.Continuation{ast: {:img,
              %{alt: "http://example.com", src: "http://example.com"}, nil},
-            bag: [tags: []], fun: nil, tail: " lovely world!"}
+            bag: [tags: [], parser: Markright.Parsers.Generic], fun: nil, tail: " lovely world!"}
 
       iex> "http://example.com Hello my] lovely world!" |> Markright.Parsers.Img.to_ast
       %Markright.Continuation{ast: {:figure, %{},
             [{:img, %{alt: "Hello my", src: "http://example.com"}, nil},
              {:figcaption, %{}, "Hello my"}]},
-            bag: [tags: []], fun: nil, tail: " lovely world!"}
+            bag: [tags: [], parser: Markright.Parsers.Generic], fun: nil, tail: " lovely world!"}
   """
 
   ##############################################################################

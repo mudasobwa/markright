@@ -34,7 +34,7 @@ defmodule Markright.Parsers.H do
   def to_ast(input, %Plume{} = plume \\ %Plume{}) when is_binary(input) do
     with %Plume{ast: first, tail: rest} <- Markright.Parsers.Word.to_ast(input, plume), # FIXME PUT TRIM PARAM
          %Plume{ast: ast, tail: tail} <- astify(rest, plume),
-         %Plume{ast: block, tail: ""} <- Markright.Parsers.Generic.to_ast(ast, plume) do
+         %Plume{ast: block, tail: ""} <- apply(plume.bag[:parser], :to_ast, [ast, plume]) do
 
       tag = case first do
               ""  -> :h1
