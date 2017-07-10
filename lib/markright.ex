@@ -54,18 +54,18 @@ defmodule Markright do
       {:article, %{}, [{:p, %{}, "Escaped *asterisk 2"}]}
 
   """
-  def to_ast(input, fun_or_collector \\ nil, opts \\ %{})
+  def to_ast(input, fun_or_collector \\ nil, opts \\ [])
 
   def to_ast(input, fun, opts)
-    when is_binary(input) and (is_nil(fun) or is_function(fun)) and is_map(opts) do
+    when is_binary(input) and (is_nil(fun) or is_function(fun)) and is_list(opts) do
 
     with plume <- %Plume{fun: fun},
-        %Plume{ast: ast} <- Markright.Parsers.Article.to_ast(input, plume),
+        %Plume{ast: ast} <- Markright.Parsers.Article.to_ast(input, plume, opts[:syntax]),
       do: ast
   end
 
   def to_ast(input, collector, opts)
-    when is_binary(input) and is_atom(collector) and is_map(opts) do
+    when is_binary(input) and is_atom(collector) and is_list(opts) do
 
     apply(collector, :start_link, [])
     fun = apply(collector, :on_ast_callback, [])
@@ -84,7 +84,7 @@ defmodule Markright do
 
   @fixme
   """
-  def to_ast_safe_input(input, fun \\ nil, opts \\ %{}) do
+  def to_ast_safe_input(input, fun \\ nil, opts \\ []) do
     to_ast(Regex.replace(~r/\r\n|\r/, input, "\n"), fun, opts)
   end
 

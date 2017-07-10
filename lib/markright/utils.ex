@@ -7,6 +7,16 @@ defmodule Markright.Utils do
 
   ##############################################################################
 
+  def parser!(name, syntax, env \\ __ENV__) when is_atom(name) do
+    contents =
+      quote do
+        use Markright.WithSyntax, syntax: unquote(syntax)
+      end
+    Module.create(name, contents, Macro.Env.location(env))
+  end
+
+  ##############################################################################
+
   def empty?(nil), do: true
   def empty?(""), do: true
   def empty?([]), do: true

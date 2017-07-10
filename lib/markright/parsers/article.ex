@@ -27,14 +27,14 @@ defmodule Markright.Parsers.Article do
 
   ##############################################################################
 
-  def to_ast(input, %Plume{} = plume \\ %Plume{}) when is_binary(input) do
-    Markright.Utils.continuation(astify(input, plume), {:article, %{}})
+  def to_ast(input, %Plume{} = plume \\ %Plume{}, syntax \\ nil) when is_binary(input) do
+    Markright.Utils.continuation(astify(input, plume, syntax), {:article, %{}})
   end
 
   ##############################################################################
 
-  defp astify(input, %Plume{} = plume) do
-    case Markright.Parsers.Generic.to_ast(@splitter <> input, plume) do
+  defp astify(input, %Plume{} = plume, syntax \\ nil) do
+    case apply(parser(syntax), :to_ast, [@splitter <> input, plume]) do
       %Plume{ast: "", tail: ""} -> plume
       %Plume{ast: ast, tail: ""} -> %Plume{plume | ast: plume.ast ++ [ast]}
       %Plume{ast: "", tail: tail} -> astify(tail, plume)
@@ -42,4 +42,6 @@ defmodule Markright.Parsers.Article do
     end
   end
 
+  defp parser(nil), do: Markright.Parsers.Generic
+  defp parser(syntax), do: Markright.Utils.parser!(A.B.C, syntax, __ENV__)
 end
