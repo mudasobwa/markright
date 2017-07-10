@@ -286,7 +286,7 @@ _Result:_
 {:ul, %{}, [{:li, %{}, "Hello, world!"}, {:li, %{}, "Hello, world!"}]}
 ```
 
-#### **`magnet`** is a leading marker:
+#### **`surrounding`** the element to surround `lead`s (see above):
 
 _Example:_
 ```elixir
@@ -297,7 +297,7 @@ _Markright:_ **none**
 
 _Result:_ **see `li` above**
 
-#### **`lead`** is an item element, usually chained and having a surrounding (see below):
+#### **`magnet`** is a leading marker:
 
 _Example:_
 ```elixir
