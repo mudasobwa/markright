@@ -46,5 +46,10 @@ defmodule Markright.Parsers.Article do
   end
 
   defp parser(nil), do: nil
-  defp parser(syntax), do: Markright.Utils.parser!(A.B.C, syntax, __ENV__)
+  defp parser(syntax) do
+    hash = :md5
+           |> :crypto.hash(inspect(syntax))
+           |> Base.encode16
+    Markright.Utils.parser!(Module.concat("Markright.Parsers", "Syntax_#{hash}"), syntax, __ENV__)
+  end
 end

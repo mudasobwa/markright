@@ -21,18 +21,28 @@ defmodule Markright.Syntax.Test do
         ".\nNormal ",
         {:strong, %{}, "para"}, " again.\n"]}]}
 
+  test "understands codeblock in the markright" do
+    assert Markright.to_ast(@input) == @output
+  end
+
   @empty_syntax []
   @output_empty_syntax {:article, %{}, [
     {:p, %{}, "Hello world."},
     {:p, %{}, "> my blockquote"},
     {:p, %{}, "Right _after_.\nNormal *para* again.\n"}]}
 
-  test "understands codeblock in the markright" do
-    assert Markright.to_ast(@input) == @output
-  end
-
   test "works with empty syntax" do
     assert Markright.to_ast(@input, nil, syntax: @empty_syntax) == @output_empty_syntax
+  end
+
+  @simple_syntax [grip: [em: "_", strong: "*"]]
+  @output_simple_syntax {:article, %{}, [
+    {:p, %{}, "Hello world."},
+    {:p, %{}, "> my blockquote"},
+    {:p, %{}, ["Right ", {:em, %{}, "after"}, ".\nNormal ", {:strong, %{}, "para"}, " again.\n"]}]}
+
+  test "works with simple user-defined syntax" do
+    assert Markright.to_ast(@input, nil, syntax: @simple_syntax) == @output_simple_syntax
   end
 
   test "treats <br> normally" do
