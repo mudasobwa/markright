@@ -81,8 +81,6 @@ defmodule Markright.WithSyntax do
       use Markright.Continuation
       alias Markright.Continuation, as: Plume
 
-      ##############################################################################
-
       def to_ast(input, %Plume{} = plume) when is_binary(input),
         do: astify(input, plume)
 

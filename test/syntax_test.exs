@@ -23,7 +23,9 @@ defmodule Markright.Syntax.Test do
 
   @empty_syntax []
   @output_empty_syntax {:article, %{}, [
-    "Hello world.\n\n> my blockquote\n\nRight _after_.\nNormal *para* again.\n"]}
+    {:p, %{}, "Hello world."},
+    {:p, %{}, "> my blockquote"},
+    {:p, %{}, "Right _after_.\nNormal *para* again.\n"}]}
 
   test "understands codeblock in the markright" do
     assert Markright.to_ast(@input) == @output
