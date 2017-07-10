@@ -232,7 +232,7 @@ end
 
 ### Syntax reference
 
-**`block`** is a block element, roughly an analogue of HTML `<div>`:
+#### **`block`** is a block element, roughly an analogue of HTML `<div>`:
 
 _Example:_
 ```elixir
@@ -249,7 +249,7 @@ _Result:_
 {:h1, %{}, "Hello, world!"]
 ```
 
-**`flush`** is an empty element, roughly an analogue of HTML `clear: all`:
+#### **`flush`** is an empty element, roughly an analogue of HTML `clear: all`:
 
 _Example:_
 ```elixir
@@ -268,7 +268,7 @@ _Result:_
 ["Hello, world!", {:hr, %{}, nil}, "\nHello, world!\n"]
 ```
 
-**`lead`** is an item element, usually chained and having a surrounding (see below):
+#### **`lead`** is an item element, usually chained and having a surrounding (see below):
 
 _Example:_
 ```elixir
@@ -286,7 +286,7 @@ _Result:_
 {:ul, %{}, [{:li, %{}, "Hello, world!"}, {:li, %{}, "Hello, world!"}]}
 ```
 
-**`magnet`** is a leading marker:
+#### **`magnet`** is a leading marker:
 
 _Example:_
 ```elixir
@@ -297,7 +297,7 @@ _Markright:_ **none**
 
 _Result:_ **see `li` above**
 
-**`lead`** is an item element, usually chained and having a surrounding (see below):
+#### **`lead`** is an item element, usually chained and having a surrounding (see below):
 
 _Example:_
 ```elixir
@@ -320,7 +320,7 @@ _Result:_
    "http://www.youtube.com/embed/AAAAAA"}]
 ```
 
-**`grip`** is an inline surrounding element, usually used for inline formatting:
+#### **`grip`** is an inline surrounding element, usually used for inline formatting:
 
 _Example:_
 ```elixir
@@ -337,7 +337,7 @@ _Result:_
 ["Hello, ", {:strong, %{}, "world"}, "!"]
 ```
 
-**`custom`** is a custom formatter, fully relying on the implementing module:
+#### **`custom`** is a custom formatter, fully relying on the implementing module:
 
 _Example:_
 ```elixir
