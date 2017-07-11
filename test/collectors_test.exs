@@ -63,7 +63,7 @@ defmodule Markright.Collectors.Test do
     defmodule Sample do
       use Markright.Collector, collectors: Markright.Collectors.OgpTwitter
 
-      def on_ast(%Markright.Continuation{ast: {tag, _, _}} = cont), do: tag
+      def on_ast(%Markright.Continuation{ast: {tag, _, _}}), do: tag
     end
     """
     {ast, acc} = Markright.to_ast(@input, Sample)

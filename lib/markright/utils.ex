@@ -90,14 +90,23 @@ defmodule Markright.Utils do
   @spec all_of(Atom.t) :: [Atom.t]
   def all_of(<<"Elixir." :: binary, prefix :: binary>>), do: all_of(prefix)
   def all_of(prefix) when is_binary(prefix) do
-    {:ok, mods} = :application.get_key(:markright, :modules)
-    Enum.filter(mods, fn e ->
-      e
-      |> Atom.to_string
-      |> String.starts_with?("Elixir." <> prefix)
-    end)
+    Enum.filter(get_modules(), & String.starts_with?(&1, "Elixir." <> prefix))
   end
   def all_of(prefix) when is_atom(prefix), do: all_of(Atom.to_string(prefix))
+  defp get_modules do
+    modules = Enum.map(:code.all_loaded(), &Atom.to_string(elem(&1, 0)))
+    case :code.get_mode() do
+      :interactive -> modules ++ get_modules_from_applications()
+      _otherwise -> modules
+    end
+  end
+  defp get_modules_from_applications do
+    for [app] <- :ets.match(:ac_tab, {{:loaded, :"$1"}, :_}),
+        {:ok, modules} = :application.get_key(app, :modules),
+        module <- modules do
+      Atom.to_string(module)
+    end
+  end
 
   @spec atomic_module_name(Atom.t) :: Atom.t
   def atomic_module_name(mod) do

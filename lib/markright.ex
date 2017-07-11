@@ -87,8 +87,7 @@ defmodule Markright do
     apply(collector, :stop, [])
   end
 
-  # "Markright.Presets"
-  # |> Markright.Utils.all_of()
+  # IO.inspect Markright.Utils.all_of("Markright"), label: "★★★"
   # TODO: smth like @before_compile
   [Markright.Presets.Article, Markright.Presets.Empty]
   |> Enum.each(fn mod ->
