@@ -62,6 +62,7 @@ defmodule Markright do
     mod = case opts[:preset] do
             nil -> Markright.Utils.to_preset_module(:article)
             mod when is_atom(mod) -> Markright.Utils.to_preset_module(mod)
+            {mod, nil} -> Markright.Utils.to_preset_module(mod)
             {mod, params} -> Markright.Utils.to_preset_module(mod, params)
           end
     with plume <- %Plume{fun: fun},
@@ -89,11 +90,16 @@ defmodule Markright do
   # "Markright.Presets"
   # |> Markright.Utils.all_of()
   # TODO: smth like @before_compile
-  [Markright.Presets.Article]
+  [Markright.Presets.Article, Markright.Presets.Empty]
   |> Enum.each(fn mod ->
     # Module.put_attribute(__MODULE__, :mod, mod)
     def unquote(:"#{Markright.Utils.atomic_module_name(mod)}!")(input, fun \\ nil, opts \\ []) do
-      to_ast(input, fun, preset: {unquote(mod), opts})
+      module_opts = opts[:module_opts]
+      params = opts
+               |> Keyword.delete(:module_opts)
+               |> Enum.into(%{})
+      opts = [{:preset, {unquote(mod), module_opts}}, {:params, params}]
+      to_ast(input, fun, opts)
     end
   end)
 

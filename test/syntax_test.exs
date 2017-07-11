@@ -35,6 +35,11 @@ defmodule Markright.Syntax.Test do
     assert Markright.to_ast(@input, nil, syntax: @empty_syntax) == @output_empty_syntax
   end
 
+  test "works with empty syntax (call to empty!)" do
+    {_, _, empty_ast} = @output_empty_syntax
+    assert Markright.empty!(@input, nil, lang: "en") == {:content, %{lang: "en"}, empty_ast}
+  end
+
   @simple_syntax [grip: [em: "_", strong: "*"]]
   @output_simple_syntax {:article, %{}, [
     {:p, %{}, "Hello world."},

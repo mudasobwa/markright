@@ -1,4 +1,4 @@
-defmodule Markright.Presets.Article do
+defmodule Markright.Presets.Empty do
   @moduledoc ~S"""
   Parses the whole text, producing a single article item.
 
@@ -20,7 +20,5 @@ defmodule Markright.Presets.Article do
                  {:figcaption, %{}, "Hello my"}]}, " lovely world!"]}]}
   """
 
-  use Markright.Top
-
-  def syntax, do: Markright.Syntax.syntax()
+  use Markright.Top, tag: :content
 end

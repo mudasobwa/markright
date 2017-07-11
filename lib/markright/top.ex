@@ -6,6 +6,8 @@ defmodule Markright.Top do
   defmacro __using__(opts) do
     quote do
       @behaviour Markright.Parser
+      @behaviour Markright.Preset
+
       @tag unquote(opts)[:tag] || Markright.Utils.atomic_module_name(__MODULE__)
 
       use Markright.Continuation
@@ -15,6 +17,9 @@ defmodule Markright.Top do
         {syntax, params} = {opts[:syntax], opts[:params] || %{}}
         Markright.Utils.continuation(astify(input, plume, syntax), {@tag, params})
       end
+
+      def syntax, do: []
+      defoverridable [syntax: 0]
 
       ##############################################################################
 

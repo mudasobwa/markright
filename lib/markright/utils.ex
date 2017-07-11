@@ -90,7 +90,6 @@ defmodule Markright.Utils do
   @spec all_of(Atom.t) :: [Atom.t]
   def all_of(<<"Elixir." :: binary, prefix :: binary>>), do: all_of(prefix)
   def all_of(prefix) when is_binary(prefix) do
-    IO.inspect :application.get_key(:markright, :modules), label: "★★★"
     {:ok, mods} = :application.get_key(:markright, :modules)
     Enum.filter(mods, fn e ->
       e
