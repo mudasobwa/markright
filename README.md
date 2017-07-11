@@ -1,6 +1,6 @@
 # Markright
 
-[![Build Status](https://travis-ci.org/mudasobwa/markright.svg?branch=master)](https://travis-ci.org/mudasobwa/markright) **The extended, streaming, configurable markdown-like syntax parser, that produces an AST.**
+[![Build Status](https://travis-ci.org/mudasobwa/markright.svg?branch=master)](https://travis-ci.org/mudasobwa/markright) [![Hex.pm](https://img.shields.io/hexpm/v/markright.svg)](https://hex.pm/packages/markright) **The extended, streaming, configurable markdown-like syntax parser, that produces an AST.**
 
 Out of the box is supports the full set of `markdown`, plus some extensions.
 The user of this library might easily extend the functionality with her own
