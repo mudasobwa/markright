@@ -76,12 +76,29 @@ defmodule Markright.Utils do
   def to_finalizer_module(atom, opts \\ []),
     do: to_module(Markright.Finalizers, atom, opts)
 
+  @spec to_preset_module(Atom.t, List.t) :: Atom.t
+  def to_preset_module(atom, opts \\ []),
+    do: to_module(Markright.Presets, atom, opts)
+
   @spec to_module(Atom.t, Atom.t, List.t) :: Atom.t
   defp to_module(prefix, atom, opts) do
     opts = Keyword.merge([prefix: prefix, fallback: Module.concat(prefix, Generic)], opts)
     mod = to_module_name(atom, [prefix: opts[:prefix]])
     if Code.ensure_loaded?(mod), do: mod, else: opts[:fallback]
   end
+
+  @spec all_of(Atom.t) :: [Atom.t]
+  def all_of(<<"Elixir." :: binary, prefix :: binary>>), do: all_of(prefix)
+  def all_of(prefix) when is_binary(prefix) do
+    IO.inspect :application.get_key(:markright, :modules), label: "★★★"
+    {:ok, mods} = :application.get_key(:markright, :modules)
+    Enum.filter(mods, fn e ->
+      e
+      |> Atom.to_string
+      |> String.starts_with?("Elixir." <> prefix)
+    end)
+  end
+  def all_of(prefix) when is_atom(prefix), do: all_of(Atom.to_string(prefix))
 
   @spec atomic_module_name(Atom.t) :: Atom.t
   def atomic_module_name(mod) do

@@ -59,8 +59,15 @@ defmodule Markright do
   def to_ast(input, fun, opts)
     when is_binary(input) and (is_nil(fun) or is_function(fun)) and is_list(opts) do
 
+    mod = case opts[:preset] do
+            nil -> Markright.Utils.to_preset_module(:article)
+            mod when is_atom(mod) -> Markright.Utils.to_preset_module(mod)
+            {mod, params} -> Markright.Utils.to_preset_module(mod, params)
+          end
     with plume <- %Plume{fun: fun},
-        %Plume{ast: ast} <- Markright.Parsers.Article.to_ast(input, plume, opts[:syntax]),
+        %Plume{ast: ast} <- apply(mod,
+          :to_ast,
+          [input, plume, Keyword.put_new(opts, :syntax, apply(mod, :syntax, []))]),
       do: ast
   end
 
@@ -78,6 +85,17 @@ defmodule Markright do
   after
     apply(collector, :stop, [])
   end
+
+  # "Markright.Presets"
+  # |> Markright.Utils.all_of()
+  # TODO: smth like @before_compile
+  [Markright.Presets.Article]
+  |> Enum.each(fn mod ->
+    # Module.put_attribute(__MODULE__, :mod, mod)
+    def unquote(:"#{Markright.Utils.atomic_module_name(mod)}!")(input, fun \\ nil, opts \\ []) do
+      to_ast(input, fun, preset: {unquote(mod), opts})
+    end
+  end)
 
   @doc """
   Most shame part of this package: here we use `Regex` because, you know, fuck Windows.

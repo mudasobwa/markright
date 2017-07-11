@@ -1,4 +1,4 @@
-defmodule Markright.Parsers.Article.Test do
+defmodule Markright.Presets.Article.Test do
   use ExUnit.Case
-  doctest Markright.Parsers.Article
+  doctest Markright.Presets.Article
 end

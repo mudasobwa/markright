@@ -38,6 +38,7 @@ defmodule Markright.Mixfile do
     [
       {:xml_builder, "~> 0.1"},
       {:credo, "~> 0.8", only: :dev},
+      {:cortex, "~> 0.1", only: [:dev, :test]},
       {:ex_doc, "~> 0.11", only: :dev}
     ]
   end
