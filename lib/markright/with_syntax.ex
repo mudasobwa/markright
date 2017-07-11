@@ -1,20 +1,10 @@
-defmodule Markright.WithSyntax do
+defmodule Markright.WithSyntax.Block do
   @moduledoc ~S"""
-  The implementation for the parser with syntax provided as an argument.
+  The default implementation for the block parser.
   """
-
   defmacro __using__(opts) do
     quote bind_quoted: [opts: opts] do
-      @behaviour Markright.Parser
-
       syntax = opts[:syntax] || Markright.Syntax.syntax()
-      Module.put_attribute(__MODULE__, :syntax, syntax)
-      @generic_parser opts[:generic_parser] || __MODULE__
-      @max_lookahead opts[:lookahead] || Markright.Syntax.lookahead
-      @max_indent opts[:indent] || Markright.Syntax.indent
-
-      ##############################################################################
-
       block_module_content =
         quote do
           @behaviour Markright.Parser
@@ -74,12 +64,41 @@ defmodule Markright.WithSyntax do
         end
       Module.put_attribute(__MODULE__, :block_module, Module.concat(__MODULE__, "Block"))
       Module.create(@block_module, block_module_content, Macro.Env.location(__ENV__))
+    end
+  end
+end
+
+defmodule Markright.WithSyntax do
+  @moduledoc ~S"""
+  The implementation for the parser with syntax provided as an argument.
+  """
+  defmacro __using__(opts) do
+    quote bind_quoted: [opts: opts] do
+      @behaviour Markright.Parser
+
+      syntax = opts[:syntax] || Markright.Syntax.syntax()
+      Module.put_attribute(__MODULE__, :syntax, syntax)
+      @generic_parser opts[:generic_parser] || __MODULE__
+      @max_lookahead opts[:lookahead] || Markright.Syntax.lookahead
+      @max_indent opts[:indent] || Markright.Syntax.indent
 
       ##############################################################################
 
       require Logger
       use Markright.Continuation
       alias Markright.Continuation, as: Plume
+
+      with mod when is_atom(mod) and not is_nil(mod) <- opts[:modules][:block],
+           true <- Code.ensure_loaded?(mod) do
+        Module.put_attribute(__MODULE__, :block_module, mod)
+      else
+        nil ->
+          use Markright.WithSyntax.Block, syntax: Module.get_attribute(__MODULE__, :syntax)
+        false ->
+          raise Markright.Errors.UnexpectedModule, value: opts[:modules][:block]
+        _ ->
+          raise Markright.Errors.UnexpectedModule, value: opts[:modules][:block], expected: :behaviour
+      end
 
       def to_ast(input, %Plume{} = plume) when is_binary(input),
         do: astify(input, plume)
