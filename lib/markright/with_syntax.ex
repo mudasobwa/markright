@@ -68,6 +68,79 @@ defmodule Markright.WithSyntax.Block do
   end
 end
 
+################################################################################
+
+defmodule Markright.WithSyntax.Attribute do
+  @moduledoc ~S"""
+  Parses the input for the class and or id specified.
+
+  ## Examples
+
+      iex> defmodule ClassOrId, do: use Markright.WithSyntax.Attribute
+      iex> "[class]world*!" |> ClassOrId.to_ast
+      %Markright.Continuation{ast: {nil, %{class: "class"}, "world*!"}, tail: ""}
+
+      iex> "Hello *[class1]my* _{style1 style2}lovely_ world!" |> Markright.to_ast
+      {:article, %{},
+        [{:p, %{},
+          ["Hello ", {:strong, %{class: "class1"}, "my"}, " ",
+           {:em, %{style: "style1 style2"}, "lovely"}, " world!"]}]}
+  """
+
+  def leadings do
+    # FIXME make it more generic
+    %{"[" => :class, "(" => :id, "{" => :style}
+  end
+
+  defmacro __using__(opts) do
+    quote bind_quoted: [opts: opts] do
+      leadings = opts[:leadings]
+      attribute_module_content =
+        quote do
+          @behaviour Markright.Parser
+          use Markright.Continuation
+          alias Markright.Continuation, as: Plume
+
+          leadings = unquote(leadings) || Markright.WithSyntax.Attribute.leadings()
+          Module.put_attribute(__MODULE__, :leadings, leadings)
+
+          def to_ast(input, %Plume{} = plume \\ %Plume{}) when is_binary(input) do
+            case input do
+              "" -> %Plume{plume | ast: {:nil, %{}, ""}} # FIXME
+              <<leading :: binary-size(1), rest :: binary>> ->
+                case @leadings[leading] do
+                  nil  -> %Plume{plume | ast: {:nil, %{}, input}}
+                  type -> astify(rest, Plume.bag!(plume, {:type, type}))
+                end
+            end
+          end
+
+          @spec astify(String.t, Markright.Continuation.t) :: Markright.Continuation.t
+          defp astify(part, plume)
+
+          Enum.each(~w|] ) }|, fn delimiter ->
+            Module.put_attribute(__MODULE__, :delimiter, delimiter)
+            defp astify(<<@delimiter :: binary, rest :: binary>>, %Plume{} = plume) do
+              with {type, plume} <- Plume.debag!(plume, :type) do
+                %Plume{plume | tail: "", ast: {:nil, %{type => plume.tail}, rest}} # FIXME REMOVE type
+              end
+            end
+            Module.delete_attribute(__MODULE__, :delimiter)
+          end)
+
+          defp astify(<<letter :: binary-size(1), rest :: binary>>, %Plume{} = plume),
+            do: astify(rest, Plume.tail!(plume, letter))
+
+          defp astify("", %Plume{} = plume), do: astify("]", plume)
+        end
+      Module.put_attribute(__MODULE__, :attribute_module, Module.concat(__MODULE__, "Attribute"))
+      Module.create(@attribute_module, attribute_module_content, Macro.Env.location(__ENV__))
+    end
+  end
+end
+
+################################################################################
+
 defmodule Markright.WithSyntax do
   @moduledoc ~S"""
   The implementation for the parser with syntax provided as an argument.
@@ -88,17 +161,35 @@ defmodule Markright.WithSyntax do
       use Markright.Continuation
       alias Markright.Continuation, as: Plume
 
+      # set the Block handler module
       with mod when is_atom(mod) and not is_nil(mod) <- opts[:modules][:block],
-           true <- Code.ensure_loaded?(mod) do
+           {:module, ^mod} <- Code.ensure_loaded(mod),
+           true <- Enum.member?(mod.__info__(:attributes)[:behaviour], Markright.Parser) do
         Module.put_attribute(__MODULE__, :block_module, mod)
       else
         nil ->
           use Markright.WithSyntax.Block, syntax: Module.get_attribute(__MODULE__, :syntax)
-        false ->
-          raise Markright.Errors.UnexpectedModule, value: opts[:modules][:block]
+        {:error, error} ->
+          raise Markright.Errors.UnexpectedModule, value: opts[:modules][:block], expected: error
         _ ->
           raise Markright.Errors.UnexpectedModule, value: opts[:modules][:block], expected: :behaviour
       end
+
+      # set the Attribute handler module
+      with mod when is_atom(mod) and not is_nil(mod) <- opts[:modules][:attribute],
+           {:module, ^mod} <- Code.ensure_loaded(mod),
+           true <- Enum.member?(mod.__info__(:attributes)[:behaviour], Markright.Parser) do
+        Module.put_attribute(__MODULE__, :attribute_module, mod)
+      else
+        nil ->
+          use Markright.WithSyntax.Attribute
+        {:error, error} ->
+          raise Markright.Errors.UnexpectedModule, value: opts[:modules][:attribute], expected: error
+        _ ->
+          raise Markright.Errors.UnexpectedModule, value: opts[:modules][:attribute], expected: :behaviour
+      end
+
+      ##########################################################################
 
       def to_ast(input, %Plume{} = plume) when is_binary(input),
         do: astify(input, plume)
@@ -107,7 +198,7 @@ defmodule Markright.WithSyntax do
       defp astify!(:split, tag, {plain, rest, %Plume{} = plume}) do
         with %Plume{ast: pre_ast, tail: ""} = plume <- astify(plain, plume),
              plume <- plume |> Plume.untail!,
-             %Plume{ast: {:nil, attrs, rest}} = plume <- Markright.Parsers.ClassOrId.to_ast(rest, plume),
+             %Plume{ast: {:nil, attrs, rest}} = plume <- @attribute_module.to_ast(rest, plume),
              plume <- plume |> Plume.untail!,
              %Plume{ast: ast, tail: more} = plume <- astify(rest, plume),
              plume <- plume |> Plume.untail!,
