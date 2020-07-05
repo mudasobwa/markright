@@ -27,23 +27,27 @@ defmodule Markright.Parsers.Img do
   def to_ast(input, %Plume{} = plume \\ %Plume{}) when is_binary(input) do
     with %Plume{ast: first, tail: rest} <- Markright.Parsers.Word.to_ast(input, plume),
          %Plume{ast: ast, tail: tail} = cont <- astify(rest, plume) do
-      attrs = case ast do
-                ["", link] -> %{src: link, alt: first}
-                [text, link] -> %{src: link, alt: first <> " " <> text}
-                text when is_binary(text) -> %{src: first, alt: String.trim(text)}
-              end
+      attrs =
+        case ast do
+          ["", link] -> %{src: link, alt: first}
+          [text, link] -> %{src: link, alt: first <> " " <> text}
+          text when is_binary(text) -> %{src: first, alt: String.trim(text)}
+        end
 
       case attrs do
         %{src: src, alt: ""} ->
-          Markright.Utils.continuation(:empty, %Plume{plume | tail: tail}, {:img, %{attrs | alt: src}})
+          Markright.Utils.continuation(
+            :empty,
+            %Plume{plume | tail: tail},
+            {:img, %{attrs | alt: src}}
+          )
+
         %{src: src, alt: alt} ->
-          cont = %Plume{cont | ast: [{:img, %{src: src, alt: alt}, nil},
-                                     {:figcaption, %{}, alt}]}
+          cont = %Plume{cont | ast: [{:img, %{src: src, alt: alt}, nil}, {:figcaption, %{}, alt}]}
           Markright.Utils.continuation(:continuation, cont, {:figure, %{}})
       end
     end
   end
 
   use Markright.Helpers.ImgLink
-
 end

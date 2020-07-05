@@ -9,10 +9,11 @@ defmodule Markright.Continuation do
   The continuation, returned from any call to `Parser.to_ast/3`.
   """
   @type t :: %__MODULE__{
-    ast: Tuple.t | List.t,
-    tail: String.t,
-    bag: List.t,
-    fun: Function.t | nil}
+          ast: Tuple.t() | List.t(),
+          tail: String.t(),
+          bag: List.t(),
+          fun: Function.t() | nil
+        }
 
   ##############################################################################
 
@@ -40,7 +41,7 @@ defmodule Markright.Continuation do
 
   def empty(), do: %Plume{}
 
-  def empty?(%Plume{ast: {:nil, _, _}} = _data), do: true
+  def empty?(%Plume{ast: {nil, _, _}} = _data), do: true
   def empty?(%Plume{ast: {_, _, []}, tail: ""} = _data), do: true
   def empty?(%Plume{ast: {_, _, ""}, tail: ""} = _data), do: true
   def empty?(%Plume{} = _data), do: false
@@ -54,28 +55,34 @@ defmodule Markright.Continuation do
   def tail!(%Plume{tail: tail} = cont, string) when is_binary(string) do
     %Plume{cont | tail: tail <> string}
   end
+
   def astail!(%Plume{tail: tail} = cont, string \\ "", trim \\ false) when is_binary(string) do
-    %Plume{cont | ast: (if trim, do: String.trim(tail), else: tail), tail: string}
+    %Plume{cont | ast: if(trim, do: String.trim(tail), else: tail), tail: string}
   end
+
   def detail!(%Plume{tail: tail} = cont) do
     {tail, %Plume{cont | tail: ""}}
   end
+
   def untail!(%Plume{} = cont) do
     %Plume{cont | tail: ""}
   end
 
   def bag(%Plume{bag: bag} = _cont, key), do: get_in(bag, [key])
+
   def bag!(%Plume{bag: bag} = cont, {key, value}) do
     %Plume{cont | bag: put_in(bag, [key], value)}
   end
+
   def debag!(%Plume{bag: bag} = cont, key) do
     {value, bag} = pop_in(bag, [key])
     {value, %Plume{cont | bag: bag}}
   end
 
   def tag!(%Plume{bag: bag} = cont, {key, value}) do
-    %Plume{cont | bag: put_in(bag, [:tags], [{key, value} | (bag[:tags] || [])])}
+    %Plume{cont | bag: put_in(bag, [:tags], [{key, value} | bag[:tags] || []])}
   end
+
   def detag!(%Plume{bag: bag} = cont) do
     case bag[:tags] do
       [{key, value} | tail] -> {{key, value}, %Plume{cont | bag: put_in(bag, [:tags], tail)}}
@@ -85,21 +92,28 @@ defmodule Markright.Continuation do
 
   def continue(%Plume{} = data, {tag, opts}),
     do: %Plume{data | ast: {tag, opts, Markright.Utils.squeeze!(data.ast)}}
+
   def continue(%Plume{} = data, {tag, opts, nil}),
     do: %Plume{data | ast: {tag, opts, nil}}
-  def continue(%Plume{} = data, ast, tail) when (is_tuple(ast) or is_list(ast)) and is_binary(tail),
-    do: %Plume{data | ast: Markright.Utils.squeeze!(ast), tail: tail}
+
+  def continue(%Plume{} = data, ast, tail)
+      when (is_tuple(ast) or is_list(ast)) and is_binary(tail),
+      do: %Plume{data | ast: Markright.Utils.squeeze!(ast), tail: tail}
 
   ##############################################################################
 
-  @spec callback(Markright.Continuation.t, Function.t | Markright.Continuation.t | nil) :: Markright.Continuation.t
+  @spec callback(Markright.Continuation.t(), Function.t() | Markright.Continuation.t() | nil) ::
+          Markright.Continuation.t()
   def callback(data, fun \\ nil)
 
   def callback(%Plume{} = data, %Plume{} = result),
     do: Map.merge(data, result)
+
   def callback(%Plume{} = data, fun) when is_function(fun, 1),
-    do: callback(data, (unless Markright.Continuation.empty?(data), do: fun.(data)))
+    do: callback(data, unless(Markright.Continuation.empty?(data), do: fun.(data)))
+
   def callback(%Plume{ast: ast, tail: tail} = data, fun) when is_function(fun, 2),
-    do: callback(data, (unless Markright.Continuation.empty?(data), do: fun.(ast, tail)))
+    do: callback(data, unless(Markright.Continuation.empty?(data), do: fun.(ast, tail)))
+
   def callback(%Plume{} = data, _), do: data
 end

@@ -9,8 +9,8 @@ defmodule Markright.Collector do
   of the content data being parsed.
   """
 
-  @callback on_ast(Markright.Continuation.t, any) :: any
-  @callback afterwards(any, Keyword.t) :: any
+  @callback on_ast(Markright.Continuation.t(), any) :: any
+  @callback afterwards(any, Keyword.t()) :: any
 
   defmacro __using__(opts) do
     quote bind_quoted: [collectors: opts[:collectors] || [], module: __MODULE__] do
@@ -34,7 +34,7 @@ defmodule Markright.Collector do
 
       @doc "Retrieves the collected values"
       def ast_collected(),
-        do: Agent.get(__MODULE__, &(&1))
+        do: Agent.get(__MODULE__, & &1)
 
       @doc "Retrieves the collected value for the particular collector"
       def ast_collected(collector, default_accumulator \\ []) when is_atom(collector),
@@ -44,8 +44,12 @@ defmodule Markright.Collector do
 
       def on_ast(%Plume{} = plume, default_accumulator) do
         Enum.each(@collectors, fn collector when is_atom(collector) ->
-          ast_collect!(collector, apply(collector, :on_ast, [plume, ast_collected(collector, default_accumulator)]))
+          ast_collect!(
+            collector,
+            apply(collector, :on_ast, [plume, ast_collected(collector, default_accumulator)])
+          )
         end)
+
         case on_ast(plume) do
           nil -> plume
           internal -> ast_collect!(__MODULE__, ast_collected(__MODULE__) ++ [internal])
@@ -56,18 +60,19 @@ defmodule Markright.Collector do
         Enum.each(@collectors, fn collector when is_atom(collector) ->
           ast_collect!(collector, apply(collector, :afterwards, [ast_collected(collector), opts]))
         end)
+
         ast_collect!(__MODULE__, __MODULE__ |> ast_collected |> afterwards(opts))
         ast_collected()
       end
 
-      def on_ast_callback, do: fn(%Plume{} = plume) -> on_ast(plume, []) end
+      def on_ast_callback, do: fn %Plume{} = plume -> on_ast(plume, []) end
 
       ##########################################################################
 
       def on_ast(%Plume{} = _plume), do: nil
       def afterwards(accumulator, opts), do: accumulator
 
-      defoverridable [on_ast: 1, afterwards: 2]
+      defoverridable on_ast: 1, afterwards: 2
     end
   end
 end

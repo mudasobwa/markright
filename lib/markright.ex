@@ -57,24 +57,27 @@ defmodule Markright do
   def to_ast(input, fun_or_collector \\ nil, opts \\ [])
 
   def to_ast(input, fun, opts)
-    when is_binary(input) and (is_nil(fun) or is_function(fun)) and is_list(opts) do
+      when is_binary(input) and (is_nil(fun) or is_function(fun)) and is_list(opts) do
+    mod =
+      case opts[:preset] do
+        nil -> Markright.Utils.to_preset_module(:article)
+        mod when is_atom(mod) -> Markright.Utils.to_preset_module(mod)
+        {mod, nil} -> Markright.Utils.to_preset_module(mod)
+        {mod, params} -> Markright.Utils.to_preset_module(mod, params)
+      end
 
-    mod = case opts[:preset] do
-            nil -> Markright.Utils.to_preset_module(:article)
-            mod when is_atom(mod) -> Markright.Utils.to_preset_module(mod)
-            {mod, nil} -> Markright.Utils.to_preset_module(mod)
-            {mod, params} -> Markright.Utils.to_preset_module(mod, params)
-          end
     with plume <- %Plume{fun: fun},
-        %Plume{ast: ast} <- apply(mod,
-          :to_ast,
-          [input, plume, Keyword.put_new(opts, :syntax, apply(mod, :syntax, []))]),
-      do: ast
+         %Plume{ast: ast} <-
+           apply(
+             mod,
+             :to_ast,
+             [input, plume, Keyword.put_new(opts, :syntax, apply(mod, :syntax, []))]
+           ),
+         do: ast
   end
 
   def to_ast(input, collector, opts)
-    when is_binary(input) and is_atom(collector) and is_list(opts) do
-
+      when is_binary(input) and is_atom(collector) and is_list(opts) do
     apply(collector, :start_link, [])
     fun = apply(collector, :on_ast_callback, [])
 
@@ -94,9 +97,12 @@ defmodule Markright do
     # Module.put_attribute(__MODULE__, :mod, mod)
     def unquote(:"#{Markright.Utils.atomic_module_name(mod)}!")(input, fun \\ nil, opts \\ []) do
       module_opts = opts[:module_opts]
-      params = opts
-               |> Keyword.delete(:module_opts)
-               |> Enum.into(%{})
+
+      params =
+        opts
+        |> Keyword.delete(:module_opts)
+        |> Enum.into(%{})
+
       opts = [{:preset, {unquote(mod), module_opts}}, {:params, params}]
       to_ast(input, fun, opts)
     end
@@ -118,26 +124,30 @@ defmodule Markright do
   end
 
   def process([]) do
-    IO.puts "Usage: markright --file=filename.md"
+    IO.puts("Usage: markright --file=filename.md")
   end
 
   def process(options) do
     if File.exists?(options[:file]) do
-      result = options[:file]
-               |> File.read!
-               |> to_ast
-               |> XmlBuilder.generate
+      result =
+        options[:file]
+        |> File.read!()
+        |> to_ast
+        |> XmlBuilder.generate()
+
       # result = if options[:squeeze], do: result |> String.split |> Enum.join(" "), else: result
       if options[:silent], do: result, else: IO.puts(result)
     else
-      IO.puts "Unable to read file #{options[:file]}"
+      IO.puts("Unable to read file #{options[:file]}")
     end
   end
 
   defp parse_args(args) do
-    {options, _, _} = OptionParser.parse(args,
-      switches: [file: :string]
-    )
+    {options, _, _} =
+      OptionParser.parse(args,
+        switches: [file: :string]
+      )
+
     options
   end
 end

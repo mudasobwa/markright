@@ -23,5 +23,4 @@ defmodule Markright.Parsers.Dt do
   """
 
   use Markright.Helpers.Lead
-
 end

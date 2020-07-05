@@ -60,31 +60,38 @@ defmodule Markright.Parsers.Pre do
          %Plume{ast: code, tail: rest} <- astify(tail, plume) do
       code_opts = if Markright.Utils.empty?(lang), do: %{}, else: %{lang: lang}
       # TODO: Should we fire another continuation event on `code` explicitly?
-      Markright.Utils.continuation(%Plume{plume | ast: [{:code, code_opts, code}], tail: rest}, {:pre, %{}})
+      Markright.Utils.continuation(
+        %Plume{plume | ast: [{:code, code_opts, code}], tail: rest},
+        {:pre, %{}}
+      )
     end
   end
 
   ##############################################################################
 
-  @spec astify(String.t, Markright.Continuation.t) :: Markright.Continuation.t
+  @spec astify(String.t(), Markright.Continuation.t()) :: Markright.Continuation.t()
   defp astify(part, plume)
 
   ##############################################################################
 
-  Enum.each(0..@max_indent-1, fn i ->
+  Enum.each(0..(@max_indent - 1), fn i ->
     indent = String.duplicate(" ", i)
     {tag, _handler} = Markright.Syntax.get(:block, :pre)
-    defp astify(<<
-                  @unix_newline :: binary,
-                  unquote(indent) :: binary,
-                  unquote(tag) :: binary,
-                  rest :: binary
-                >>, %Plume{} = plume) do
+
+    defp astify(
+           <<
+             @unix_newline::binary,
+             unquote(indent)::binary,
+             unquote(tag)::binary,
+             rest::binary
+           >>,
+           %Plume{} = plume
+         ) do
       Plume.astail!(plume, rest)
     end
   end)
 
-  defp astify(<<letter :: binary-size(1), rest :: binary>>, %Plume{} = plume),
+  defp astify(<<letter::binary-size(1), rest::binary>>, %Plume{} = plume),
     do: astify(rest, Plume.tail!(plume, letter))
 
   defp astify("", %Plume{} = plume), do: Plume.astail!(plume)

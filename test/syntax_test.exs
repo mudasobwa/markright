@@ -12,24 +12,25 @@ defmodule Markright.Syntax.Test do
   Normal *para* again.
   """
 
-  @output {:article, %{}, [
-    {:p, %{}, "Hello world."},
-     {:blockquote, %{}, " my blockquote"},
-     {:p, %{},
-      ["Right ",
-        {:em, %{}, "after"},
-        ".\nNormal ",
-        {:strong, %{}, "para"}, " again.\n"]}]}
+  @output {:article, %{},
+           [
+             {:p, %{}, "Hello world."},
+             {:blockquote, %{}, " my blockquote"},
+             {:p, %{},
+              ["Right ", {:em, %{}, "after"}, ".\nNormal ", {:strong, %{}, "para"}, " again.\n"]}
+           ]}
 
   test "understands codeblock in the markright" do
     assert Markright.to_ast(@input) == @output
   end
 
   @empty_syntax []
-  @output_empty_syntax {:article, %{}, [
-    {:p, %{}, "Hello world."},
-    {:p, %{}, "> my blockquote"},
-    {:p, %{}, "Right _after_.\nNormal *para* again.\n"}]}
+  @output_empty_syntax {:article, %{},
+                        [
+                          {:p, %{}, "Hello world."},
+                          {:p, %{}, "> my blockquote"},
+                          {:p, %{}, "Right _after_.\nNormal *para* again.\n"}
+                        ]}
 
   test "works with empty syntax" do
     assert Markright.to_ast(@input, nil, syntax: @empty_syntax) == @output_empty_syntax
@@ -41,10 +42,19 @@ defmodule Markright.Syntax.Test do
   end
 
   @simple_syntax [grip: [em: "_", strong: "*"]]
-  @output_simple_syntax {:article, %{}, [
-    {:p, %{}, "Hello world."},
-    {:p, %{}, "> my blockquote"},
-    {:p, %{}, ["Right ", {:em, %{}, "after"}, ".\nNormal ", {:strong, %{}, "para"}, " again.\n"]}]}
+  @output_simple_syntax {:article, %{},
+                         [
+                           {:p, %{}, "Hello world."},
+                           {:p, %{}, "> my blockquote"},
+                           {:p, %{},
+                            [
+                              "Right ",
+                              {:em, %{}, "after"},
+                              ".\nNormal ",
+                              {:strong, %{}, "para"},
+                              " again.\n"
+                            ]}
+                         ]}
 
   test "works with simple user-defined syntax" do
     assert Markright.to_ast(@input, nil, syntax: @simple_syntax) == @output_simple_syntax
@@ -55,8 +65,12 @@ defmodule Markright.Syntax.Test do
     Line one.  
     Line two.
     """
-    assert Markright.to_ast(input) == {:article, %{}, [
-      {:p, %{}, ["Line one.", {:br, %{}, nil}, "Line two.\n"]}]}
+
+    assert Markright.to_ast(input) ==
+             {:article, %{},
+              [
+                {:p, %{}, ["Line one.", {:br, %{}, nil}, "Line two.\n"]}
+              ]}
   end
 
   @tag :skip
@@ -68,13 +82,22 @@ defmodule Markright.Syntax.Test do
     - Шестое кольцо
     - Второй завтрак
     """
-    output = {:article, %{}, [
-                {:p, %{}, [
-                  {:b, %{}, "Часть 1. Пришествие рядового Разнобердыева"},
-                  {:ul, %{}, [
-                    {:li, %{}, "Первый звонок"},
-                    {:li, %{}, "Шестое кольцо"},
-                    {:li, %{}, "Второй завтрак"}]}]}]}
+
+    output =
+      {:article, %{},
+       [
+         {:p, %{},
+          [
+            {:b, %{}, "Часть 1. Пришествие рядового Разнобердыева"},
+            {:ul, %{},
+             [
+               {:li, %{}, "Первый звонок"},
+               {:li, %{}, "Шестое кольцо"},
+               {:li, %{}, "Второй завтрак"}
+             ]}
+          ]}
+       ]}
+
     assert Markright.to_ast(input) == output
   end
 
@@ -88,13 +111,22 @@ defmodule Markright.Syntax.Test do
 
     Далее.
     """
-    output = {:article, %{}, [
-                {:p, %{}, [
-                  {:b, %{}, "Часть 1. Пришествие рядового Разнобердыева"},
-                  {:ul, %{}, [
-                    {:li, %{}, "Первый звонок"},
-                    {:li, %{}, "Шестое кольцо"},
-                    {:li, %{}, "Второй завтрак"}]}]}]}
+
+    output =
+      {:article, %{},
+       [
+         {:p, %{},
+          [
+            {:b, %{}, "Часть 1. Пришествие рядового Разнобердыева"},
+            {:ul, %{},
+             [
+               {:li, %{}, "Первый звонок"},
+               {:li, %{}, "Шестое кольцо"},
+               {:li, %{}, "Второй завтрак"}
+             ]}
+          ]}
+       ]}
+
     assert Markright.to_ast(input) == output
   end
 
@@ -111,24 +143,32 @@ defmodule Markright.Syntax.Test do
 
     Все.
     """
-    output = {:article, %{}, [
-                {:h3, %{}, "Часть 1. Section"},
-                {:h4, %{}, "Часть 1.1. Subsection"},
-                {:ul, %{}, [
-                  {:li, %{}, "Первый звонок"},
-                  {:li, %{}, "Шестое кольцо"},
-                  {:li, %{}, "Второй завтрак"}]}]}
+
+    output =
+      {:article, %{},
+       [
+         {:h3, %{}, "Часть 1. Section"},
+         {:h4, %{}, "Часть 1.1. Subsection"},
+         {:ul, %{},
+          [
+            {:li, %{}, "Первый звонок"},
+            {:li, %{}, "Шестое кольцо"},
+            {:li, %{}, "Второй завтрак"}
+          ]}
+       ]}
+
     assert Markright.to_ast(input) == output
   end
 
   @tag :skip
   test "converts text" do
-    input = "test/fixtures/rr.md"
-            |> File.read!
-            |> Markright.to_ast
-            |> XmlBuilder.generate
-    expected = File.read! "test/fixtures/rr.html"
+    input =
+      "test/fixtures/rr.md"
+      |> File.read!()
+      |> Markright.to_ast()
+      |> XmlBuilder.generate()
+
+    expected = File.read!("test/fixtures/rr.html")
     assert expected == input
   end
-
 end

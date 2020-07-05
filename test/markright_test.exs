@@ -57,22 +57,26 @@ defmodule Markright.Test do
   """
 
   test "generates XML from parsed markright" do
-    assert(@input_text
-           |> Markright.article!(fn e -> IO.puts "★☆★ #{inspect e}" end)
-           # |> IO.inspect
-           |> XmlBuilder.generate == String.trim(@output_text))
+    assert @input_text
+           |> Markright.article!(fn e -> IO.puts("★☆★ #{inspect(e)}") end)
+           |> XmlBuilder.generate(format: :none)
+           |> String.replace(~r/\n|\t/, "") == String.replace(@output_text, ~r/\n|\t/, "")
   end
 
   test "properly handles nested blockquotes" do
-    assert(@input_blockquote
-           |> Markright.to_ast ==
-     {:article, %{}, [{:blockquote, %{}, " Blockquotes!  This is level 2."}]})
+    assert(
+      @input_blockquote
+      |> Markright.to_ast() ==
+        {:article, %{}, [{:blockquote, %{}, " Blockquotes!  This is level 2."}]}
+    )
   end
 
   test "handles unterminated symbols properly" do
-    assert("Unterminated *asterisk"
-           |> Markright.to_ast ==
-      {:article, %{}, [{:p, %{}, ["Unterminated ", {:strong, %{}, "asterisk"}]}]})
+    assert(
+      "Unterminated *asterisk"
+      |> Markright.to_ast() ==
+        {:article, %{}, [{:p, %{}, ["Unterminated ", {:strong, %{}, "asterisk"}]}]}
+    )
   end
 
   @readme ~s"""
@@ -89,21 +93,26 @@ defmodule Markright.Test do
   """
 
   test "understands our own README" do
-    assert(Markright.to_ast(@readme) ==
-      {:article, %{}, [
-        {:p, %{}, [
-          "If ",
-          {:a, %{href: "https://hex.pm/docs/publish"},
-          "available in Hex"},
-          ", the package can be installed\nby adding ",
-          {:code, %{}, "markright"},
-          " to your list of dependencies in ",
-          {:code, %{}, "mix.exs"},
-          ":"]},
-        {:pre, %{}, [
-          {:code, %{lang: "elixir"},
-            "def deps do\n  [{:markright, \"~> 0.1.0\"}]\nend"}]},
-        {:h2, %{}, "Basic Usage"}]}
+    assert(
+      Markright.to_ast(@readme) ==
+        {:article, %{},
+         [
+           {:p, %{},
+            [
+              "If ",
+              {:a, %{href: "https://hex.pm/docs/publish"}, "available in Hex"},
+              ", the package can be installed\nby adding ",
+              {:code, %{}, "markright"},
+              " to your list of dependencies in ",
+              {:code, %{}, "mix.exs"},
+              ":"
+            ]},
+           {:pre, %{},
+            [
+              {:code, %{lang: "elixir"}, "def deps do\n  [{:markright, \"~> 0.1.0\"}]\nend"}
+            ]},
+           {:h2, %{}, "Basic Usage"}
+         ]}
     )
   end
 
@@ -120,28 +129,36 @@ defmodule Markright.Test do
   Normal *para* again.
   """
 
-  @output {:article, %{}, [
-    {:div, %{}, "Hello world."},
-     {:pre, %{},
-      [{:code, %{lang: "ruby"},
-       "def method(*args, **args)\n  puts \"method \#{__callee__} called\"\nend"}]},
-     {:div, %{},
-      ["Right after.\nNormal ", {:strong, %{}, "para"}, " again."]}]}
+  @output {:article, %{},
+           [
+             {:div, %{}, "Hello world."},
+             {:pre, %{},
+              [
+                {:code, %{lang: "ruby"},
+                 "def method(*args, **args)\n  puts \"method \#{__callee__} called\"\nend"}
+              ]},
+             {:div, %{}, ["Right after.\nNormal ", {:strong, %{}, "para"}, " again."]}
+           ]}
 
   test "makes changes in the callbacks" do
     fun1 = fn
       %Markright.Continuation{ast: {:p, %{}, text}} = cont ->
         %Markright.Continuation{cont | ast: {:div, %{}, text}}
-      cont -> cont
+
+      cont ->
+        cont
     end
+
     assert Markright.to_ast(@input, fun1) == @output
 
     fun2 = fn
       {:p, %{}, text}, tail ->
         %Markright.Continuation{ast: {:div, %{}, text}, tail: tail}
+
       ast, tail ->
         %Markright.Continuation{ast: ast, tail: tail}
     end
+
     assert Markright.to_ast(@input, fun2) == @output
   end
 
@@ -151,17 +168,21 @@ defmodule Markright.Test do
   Adiós!
   """
 
-  @output_flush {:article, %{}, [
-    {:p, %{}, [
-      "Robin Hood",
-      {:br, %{}, nil},
-      "was a skilled archer.",
-      {:br, %{}, nil},
-      "This is good",
-      {:br, %{}, nil},
-      "Rye needs her marcher.",
-      {:hr, %{}, nil},
-      "\nAdiós!\n"]}]}
+  @output_flush {:article, %{},
+                 [
+                   {:p, %{},
+                    [
+                      "Robin Hood",
+                      {:br, %{}, nil},
+                      "was a skilled archer.",
+                      {:br, %{}, nil},
+                      "This is good",
+                      {:br, %{}, nil},
+                      "Rye needs her marcher.",
+                      {:hr, %{}, nil},
+                      "\nAdiós!\n"
+                    ]}
+                 ]}
 
   test "understands flush tags" do
     assert Markright.to_ast(@input_flush) == @output_flush
@@ -170,15 +191,25 @@ defmodule Markright.Test do
   @input_code_inplace ~s"""
   The *_quick ~brown~_ fox* `*_jumps ~over~_ the lazy* dog`.
   """
-  @output_code_inplace {:article, %{}, [
-    {:p, %{}, ["The ",
-                {:strong, %{}, [
-                  {:em, %{}, [
-                    "quick ",
-                    {:strike, %{}, "brown"}]},
-                  " fox"]},
-                " ",
-                {:code, %{}, "*_jumps ~over~_ the lazy* dog"}, ".\n"]}]}
+  @output_code_inplace {:article, %{},
+                        [
+                          {:p, %{},
+                           [
+                             "The ",
+                             {:strong, %{},
+                              [
+                                {:em, %{},
+                                 [
+                                   "quick ",
+                                   {:strike, %{}, "brown"}
+                                 ]},
+                                " fox"
+                              ]},
+                             " ",
+                             {:code, %{}, "*_jumps ~over~_ the lazy* dog"},
+                             ".\n"
+                           ]}
+                        ]}
 
   test "gracefully ignores syntax inside backticks" do
     ast = Markright.to_ast(@input_code_inplace)
@@ -186,6 +217,4 @@ defmodule Markright.Test do
   end
 
   # @badge_url "http://mel.fm/2016/05/22/plural"
-
-
 end

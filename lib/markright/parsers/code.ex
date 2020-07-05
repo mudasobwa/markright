@@ -25,15 +25,15 @@ defmodule Markright.Parsers.Code do
 
   ##############################################################################
 
-  @spec astify(String.t, Markright.Continuation.t) :: Markright.Continuation.t
+  @spec astify(String.t(), Markright.Continuation.t()) :: Markright.Continuation.t()
   defp astify(part, plume)
 
   ##############################################################################
 
-  defp astify(<<"`" :: binary, rest :: binary>>, %Plume{} = plume),
+  defp astify(<<"`"::binary, rest::binary>>, %Plume{} = plume),
     do: Plume.astail!(plume, rest)
 
-  defp astify(<<letter :: binary-size(1), rest :: binary>>, %Plume{} = plume),
+  defp astify(<<letter::binary-size(1), rest::binary>>, %Plume{} = plume),
     do: astify(rest, Plume.tail!(plume, letter))
 
   defp astify("", %Plume{} = plume),

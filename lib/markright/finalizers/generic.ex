@@ -5,7 +5,6 @@ defmodule Markright.Finalizers.Generic do
 
   @behaviour Markright.Finalizer
 
-  @spec finalize(Markright.Continuation.t) :: Markright.Continuation.t
+  @spec finalize(Markright.Continuation.t()) :: Markright.Continuation.t()
   def finalize(%Markright.Continuation{} = cont), do: cont
-
 end

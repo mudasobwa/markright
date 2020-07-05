@@ -19,13 +19,14 @@ defmodule Markright.Parsers.Link do
 
   def to_ast(input, %Plume{} = plume \\ %Plume{}) when is_binary(input) do
     with %Plume{ast: first, tail: rest} <- Markright.Parsers.Word.to_ast(input, plume),
-         plume <- plume |> Plume.untail!,
+         plume <- plume |> Plume.untail!(),
          %Plume{ast: ast, tail: tail} <- astify(rest, plume) do
-      {subinput, href} = case ast do
-                           ["", link] -> {first, link}
-                           [text, link] -> {first <> " " <> text, link}
-                           text when is_binary(text) -> {String.trim(text), first}
-                         end
+      {subinput, href} =
+        case ast do
+          ["", link] -> {first, link}
+          [text, link] -> {first <> " " <> text, link}
+          text when is_binary(text) -> {String.trim(text), first}
+        end
 
       %Plume{ast: label, tail: ""} = apply(plume.bag[:parser], :to_ast, [subinput, plume])
       Plume.continue(%Plume{plume | ast: label, tail: tail}, {:a, %{href: href}})
@@ -33,5 +34,4 @@ defmodule Markright.Parsers.Link do
   end
 
   use Markright.Helpers.ImgLink
-
 end

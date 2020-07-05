@@ -7,7 +7,6 @@ defmodule Markright.Syntax do
     lookahead: 10,
     indent: 10,
     shield: ~w|/ \\|,
-
     block: [
       h: "#",
       h: "§",
@@ -37,12 +36,12 @@ defmodule Markright.Syntax do
       em: "_",
       strong: "*",
       b: "**",
-      strike: "~",
+      strike: "~"
     ],
     custom: [
       link: "[",
       img: "![",
-      code: "`",
+      code: "`"
     ],
     surrounding: [
       li: :ul,
@@ -52,6 +51,7 @@ defmodule Markright.Syntax do
 
   def syntax do
     config = Application.get_env(:markright, :syntax) || []
+
     Keyword.merge(@syntax, config, fn _k, v1, v2 ->
       Keyword.merge(v1, v2)
     end)
@@ -59,18 +59,23 @@ defmodule Markright.Syntax do
 
   defp value(key, syntax) when is_atom(key) do
     case syntax[key] do
-      nil -> []
+      nil ->
+        []
+
       list when is_list(list) ->
         Enum.map(list, fn {k, v} -> {k, value_with_opts(v)} end)
-      other -> raise Markright.Errors.UnexpectedSyntax, value: other, expected: "nil or list"
+
+      other ->
+        raise Markright.Errors.UnexpectedSyntax, value: other, expected: "nil or list"
     end
   end
+
   defp value(key, syntax) when is_binary(key),
-    do: key |> String.to_atom |> get(syntax)
+    do: key |> String.to_atom() |> get(syntax)
 
   def get(key, subkey, syntax \\ syntax())
       when (is_atom(key) or is_binary(key)) and is_atom(subkey),
-    do: value(key, syntax)[subkey]
+      do: value(key, syntax)[subkey]
 
   # These parameters do not have respected handlers
   Enum.each(~w|lookahead indent shield|a, fn e ->
@@ -93,6 +98,7 @@ defmodule Markright.Syntax do
 
   defp sort_by_length(nil), do: []
   defp sort_by_length([]), do: []
+
   defp sort_by_length(values) do
     Enum.sort(values, fn {_, v1}, {_, v2} ->
       String.length(plain_value(v1)) > String.length(plain_value(v2))
@@ -100,9 +106,11 @@ defmodule Markright.Syntax do
   end
 
   defp value_with_opts({value, opts}) when is_binary(value) and is_list(opts), do: {value, opts}
-  defp value_with_opts({value, opts}) when is_atom(value) and is_list(opts), do: {Atom.to_string(value), opts}
+
+  defp value_with_opts({value, opts}) when is_atom(value) and is_list(opts),
+    do: {Atom.to_string(value), opts}
+
   defp value_with_opts(value), do: {value, []}
 
-  defp plain_value(whatever), do: with {value, _} <- value_with_opts(whatever), do: value || ""
-
+  defp plain_value(whatever), do: with({value, _} <- value_with_opts(whatever), do: value || "")
 end

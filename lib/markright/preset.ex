@@ -3,5 +3,5 @@ defmodule Markright.Preset do
   The default behaviour for all the presets.
   """
 
-  @callback syntax() :: Keyword.t
+  @callback syntax() :: Keyword.t()
 end

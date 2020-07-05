@@ -12,17 +12,28 @@ defmodule Markright.Parsers.Dt.Test do
   """
 
   @output {
-    :article, %{},
-      [{:p, %{}, [
-          "Hello, world! Data terms here:",
-          {:dl, %{}, [
-            {:dt, %{}, "item 1"}, {:dd, %{}, " definition 1"},
-            {:dt, %{}, "item 2"}, {:dd, %{}, " definition 2"},
-            {:dt, %{}, " item 3"}, {:dd, %{}, " definition 3"}]},
-          "Afterparty.\n"]}]}
+    :article,
+    %{},
+    [
+      {:p, %{},
+       [
+         "Hello, world! Data terms here:",
+         {:dl, %{},
+          [
+            {:dt, %{}, "item 1"},
+            {:dd, %{}, " definition 1"},
+            {:dt, %{}, "item 2"},
+            {:dd, %{}, " definition 2"},
+            {:dt, %{}, " item 3"},
+            {:dd, %{}, " definition 3"}
+          ]},
+         "Afterparty.\n"
+       ]}
+    ]
+  }
 
   test "parses [different types of] data terms" do
-    assert (@input
-            |> Markright.to_ast) == @output
+    assert @input
+           |> Markright.to_ast() == @output
   end
 end

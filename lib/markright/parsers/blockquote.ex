@@ -36,39 +36,50 @@ defmodule Markright.Parsers.Blockquote do
 
   def to_ast(input, %Plume{} = plume \\ %Plume{}) when is_binary(input) do
     with %Plume{ast: ast, tail: tail} <- astify(input, plume),
-         plume <- plume |> Plume.untail!,
+         plume <- plume |> Plume.untail!(),
          %Plume{ast: block, tail: ""} <- apply(plume.bag[:parser], :to_ast, [ast, plume]),
-      do: Markright.Utils.continuation(
-        %Plume{plume | ast: block, tail: tail}, {:blockquote, %{}})
+         do:
+           Markright.Utils.continuation(
+             %Plume{plume | ast: block, tail: tail},
+             {:blockquote, %{}}
+           )
   end
 
   ##############################################################################
 
-  @spec astify(String.t, Markright.Continuation.t) :: Markright.Continuation.t
+  @spec astify(String.t(), Markright.Continuation.t()) :: Markright.Continuation.t()
   defp astify(part, plume)
 
   ##############################################################################
 
-  defp astify(<<
-                unquote(@splitter) :: binary,
-                rest :: binary
-              >>, %Plume{} = plume),
-    do: Plume.astail!(plume, rest)
+  defp astify(
+         <<
+           unquote(@splitter)::binary,
+           rest::binary
+         >>,
+         %Plume{} = plume
+       ),
+       do: Plume.astail!(plume, rest)
 
-  Enum.each(0..@max_indent-1, fn i ->
+  Enum.each(0..(@max_indent - 1), fn i ->
     indent = String.duplicate(" ", i)
-    {tag, _handler} = Markright.Syntax.block()[:blockquote] # FIXME!!!
-    defp astify(<<
-                  @unix_newline :: binary,
-                  unquote(indent) :: binary,
-                  unquote(tag) :: binary,
-                  rest :: binary
-                >>, %Plume{} = plume) do
+    # FIXME!!!
+    {tag, _handler} = Markright.Syntax.block()[:blockquote]
+
+    defp astify(
+           <<
+             @unix_newline::binary,
+             unquote(indent)::binary,
+             unquote(tag)::binary,
+             rest::binary
+           >>,
+           %Plume{} = plume
+         ) do
       astify(" " <> rest, plume)
     end
   end)
 
-  defp astify(<<letter :: binary-size(1), rest :: binary>>, %Plume{} = plume),
+  defp astify(<<letter::binary-size(1), rest::binary>>, %Plume{} = plume),
     do: astify(rest, Plume.tail!(plume, letter))
 
   defp astify("", %Plume{} = plume),

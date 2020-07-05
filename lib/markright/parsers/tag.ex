@@ -13,9 +13,12 @@ defmodule Markright.Parsers.Tag do
   use Markright.Helpers.Magnet
 
   def to_ast(input, %Plume{} = plume \\ %Plume{}) when is_binary(input) do
-    %Plume{ast: <<@magnet :: binary, tag :: binary>>} = cont = astify(input, plume)
-    Markright.Utils.continuation(:continuation,
-                                  %Plume{cont | ast: tag},
-                                  {:a, %{class: "tag", href: "/tags/#{tag}"}})
+    %Plume{ast: <<@magnet::binary, tag::binary>>} = cont = astify(input, plume)
+
+    Markright.Utils.continuation(
+      :continuation,
+      %Plume{cont | ast: tag},
+      {:a, %{class: "tag", href: "/tags/#{tag}"}}
+    )
   end
 end

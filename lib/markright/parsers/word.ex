@@ -16,10 +16,11 @@ defmodule Markright.Parsers.Word do
   ##############################################################################
 
   def to_ast(input, %Plume{} = plume \\ %Plume{}) when is_binary(input) do
-      cont = astify(input, plume)
-      if plume.bag[:notrim],
-        do: cont,
-        else: %Plume{cont | tail: String.trim(cont.tail)}
+    cont = astify(input, plume)
+
+    if plume.bag[:notrim],
+      do: cont,
+      else: %Plume{cont | tail: String.trim(cont.tail)}
   end
 
   ##############################################################################

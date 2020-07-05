@@ -4,17 +4,16 @@ defmodule Markright.Continuation.Test do
   doctest Markright.Continuation
 
   test "is_last guard" do
-    Code.eval_string """
     defmodule Sample do
       use Markright.Continuation
       def guarded(%Markright.Continuation{tail: tail} = _data) when tail == "", do: :last
       def guarded(%Markright.Continuation{tail: _tail} = _data), do: :leading
     end
-    """
+
     data = %Markright.Continuation{}
     assert Sample.guarded(data) == :last
     assert Sample.guarded(%Markright.Continuation{tail: "hello"}) == :leading
   after
-    purge Sample
+    purge(Sample)
   end
 end

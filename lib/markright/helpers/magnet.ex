@@ -25,14 +25,23 @@ defmodule Markright.Helpers.Magnet do
       @attr opts[:attr] || :href
       @value opts[:value] || :text
 
-      case opts[:magnet_and_handler] || Markright.Syntax.get(Markright.Utils.atomic_module_name(module), opts[:magnet] || Markright.Utils.atomic_module_name(__MODULE__)) do
+      case opts[:magnet_and_handler] ||
+             Markright.Syntax.get(
+               Markright.Utils.atomic_module_name(module),
+               opts[:magnet] || Markright.Utils.atomic_module_name(__MODULE__)
+             ) do
         {magnet, handler} ->
           @magnet magnet
           @handler handler
+
         nil ->
           @magnet ""
           @handler Markright.Parsers.Word
-        other -> raise Markright.Errors.UnexpectedFeature, value: other, expected: "{magnet, handler} tuple"
+
+        other ->
+          raise Markright.Errors.UnexpectedFeature,
+            value: other,
+            expected: "{magnet, handler} tuple"
       end
 
       @terminators [" ", "\n", "\t", "\r", "]", "|"]
@@ -43,38 +52,44 @@ defmodule Markright.Helpers.Magnet do
 
       def to_ast(input, %Plume{} = plume) when is_binary(input) do
         cont = astify(input, plume)
-        value = case @value do
-                  :empty -> %Plume{plume | ast: "", tail: input}
-                  :text  -> cont
-                end
-        attrs = case @attr do
-                  :empty -> %{}
-                  some -> %{some => cont.ast}
-                end
+
+        value =
+          case @value do
+            :empty -> %Plume{plume | ast: "", tail: input}
+            :text -> cont
+          end
+
+        attrs =
+          case @attr do
+            :empty -> %{}
+            some -> %{some => cont.ast}
+          end
 
         Markright.Utils.continuation(@continuation, value, {@tag, attrs})
       end
 
-      defoverridable [to_ast: 2]
+      defoverridable to_ast: 2
 
       ##############################################################################
 
-      @spec astify(String.t, Markright.Continuation.t) :: Markright.Continuation.t
+      @spec astify(String.t(), Markright.Continuation.t()) :: Markright.Continuation.t()
       defp astify(part, plume)
 
       ##############################################################################
 
       Enum.each(@terminators, fn delimiter ->
         @delimiter delimiter
-        defp astify(<<@delimiter :: binary, _rest :: binary>> = rest, %Plume{} = plume),
+        defp astify(<<@delimiter::binary, _rest::binary>> = rest, %Plume{} = plume),
           do: Plume.astail!(plume, rest)
       end)
+
       Module.delete_attribute(__MODULE__, :delimiter)
 
-      defp astify(<<letter :: binary-size(1), rest :: binary>>, %Plume{} = plume),
+      defp astify(<<letter::binary-size(1), rest::binary>>, %Plume{} = plume),
         do: astify(rest, Plume.tail!(plume, letter))
 
-      defp astify("", %Plume{} = plume), do: %Plume{plume | ast: String.trim(plume.tail), tail: ""}
+      defp astify("", %Plume{} = plume),
+        do: %Plume{plume | ast: String.trim(plume.tail), tail: ""}
     end
   end
 end
