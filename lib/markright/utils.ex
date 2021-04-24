@@ -203,10 +203,22 @@ defmodule Markright.Utils do
         _ -> false
       end)
 
-    # FIXME Maybe more accurate decision on surrounding
-    ast = if(Enum.empty?(head), do: middle, else: head ++ [[{surrounding, %{}, middle}]]) ++ tail
+    {tail_head, tail_tail} = head_tail(tail)
+
+    new_tail_head = case tail_head do
+      {^surrounding, _, content} ->  [{surrounding, %{},  middle ++ content}]
+      [] -> [{surrounding, %{}, middle}]
+      element ->  [{surrounding, %{}, middle}] ++ [element]
+    end
+
+    ast = head ++ new_tail_head ++ tail_tail
+
     %Plume{plume | ast: ast}
   end
+
+  defp head_tail([head|tail]), do: {head, tail}
+  defp head_tail([]), do: {[],[]}
+
 
   ##############################################################################
 
