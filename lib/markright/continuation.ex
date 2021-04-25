@@ -9,10 +9,10 @@ defmodule Markright.Continuation do
   The continuation, returned from any call to `Parser.to_ast/3`.
   """
   @type t :: %__MODULE__{
-          ast: Tuple.t() | List.t(),
+          ast: tuple() | list(),
           tail: String.t(),
-          bag: List.t(),
-          fun: Function.t() | nil
+          bag: list(),
+          fun: (Markright.Continuation.t() -> Markright.Continuation.t()) | nil
         }
 
   ##############################################################################
@@ -102,7 +102,12 @@ defmodule Markright.Continuation do
 
   ##############################################################################
 
-  @spec callback(Markright.Continuation.t(), Function.t() | Markright.Continuation.t() | nil) ::
+  @spec callback(
+          Markright.Continuation.t(),
+          (Markright.Continuation.t() -> Markright.Continuation.t())
+          | Markright.Continuation.t()
+          | nil
+        ) ::
           Markright.Continuation.t()
   def callback(data, fun \\ nil)
 

@@ -7,7 +7,7 @@ defmodule Markright.Mixfile do
   def project do
     [
       app: @app,
-      version: "0.7.0",
+      version: "0.7.1",
       elixir: "~> 1.3",
       build_embedded: Mix.env() == :prod,
       start_permanent: Mix.env() == :prod,
@@ -22,19 +22,12 @@ defmodule Markright.Mixfile do
   #
   # Type "mix help compile.app" for more information
   def application do
-    # Specify extra applications you'll use from Erlang/Elixir
-    [applications: [:logger]]
+    [
+      applications: [:logger],
+      extra_applications: [:crypto, :xml_builder]
+    ]
   end
 
-  # Dependencies can be Hex packages:
-  #
-  #   {:my_dep, "~> 0.3.0"}
-  #
-  # Or git/path repositories:
-  #
-  #   {:my_dep, git: "https://github.com/elixir-lang/my_dep.git", tag: "0.1.0"}
-  #
-  # Type "mix help deps" for more examples and options
   defp deps do
     [
       {:xml_builder, "~> 2.0"},

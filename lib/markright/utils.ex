@@ -76,26 +76,26 @@ defmodule Markright.Utils do
 
   ##############################################################################
 
-  @spec to_parser_module(Atom.t(), List.t()) :: Atom.t()
+  @spec to_parser_module(atom(), list()) :: atom()
   def to_parser_module(atom, opts \\ []),
     do: to_module(Markright.Parsers, atom, opts)
 
-  @spec to_finalizer_module(Atom.t(), List.t()) :: Atom.t()
+  @spec to_finalizer_module(atom(), list()) :: atom()
   def to_finalizer_module(atom, opts \\ []),
     do: to_module(Markright.Finalizers, atom, opts)
 
-  @spec to_preset_module(Atom.t(), List.t()) :: Atom.t()
+  @spec to_preset_module(atom(), list()) :: atom()
   def to_preset_module(atom, opts \\ []),
     do: to_module(Markright.Presets, atom, opts)
 
-  @spec to_module(Atom.t(), Atom.t(), List.t()) :: Atom.t()
+  @spec to_module(atom(), atom(), list()) :: atom()
   defp to_module(prefix, atom, opts) do
     opts = Keyword.merge([prefix: prefix, fallback: Module.concat(prefix, Generic)], opts)
     mod = to_module_name(atom, prefix: opts[:prefix])
     if Code.ensure_loaded?(mod), do: mod, else: opts[:fallback]
   end
 
-  @spec all_of(Atom.t()) :: [Atom.t()]
+  @spec all_of(atom()) :: [atom()]
   def all_of(<<"Elixir."::binary, prefix::binary>>), do: all_of(prefix)
 
   def all_of(prefix) when is_binary(prefix) do
@@ -121,7 +121,7 @@ defmodule Markright.Utils do
     end
   end
 
-  @spec atomic_module_name(Atom.t()) :: Atom.t()
+  @spec atomic_module_name(atom()) :: atom()
   def atomic_module_name(mod) do
     mod
     |> denamespace
@@ -131,7 +131,7 @@ defmodule Markright.Utils do
 
   ##############################################################################
 
-  @spec continuation(Atom.t(), Markright.Continuation.t(), {Atom.t(), Map.t()}) ::
+  @spec continuation(atom(), Markright.Continuation.t(), {atom(), map()}) ::
           Markright.Continuation.t()
   def continuation(:continuation, %Plume{} = plume, {tag, %{} = attrs}) do
     case Plume.callback(Plume.continue(plume, {tag, attrs}), plume.fun) do
@@ -155,7 +155,7 @@ defmodule Markright.Utils do
     end
   end
 
-  @spec continuation(Markright.Continuation.t(), {Atom.t(), Map.t()}) ::
+  @spec continuation(Markright.Continuation.t(), {atom(), map()}) ::
           Markright.Continuation.t()
   def continuation(%Plume{} = plume, {tag, %{} = attrs}) do
     continuation(:continuation, plume, {tag, attrs})
@@ -169,7 +169,7 @@ defmodule Markright.Utils do
 
   ##############################################################################
 
-  @spec split_ast(String.t() | List.t()) :: {String.t() | List.t(), List.t()}
+  @spec split_ast(String.t() | list()) :: {String.t() | list(), list()}
 
   @splitters ~w|p div|a ++ (Markright.Syntax.block() |> Keyword.keys() |> Enum.uniq())
   @clauses Enum.map(@splitters, fn tag ->
@@ -187,7 +187,7 @@ defmodule Markright.Utils do
 
   ##############################################################################
 
-  @spec surround(Markright.Continuation.t(), Atom.t(), Atom.t()) :: Markright.Continuation.t()
+  @spec surround(Markright.Continuation.t(), atom(), atom()) :: Markright.Continuation.t()
   def surround(%Plume{ast: ast} = plume, tag, surrounding) when is_list(ast) do
     {head, middle_and_tail} =
       Enum.split_while(ast, fn
@@ -205,24 +205,24 @@ defmodule Markright.Utils do
 
     {tail_head, tail_tail} = head_tail(tail)
 
-    new_tail_head = case tail_head do
-      {^surrounding, _, content} ->  [{surrounding, %{},  middle ++ content}]
-      [] -> [{surrounding, %{}, middle}]
-      element ->  [{surrounding, %{}, middle}] ++ [element]
-    end
+    new_tail_head =
+      case tail_head do
+        {^surrounding, _, content} -> [{surrounding, %{}, middle ++ content}]
+        [] -> [{surrounding, %{}, middle}]
+        element -> [{surrounding, %{}, middle}] ++ [element]
+      end
 
     ast = head ++ new_tail_head ++ tail_tail
 
     %Plume{plume | ast: ast}
   end
 
-  defp head_tail([head|tail]), do: {head, tail}
-  defp head_tail([]), do: {[],[]}
-
+  defp head_tail([head | tail]), do: {head, tail}
+  defp head_tail([]), do: {[], []}
 
   ##############################################################################
 
-  @spec to_module_name(Atom.t(), List.t()) :: Atom.t()
+  @spec to_module_name(atom(), list()) :: atom()
   defp to_module_name(atom, opts) do
     if String.starts_with?("#{atom}", "Elixir.") do
       atom

@@ -232,7 +232,7 @@ defmodule Markright.WithSyntax do
       def to_ast(input, %Plume{} = plume) when is_binary(input),
         do: astify(input, plume)
 
-      @spec astify!(Atom.t(), Atom.t(), {String.t(), String.t(), Markright.Continuation.t()}) ::
+      @spec astify!(atom(), atom(), {String.t(), String.t(), Markright.Continuation.t()}) ::
               Markright.Continuation.t()
       defp astify!(:split, tag, {plain, rest, %Plume{} = plume}) do
         with %Plume{ast: pre_ast, tail: ""} = plume <- astify(plain, plume),
@@ -258,7 +258,7 @@ defmodule Markright.WithSyntax do
              plume <- plume |> Plume.untail!(),
              %Plume{ast: post_ast, tail: tail} = plume <-
                apply(@generic_parser, :to_ast, [more, plume]) do
-          post_ast = if mod == @generic_parser, do: {tag, plume.attrs, post_ast}, else: post_ast
+          post_ast = if mod == @generic_parser, do: {tag, [], post_ast}, else: post_ast
 
           Plume.continue(
             Plume.untail!(plume),
@@ -277,7 +277,7 @@ defmodule Markright.WithSyntax do
              %Plume{ast: post_ast, tail: tail} = plume <-
                apply(@generic_parser, :to_ast, [more, plume]) do
           {mine, rest} =
-            case if mod == @generic_parser, do: {tag, plume.attrs, ast}, else: ast do
+            case if mod == @generic_parser, do: {tag, [], ast}, else: ast do
               {tag, opts, ast} ->
                 {m, r} = Markright.Utils.split_ast(ast)
                 {{tag, opts, m}, r}
