@@ -101,7 +101,7 @@ defmodule Markright.Utils do
     if Code.ensure_loaded?(mod), do: mod, else: opts[:fallback]
   end
 
-  @spec all_of(atom()) :: [atom()]
+  @spec all_of(atom()| String.t()) :: [atom()]
   def all_of(<<"Elixir."::binary, prefix::binary>>), do: all_of(prefix)
 
   def all_of(prefix) when is_binary(prefix) do
@@ -142,7 +142,6 @@ defmodule Markright.Utils do
   def continuation(:continuation, %Plume{} = plume, {tag, %{} = attrs}) do
     case Plume.callback(Plume.continue(plume, {tag, attrs}), plume.fun) do
       %Plume{} = plume -> apply(to_finalizer_module(tag), :finalize, [plume])
-      other -> raise Markright.Errors.UnexpectedContinuation, value: other
     end
   end
 
@@ -157,7 +156,6 @@ defmodule Markright.Utils do
   def continuation(:empty, %Plume{} = plume, {tag, %{} = attrs}) do
     case Plume.callback(Plume.continue(plume, {tag, attrs, nil}), plume.fun) do
       %Plume{} = plume -> apply(to_finalizer_module(tag), :finalize, [plume])
-      other -> raise Markright.Errors.UnexpectedContinuation, value: other
     end
   end
 
