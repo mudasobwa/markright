@@ -77,7 +77,13 @@ defmodule Markright.Utils do
   ##############################################################################
 
   @spec to_parser_module(atom(), list()) :: atom()
-  def to_parser_module(atom, opts \\ []),
+  def to_parser_module(atom, opts \\ [])
+
+  def to_parser_module(_atom, [parser: mod] = opts) do
+    if Code.ensure_loaded?(mod), do: mod, else: opts[:fallback]
+  end
+
+  def to_parser_module(atom, opts),
     do: to_module(Markright.Parsers, atom, opts)
 
   @spec to_finalizer_module(atom(), list()) :: atom()
