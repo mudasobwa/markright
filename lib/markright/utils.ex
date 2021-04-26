@@ -77,8 +77,15 @@ defmodule Markright.Utils do
   ##############################################################################
 
   @spec to_parser_module(atom(), list()) :: atom()
-  def to_parser_module(atom, opts \\ []),
-    do: to_module(Markright.Parsers, atom, opts)
+  def to_parser_module(atom, opts \\ []) do
+    mod = Keyword.get(opts, :parser)
+    mod =
+      if mod && Code.ensure_loaded?(mod),
+        do: mod,
+        else: opts[:fallback]
+
+      mod || to_module(Markright.Parsers, atom, opts)
+  end
 
   @spec to_finalizer_module(atom(), list()) :: atom()
   def to_finalizer_module(atom, opts \\ []),
@@ -95,7 +102,7 @@ defmodule Markright.Utils do
     if Code.ensure_loaded?(mod), do: mod, else: opts[:fallback]
   end
 
-  @spec all_of(atom()) :: [atom()]
+  @spec all_of(atom()| String.t()) :: [atom()]
   def all_of(<<"Elixir."::binary, prefix::binary>>), do: all_of(prefix)
 
   def all_of(prefix) when is_binary(prefix) do
@@ -136,7 +143,6 @@ defmodule Markright.Utils do
   def continuation(:continuation, %Plume{} = plume, {tag, %{} = attrs}) do
     case Plume.callback(Plume.continue(plume, {tag, attrs}), plume.fun) do
       %Plume{} = plume -> apply(to_finalizer_module(tag), :finalize, [plume])
-      other -> raise Markright.Errors.UnexpectedContinuation, value: other
     end
   end
 
@@ -151,7 +157,6 @@ defmodule Markright.Utils do
   def continuation(:empty, %Plume{} = plume, {tag, %{} = attrs}) do
     case Plume.callback(Plume.continue(plume, {tag, attrs, nil}), plume.fun) do
       %Plume{} = plume -> apply(to_finalizer_module(tag), :finalize, [plume])
-      other -> raise Markright.Errors.UnexpectedContinuation, value: other
     end
   end
 

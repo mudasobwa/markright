@@ -268,9 +268,8 @@ defmodule Markright.WithSyntax do
         end
       end
 
-      defp astify!(:fork, tag, {plain, rest, %Plume{} = plume}) do
-        with mod <- Markright.Utils.to_parser_module(tag),
-             %Plume{ast: pre_ast, tail: ""} = plume <- astify(plain, plume),
+      defp astify!(:fork, tag, mod, {plain, rest, %Plume{} = plume}) do
+        with %Plume{ast: pre_ast, tail: ""} = plume <- astify(plain, plume),
              plume <- plume |> Plume.untail!(),
              %Plume{ast: ast, tail: more} = plume <- apply(mod, :to_ast, [rest, plume]),
              plume <- plume |> Plume.untail!(),
@@ -403,10 +402,11 @@ defmodule Markright.WithSyntax do
         end)
 
         Enum.each(0..@max_indent, fn indent ->
-          Enum.each(Markright.Syntax.lead(@syntax), fn {tag, {delimiter, _opts}} ->
+          Enum.each(Markright.Syntax.lead(@syntax), fn {tag, {delimiter, opts}} ->
             Module.put_attribute(__MODULE__, :indent, String.duplicate(" ", indent))
             Module.put_attribute(__MODULE__, :tag, tag)
             Module.put_attribute(__MODULE__, :delimiter, delimiter)
+            Module.put_attribute(__MODULE__, :opts, opts)
 
             defp astify(
                    <<
@@ -418,9 +418,9 @@ defmodule Markright.WithSyntax do
                    >>,
                    %Plume{} = plume
                  ) do
-              astify!(:fork, @tag, {plain, rest, plume})
+              astify!(:fork, @tag, Markright.Utils.to_parser_module(@tag, @opts), {plain, rest, plume})
             end
-
+            Module.delete_attribute(__MODULE__, :opts)
             Module.delete_attribute(__MODULE__, :delimiter)
             Module.delete_attribute(__MODULE__, :tag)
             Module.delete_attribute(__MODULE__, :indent)
