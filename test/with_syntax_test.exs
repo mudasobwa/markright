@@ -7,10 +7,17 @@ defmodule Markright.WithSyntax.Test do
     ( ) item 1
     ( ) item 2
     """
-    output = Markright.to_ast(input, nil, syntax: [
-      lead: [choice: {"( )", [parser: CustomParse]}],
-    ])
-    assert output == {:article, %{}, [{:p, %{}, [{nil, %{}, [{:choice, %{}, "item 1"}, {:choice, %{}, "item 2"}]}]}]}
+
+    output =
+      Markright.to_ast(input, nil,
+        syntax: [
+          lead: [choice: {"( )", [custom_parser: CustomParse]}]
+        ]
+      )
+
+    assert output ==
+             {:article, %{},
+              [{:p, %{}, [{nil, %{}, [{:choice, %{}, "item 1"}, {:choice, %{}, "item 2"}]}]}]}
   end
 end
 

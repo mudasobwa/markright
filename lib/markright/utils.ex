@@ -78,13 +78,11 @@ defmodule Markright.Utils do
 
   @spec to_parser_module(atom(), list()) :: atom()
   def to_parser_module(atom, opts \\ []) do
-    mod = Keyword.get(opts, :parser)
-    mod =
-      if mod && Code.ensure_loaded?(mod),
-        do: mod,
-        else: opts[:fallback]
+    {mod, opts} = Keyword.pop(opts, :custom_parser)
 
-      mod || to_module(Markright.Parsers, atom, opts)
+    if mod && Code.ensure_loaded?(mod),
+      do: mod,
+      else: to_module(Markright.Parsers, atom, opts)
   end
 
   @spec to_finalizer_module(atom(), list()) :: atom()
@@ -102,7 +100,7 @@ defmodule Markright.Utils do
     if Code.ensure_loaded?(mod), do: mod, else: opts[:fallback]
   end
 
-  @spec all_of(atom()| String.t()) :: [atom()]
+  @spec all_of(atom() | String.t()) :: [atom()]
   def all_of(<<"Elixir."::binary, prefix::binary>>), do: all_of(prefix)
 
   def all_of(prefix) when is_binary(prefix) do

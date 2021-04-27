@@ -77,6 +77,10 @@ defmodule Markright.Syntax do
       when (is_atom(key) or is_binary(key)) and is_atom(subkey),
       do: value(key, syntax)[subkey]
 
+  def take(key, subkey, syntax \\ syntax())
+      when (is_atom(key) or is_binary(key)) and is_atom(subkey),
+      do: key |> value(syntax) |> Keyword.get_values(subkey)
+
   # These parameters do not have respected handlers
   Enum.each(~w|lookahead indent shield|a, fn e ->
     def unquote(e)(syntax \\ syntax()),

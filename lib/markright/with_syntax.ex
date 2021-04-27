@@ -418,8 +418,14 @@ defmodule Markright.WithSyntax do
                    >>,
                    %Plume{} = plume
                  ) do
-              astify!(:fork, @tag, Markright.Utils.to_parser_module(@tag, @opts), {plain, rest, plume})
+              astify!(
+                :fork,
+                @tag,
+                Markright.Utils.to_parser_module(@tag, @opts),
+                {plain, rest, plume}
+              )
             end
+
             Module.delete_attribute(__MODULE__, :opts)
             Module.delete_attribute(__MODULE__, :delimiter)
             Module.delete_attribute(__MODULE__, :tag)

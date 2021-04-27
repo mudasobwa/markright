@@ -17,10 +17,21 @@ defmodule Markright.Helpers.Lead do
 
       @tag opts[:tag] || Markright.Utils.atomic_module_name(__MODULE__)
       case opts[:lead_and_handler] ||
-             Markright.Syntax.get(Markright.Utils.atomic_module_name(module), opts[:lead] || @tag) do
+             Markright.Syntax.take(
+               Markright.Utils.atomic_module_name(module),
+               opts[:lead] || @tag
+             ) do
         {lead, handler} ->
-          @lead lead
-          @handler handler
+          @lead [lead]
+          @handler [handler]
+
+        [{lead, handler}] ->
+          @lead [lead]
+          @handler [handler]
+
+        many ->
+          @lead Enum.map(many, &elem(&1, 0))
+          @handler Enum.map(many, &elem(&1, 1))
 
         other ->
           raise Markright.Errors.UnexpectedFeature,
@@ -46,23 +57,26 @@ defmodule Markright.Helpers.Lead do
       defp astify(<<unquote(@splitter)::binary, rest::binary>>, %Plume{} = plume),
         do: Plume.astail!(plume, rest)
 
-      Enum.each(0..(Markright.Syntax.indent() - 1), fn i ->
-        @indent String.duplicate(" ", i)
-        defp astify(
-               <<
-                 @unix_newline::binary,
-                 @indent::binary,
-                 @lead::binary,
-                 rest::binary
-               >>,
-               %Plume{} = plume
-             ) do
-          %Plume{
-            plume
-            | ast: String.trim(plume.tail),
-              tail: @unix_newline <> @indent <> @lead <> rest
-          }
-        end
+      Enum.each(@lead, fn l ->
+        @l l
+        Enum.each(0..(Markright.Syntax.indent() - 1), fn i ->
+          @indent String.duplicate(" ", i)
+          defp astify(
+                 <<
+                   @unix_newline::binary,
+                   @indent::binary,
+                   @l::binary,
+                   rest::binary
+                 >>,
+                 %Plume{} = plume
+               ) do
+            %Plume{
+              plume
+              | ast: String.trim(plume.tail),
+                tail: @unix_newline <> @indent <> @l <> rest
+            }
+          end
+        end)
       end)
 
       defp astify(<<letter::binary-size(1), rest::binary>>, %Plume{} = plume),

@@ -18,12 +18,17 @@ defmodule Markright.Helpers.Flush do
     quote bind_quoted: [opts: opts, module: __MODULE__] do
       @tag opts[:tag] || Markright.Utils.atomic_module_name(__MODULE__)
       @lead_and_handler opts[:lead_and_handler] ||
-                          Markright.Syntax.get(
+                          Markright.Syntax.take(
                             Markright.Utils.atomic_module_name(module),
                             opts[:lead] || @tag
                           )
       case @lead_and_handler do
         {lead, handler} ->
+          @lead lead
+          @handler handler
+
+        [{lead, handler} | _] ->
+          # FIXME support several heads
           @lead lead
           @handler handler
 
