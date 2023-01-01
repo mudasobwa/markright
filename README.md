@@ -1,4 +1,6 @@
-# Markright
+# ~~Markright~~
+
+## This proecjt is retired, Please check https://github.com/am-kantox/md instead.
 
 [![Build Status](https://travis-ci.org/mudasobwa/markright.svg?branch=master)](https://travis-ci.org/mudasobwa/markright) [![Hex.pm](https://img.shields.io/hexpm/v/markright.svg)](https://hex.pm/packages/markright) **The extended, streaming, configurable markdown-like syntax parser, that produces an AST.**
 
